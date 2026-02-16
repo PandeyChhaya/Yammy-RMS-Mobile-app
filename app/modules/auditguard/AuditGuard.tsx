@@ -23,12 +23,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-
-import {
-    cacheDirectory,
-    EncodingType,
-    writeAsStringAsync
-} from 'expo-file-system';
+import * as FileSystem from 'expo-file-system';
 
 
 
@@ -172,21 +167,19 @@ export default function AuditGuard() {
     };
 
     
-const handleExportData = async (format: 'json' | 'csv') => {
-    try {
+try {
         const data = await securityService.exportSecurityData(format);
         const fileName = `security-export-${new Date().toISOString().split('T')[0]}.${format}`;
-        
-        if (!cacheDirectory) {
+
+        if (!FileSystem.cacheDirectory) {
             Alert.alert('Error', 'Cache directory not available');
             return;
         }
-        
-        const fileUri = `${cacheDirectory}${fileName}`;
-        
-        // New API with options
-        await writeAsStringAsync(fileUri, data, {
-            encoding: EncodingType.UTF8,
+
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+
+        await FileSystem.writeAsStringAsync(fileUri, data, {
+            encoding: FileSystem.EncodingType.UTF8,
         });
 
         const canShare = await Sharing.isAvailableAsync();
@@ -203,7 +196,6 @@ const handleExportData = async (format: 'json' | 'csv') => {
         Alert.alert('Export Failed', 'Could not export security data');
     }
 };
-
     if (statsLoading) {
         return (
             <View className="flex-1 items-center justify-center bg-gray-50">
