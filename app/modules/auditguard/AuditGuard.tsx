@@ -36,7 +36,6 @@ import {
     SecurityStats,
 } from '../../../shared/types/security'
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
 const Colors = {
     background: '#FEF1A8',
     card: '#FFFFFF',
@@ -64,13 +63,13 @@ const Colors = {
     resolvedText: '#4B5563',
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function AuditGuard() {
     const [activeTab, setActiveTab] = useState<'overview' | 'anomalies' | 'compliance' | 'config'>('overview')
     const [sessionId] = useState(() => securityService.generateSessionId())
     const queryClient = useQueryClient()
 
-    // ── Queries ──
+    
     const { data: securityStats, isLoading: statsLoading } = useQuery<SecurityStats>({
         queryKey: ['security-stats'],
         queryFn: () => securityService.getSecurityStats(),
@@ -94,7 +93,7 @@ export default function AuditGuard() {
         queryFn: () => securityService.getSecurityConfig(),
     })
 
-    // ── Mutations ──
+
     const resolveAnomalyMutation = useMutation({
         mutationFn: ({ anomalyId, resolvedBy }: { anomalyId: string; resolvedBy: string }) =>
             securityService.resolveAnomaly(anomalyId, resolvedBy),
@@ -111,7 +110,7 @@ export default function AuditGuard() {
         },
     })
 
-    // ── Init security system ──
+    
     useEffect(() => {
         const initSecurity = async () => {
             try {
@@ -124,14 +123,14 @@ export default function AuditGuard() {
         initSecurity()
     }, [sessionId])
 
-    // ── Real-time monitoring ──
+  
     useEffect(() => {
         if (securityConfig) {
             securityService.startRealTimeMonitoring(sessionId, securityConfig)
         }
     }, [sessionId, securityConfig])
 
-    // ── Security alerts via DeviceEventEmitter ──
+   
     useEffect(() => {
         const subscription = DeviceEventEmitter.addListener('security-alert', (data) => {
             console.log('Security alert received:', data)
@@ -139,7 +138,7 @@ export default function AuditGuard() {
         return () => subscription.remove()
     }, [])
 
-    // ── Helpers ──
+ 
     const getSeverityStyle = (severity: AnomalySeverity) => {
         switch (severity) {
             case AnomalySeverity.Low:
@@ -176,31 +175,41 @@ export default function AuditGuard() {
         resolveAnomalyMutation.mutate({ anomalyId, resolvedBy: 'admin' })
     }
 
-    // ── Export ──
-    const handleExportData = async (format: 'json' | 'csv') => {
-        try {
-            const data = await securityService.exportSecurityData(format)
-            const fileName = `security-export-${new Date().toISOString().split('T')[0]}.${format}`
-            const fileUri = FileSystem.cacheDirectory + fileName
-            await FileSystem.writeAsStringAsync(fileUri, data, {
-                encoding: FileSystem.EncodingType.UTF8,
-            })
-            const canShare = await Sharing.isAvailableAsync()
-            if (canShare) {
-                await Sharing.shareAsync(fileUri, {
-                    mimeType: format === 'json' ? 'application/json' : 'text/csv',
-                    dialogTitle: `Export ${format.toUpperCase()}`,
-                })
-            } else {
-                Alert.alert('Export saved', `File saved to: ${fileUri}`)
-            }
-        } catch (error) {
-            console.error('Error exporting data:', error)
-            Alert.alert('Export Failed', 'Could not export security data.')
+   
+ const handleExportData = async (format: 'json' | 'csv') => {
+    try {
+  
+        const docDir = FileSystem.documentDirectory
+        
+        if (!docDir) {
+            Alert.alert('Error', 'Document directory not available')
+            return
         }
+        
+        const data = await securityService.exportSecurityData(format)
+        const fileName = `security-export-${new Date().toISOString().split('T')[0]}.${format}`
+        const fileUri = `${docDir}${fileName}`
+        
+        await FileSystem.writeAsStringAsync(fileUri, data, {
+            encoding: 'utf8',
+        })
+        
+        const canShare = await Sharing.isAvailableAsync()
+        if (canShare) {
+            await Sharing.shareAsync(fileUri, {
+                mimeType: format === 'json' ? 'application/json' : 'text/csv',
+                dialogTitle: `Export ${format.toUpperCase()}`,
+            })
+        } else {
+            Alert.alert('Export saved', `File saved to: ${fileUri}`)
+        }
+    } catch (error) {
+        console.error('Error exporting data:', error)
+        Alert.alert('Export Failed', 'Could not export security data.')
     }
-
-    // ── Loading state ──
+}
+     
+  
     if (statsLoading) {
         return (
             <View style={styles.loadingContainer}>
@@ -209,7 +218,7 @@ export default function AuditGuard() {
         )
     }
 
-    // ── Tab definitions ──
+   
     const tabs = [
         { id: 'overview', name: 'Overview', icon: Activity },
         { id: 'anomalies', name: 'Anomalies', icon: AlertTriangle },
@@ -220,7 +229,7 @@ export default function AuditGuard() {
     return (
         <View style={styles.root}>
 
-            {/* ── Header ── */}
+           
             <View style={styles.header}>
                 <View style={styles.headerTop}>
                     <View style={styles.headerTitle}>
@@ -251,7 +260,7 @@ export default function AuditGuard() {
                     </View>
                 </View>
 
-                {/* ── Tabs ── */}
+              
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll}>
                     <View style={styles.tabsRow}>
                         {tabs.map((tab) => {
@@ -277,18 +286,18 @@ export default function AuditGuard() {
                 </ScrollView>
             </View>
 
-            {/* ── Content ── */}
+          
             <ScrollView
                 style={styles.content}
                 contentContainerStyle={styles.contentInner}
                 showsVerticalScrollIndicator={false}
             >
 
-                {/* ══════════ OVERVIEW TAB ══════════ */}
+               
                 {activeTab === 'overview' && (
                     <View style={styles.tabContent}>
 
-                        {/* Stat Cards */}
+                       
                         <View style={styles.statsGrid}>
                             <StatCard
                                 label="Secure Logs"
@@ -313,7 +322,7 @@ export default function AuditGuard() {
                             />
                         </View>
 
-                        {/* System Integrity */}
+                      
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>System Integrity</Text>
 
@@ -350,7 +359,7 @@ export default function AuditGuard() {
                             </View>
                         </View>
 
-                        {/* Recent Activity */}
+                     
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>Recent Activity</Text>
                             {anomalies.slice(0, 5).map((anomaly) => (
@@ -373,7 +382,6 @@ export default function AuditGuard() {
                     </View>
                 )}
 
-                {/* ══════════ ANOMALIES TAB ══════════ */}
                 {activeTab === 'anomalies' && (
                     <View style={styles.tabContent}>
                         <View style={styles.sectionHeader}>
@@ -403,7 +411,7 @@ export default function AuditGuard() {
                                 return (
                                     <View key={anomaly.id} style={styles.card}>
 
-                                        {/* ✅ FIX 1: icon+badge grouped left, time pushed right */}
+                                        {}
                                         <View style={styles.anomalyBadgeRow}>
                                             <View style={styles.anomalyBadgeLeft}>
                                                 {getSeverityIcon(anomaly.severity)}
@@ -418,14 +426,12 @@ export default function AuditGuard() {
                                             </Text>
                                         </View>
 
-                                        {/* Description */}
                                         <Text style={styles.anomalyDescription}>{anomaly.description}</Text>
                                         <Text style={styles.anomalyType}>
                                             <Text style={{ fontWeight: '600' }}>Type: </Text>
                                             {anomaly.anomaly_type}
                                         </Text>
 
-                                        {/* Recommendations */}
                                         {anomaly.recommendations.length > 0 && (
                                             <View style={styles.recommendationsBox}>
                                                 <Text style={styles.recommendationsTitle}>Recommendations:</Text>
@@ -437,7 +443,7 @@ export default function AuditGuard() {
                                             </View>
                                         )}
 
-                                        {/* Action */}
+                                        
                                         <View style={styles.anomalyAction}>
                                             {!anomaly.resolved ? (
                                                 <TouchableOpacity
@@ -464,7 +470,7 @@ export default function AuditGuard() {
                     </View>
                 )}
 
-                {/* ══════════ COMPLIANCE TAB ══════════ */}
+               
                 {activeTab === 'compliance' && (
                     <View style={styles.tabContent}>
                         <Text style={styles.sectionTitle}>Regulatory Compliance</Text>
@@ -515,7 +521,7 @@ export default function AuditGuard() {
                     </View>
                 )}
 
-                {/* ══════════ CONFIG TAB ══════════ */}
+               
                 {activeTab === 'config' && (
                     <View style={styles.tabContent}>
                         <Text style={styles.sectionTitle}>Security Configuration</Text>
@@ -523,7 +529,6 @@ export default function AuditGuard() {
                         {securityConfig && (
                             <View style={styles.card}>
 
-                                {/* Toggle rows */}
                                 {[
                                     {
                                         label: 'Chain Validation',
@@ -564,7 +569,7 @@ export default function AuditGuard() {
 
                                 <View style={styles.divider} />
 
-                                {/* ✅ FIX 2: color inside style object, wrapped in View with label */}
+                                
                                 <View style={styles.configInputGroup}>
                                     <Text style={styles.configLabel}>Max Time Drift (seconds)</Text>
                                     <TextInput
@@ -607,7 +612,7 @@ export default function AuditGuard() {
     )
 }
 
-// ─── StatCard Sub-component ───────────────────────────────────────────────────
+
 function StatCard({
     label,
     value,
@@ -632,7 +637,7 @@ function StatCard({
     )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
     root: {
         flex: 1,
@@ -645,7 +650,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FEF1A8',
     },
 
-    // Header
+   
     header: {
         backgroundColor: '#FFF1C1',
         paddingTop: 52,
@@ -708,7 +713,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter',
     },
 
-    // Tabs
+ 
     tabsScroll: {
         marginTop: 4,
     },
@@ -740,7 +745,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
 
-    // Content
+   
     content: {
         flex: 1,
     },
@@ -752,7 +757,7 @@ const styles = StyleSheet.create({
         gap: 14,
     },
 
-    // Cards
+    
     card: {
         backgroundColor: '#FFFFFF',
         borderRadius: 16,
@@ -773,7 +778,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter',
     },
 
-    // Stat cards
+    
     statsGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -816,7 +821,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter',
     },
 
-    // Integrity
+   
     integrityRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -844,7 +849,7 @@ const styles = StyleSheet.create({
         marginVertical: 8,
     },
 
-    // Recent activity
+    
     recentItem: {
         flexDirection: 'row',
         alignItems: 'flex-start',
@@ -876,7 +881,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter',
     },
 
-    // Section header
+
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -905,7 +910,6 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter',
     },
 
-    // Loaders / empty
     centerLoader: {
         paddingVertical: 48,
         alignItems: 'center',
@@ -927,7 +931,6 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter',
     },
 
-    // ✅ FIX 1: anomalyBadgeRow uses justifyContent instead of marginLeft: 'auto'
     anomalyBadgeRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1025,7 +1028,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter',
     },
 
-    // Compliance
+
     complianceCardHeader: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1076,7 +1079,6 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter',
     },
 
-    // Config
     configToggleRow: {
         flexDirection: 'row',
         alignItems: 'center',
