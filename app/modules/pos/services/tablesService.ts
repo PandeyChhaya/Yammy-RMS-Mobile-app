@@ -1,13 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-export interface Table {
-  id: string
-  name: string
-  status: string
-  capacity: number
-  position_x: number
-  position_y: number
-}
+import { Table } from '../types/tables'
 
 export interface CartItem {
   product_id: string
@@ -45,6 +38,8 @@ export const tablesService = {
     const newTable: Table = {
       ...table,
       id: generateId(),
+      created_at: new Date().toISOString(), 
+      updated_at: new Date().toISOString(), 
     }
     const updated = [...existing, newTable]
     await AsyncStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(updated))

@@ -180,18 +180,18 @@ export const timelineService = {
 
     getReservationStatusText(reservation: ReservationEvent): string {
         if (reservation.isOverdue) {
-            return 'EN RETARD'
+            return 'LATE'
         }
 
         if (reservation.minutesUntil < 15) {
-            return `ARRIVE DANS ${reservation.minutesUntil}min`
+            return `ARRIVES IN ${reservation.minutesUntil}minutes`
         }
 
         if (reservation.minutesUntil < 60) {
-            return `ARRIVE DANS ${reservation.minutesUntil}min`
+            return `ARRIVES IN ${reservation.minutesUntil}minutes`
         }
 
-        return `RÉSERVÉ POUR ${reservation.reservation_time}`
+        return `RESERVED FOR ${reservation.reservation_time}`
     },
 
     getReservationStatusColor(reservation: ReservationEvent): string {
@@ -249,19 +249,19 @@ export const timelineService = {
         const diffMins = Math.floor(diffMs / (1000 * 60))
 
         if (diffMins < 1) {
-            return 'À l\'instant'
+            return 'Just\'now'
         }
 
         if (diffMins < 60) {
-            return `Il y a ${diffMins}min`
+            return `Minutes ${diffMins}ago`
         }
 
         if (diffMins < 1440) {
             const hours = Math.floor(diffMins / 60)
-            return `Il y a ${hours}h`
+            return `Hours ${hours}ago`
         }
 
-        return date.toLocaleTimeString('fr-FR', {
+        return date.toLocaleTimeString('np-NPR', {
             hour: '2-digit',
             minute: '2-digit'
         })

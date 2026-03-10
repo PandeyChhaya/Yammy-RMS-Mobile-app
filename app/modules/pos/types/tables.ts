@@ -1,4 +1,15 @@
-export interface TableData {
+export interface Table {
+    id: string
+    name: string
+    number: number
+    capacity: number
+    status: string
+    created_at: string    
+    updated_at: string    
+    
+}
+
+export interface TableData extends Table{
   id: string
   number: number
   name: string
@@ -14,8 +25,10 @@ export interface TableData {
 export interface TableStatus {
   status: 'free' | 'occupied' | 'reserved' | 'cleaning'
   label: string
-  color: string
+  bgColor: string
+  textColor:string
   icon: any
+  iconColor: string
 }
 
 export interface TableSelection {

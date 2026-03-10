@@ -1,5 +1,5 @@
 // Mapping between frontend provider names and backend provider names
-// Backend uses lowercase without underscores due to serde(rename_all = "lowercase")
+
 
 export const FRONTEND_TO_BACKEND_PROVIDER = {
     'none': 'none',

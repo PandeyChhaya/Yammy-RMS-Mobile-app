@@ -1,23 +1,23 @@
 import { useRouter } from 'expo-router'
 import {
-    Banknote,
-    ChefHat,
-    FileText,
-    HelpCircle,
-    LayoutDashboard,
-    Package,
-    Receipt,
-    Settings,
-    ShoppingCart,
-    Store,
-    Users,
+  Banknote,
+  ChefHat,
+  FileText,
+  HelpCircle,
+  LayoutDashboard,
+  Package,
+  Receipt,
+  Settings,
+  ShoppingCart,
+  Store,
+  Users,
 } from 'lucide-react-native'
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native'
 
 interface MenuItem {
@@ -33,7 +33,7 @@ export default function Dashboard() {
   const menuItems: MenuItem[] = [
     {
       id: 'order',
-      label: 'Order',
+      label: 'order',
       icon: <ShoppingCart size={20} color="#1A1A1A" />,
       route: '/modules/orders/Orders',
     },

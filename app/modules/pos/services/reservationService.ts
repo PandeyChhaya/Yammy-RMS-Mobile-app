@@ -43,7 +43,7 @@ export const reservationService = {
         return reservationService.getReservationsByDate(today)
     },
 
-    async updateReservationStatus(id: string, status: ReservationStatus): Promise<void> {  // ✅ FIXED - was string
+    async updateReservationStatus(id: string, status: ReservationStatus): Promise<void> { 
         const all = await reservationService.getAllReservations()
         const index = all.findIndex(r => r.id === id)
         if (index === -1) throw new Error('Reservation not found')

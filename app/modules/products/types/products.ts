@@ -16,6 +16,12 @@ export interface Product {
   created_at: string
   updated_at: string
 }
+export interface ProductDisplay extends Product {
+    category_name?: string
+    tax_rate: number
+    tax_amount: number
+    total_with_tax: number
+}
 
 export interface CreateProductRequest {
   name: string

@@ -198,7 +198,7 @@ export default function Categories() {
     )
   }
 
-  // ── Form Component (reused for Add & Edit) ───────────────
+  // ── Form Component ───────────────
 
   const renderForm = (
     form: CategoryFormData,
