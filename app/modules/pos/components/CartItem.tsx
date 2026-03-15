@@ -21,30 +21,32 @@ export default function CartItem({
     compact = false
 }: CartItemProps) {
     const { formatAmount } = useTaxSettings()
+    
+    if (!item) return null
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
                     <Text style={styles.productName}>
-                        {item.product_name}
+                        {item.product_name || 'Unknown Product'}
                     </Text>
                     {item.product && (
                         <View style={styles.categoryRow}>
                             <View
                                 style={[
                                     styles.categoryDot,
-                                    { backgroundColor: getCategoryColor(item.product.category_id) }
+                                    { backgroundColor: getCategoryColor(item.product?.category_id || '') }
                                 ]}
                             />
                             <Text style={styles.categoryName}>
-                                {item.product.category_name}
+                                {item.product?.category_name || 'Uncategorized'}
                             </Text>
                         </View>
                     )}
                 </View>
                 <TouchableOpacity
-                    onPress={() => onRemove(item.product_id)}
+                    onPress={() => onRemove(item.product_id || '')}
                     style={styles.deleteButton}
                 >
                     <Trash2 size={12} color="#F87171" />
@@ -54,16 +56,17 @@ export default function CartItem({
             <View style={styles.footer}>
                 <View style={styles.quantityControls}>
                     <TouchableOpacity
-                        onPress={() => onUpdateQuantity(item.product_id, item.quantity - 1)}
+                        onPress={() => onUpdateQuantity(item.product_id || '', Math.max(1, (item.quantity || 1) - 1))}
                         style={styles.quantityButton}
+                        disabled={(item.quantity || 1) <= 1}
                     >
-                        <Minus size={12} color="#4B5563" />
+                        <Minus size={12} color={(item.quantity || 1) <= 1 ? "#D1D5DB" : "#4B5563"} />
                     </TouchableOpacity>
                     <Text style={[styles.quantityText, compact && styles.quantityTextCompact]}>
-                        {item.quantity}
+                        {item.quantity || 0}
                     </Text>
                     <TouchableOpacity
-                        onPress={() => onUpdateQuantity(item.product_id, item.quantity + 1)}
+                        onPress={() => onUpdateQuantity(item.product_id || '', (item.quantity || 0) + 1)}
                         style={styles.quantityButton}
                     >
                         <Plus size={12} color="#4B5563" />
@@ -72,19 +75,19 @@ export default function CartItem({
 
                 <View style={styles.priceSection}>
                     <Text style={styles.unitPrice}>
-                        {formatAmount(item.unit_price)}
+                        {formatAmount(item.unit_price || 0)}
                     </Text>
                     <Text style={[styles.totalPrice, compact && styles.totalPriceCompact]}>
-                        {formatAmount(item.total_price)}
+                        {formatAmount(item.total_price || 0)}
                     </Text>
 
                     {showTaxDetails && item.product && (
                         <View style={styles.taxDetails}>
                             <Text style={styles.taxText}>
-                                TVA: +{formatAmount(item.tax_amount)}
+                                TVA: +{formatAmount(item.tax_amount || 0)}
                             </Text>
                             <Text style={styles.totalWithTax}>
-                                Total: {formatAmount(item.total_with_tax)}
+                                Total: {formatAmount(item.total_with_tax || 0)}
                             </Text>
                         </View>
                     )}

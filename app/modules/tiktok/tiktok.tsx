@@ -13,7 +13,6 @@ import {
 
 const { height, width } = Dimensions.get('window')
 
-// ── Your video data (replace URLs with real ones) ──
 const VIDEO_MENU = [
   {
     id: '1',

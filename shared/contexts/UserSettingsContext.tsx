@@ -1,8 +1,9 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useContext, useEffect, useReducer } from 'react';
 
 interface UserSettings {
     leftHandedMode: boolean
-    // Autres paramètres utilisateur peuvent être ajoutés ici
+    // Other user settings can be added here
 }
 
 type UserSettingsAction =
@@ -23,8 +24,9 @@ function userSettingsReducer(state: UserSettings, action: UserSettingsAction): U
     switch (action.type) {
         case 'SET_LEFT_HANDED_MODE':
             const newSettings = { ...state, leftHandedMode: action.payload }
-            // Sauvegarder dans localStorage
-            localStorage.setItem('userSettings', JSON.stringify(newSettings))
+            // Save to AsyncStorage (async operation handled outside reducer)
+            AsyncStorage.setItem('userSettings', JSON.stringify(newSettings))
+                .catch(err => console.error('Error saving settings:', err))
             return newSettings
         case 'LOAD_SETTINGS':
             return action.payload
@@ -42,15 +44,15 @@ export function UserSettingsProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'SET_LEFT_HANDED_MODE', payload: enabled })
     }
 
-    const loadSettings = () => {
+    const loadSettings = async () => {
         try {
-            const savedSettings = localStorage.getItem('userSettings')
+            const savedSettings = await AsyncStorage.getItem('userSettings')
             if (savedSettings) {
                 const parsedSettings = JSON.parse(savedSettings)
                 dispatch({ type: 'LOAD_SETTINGS', payload: parsedSettings })
             }
         } catch (error) {
-            console.error('Erreur lors du chargement des paramètres:', error)
+            console.error('Error loading settings:', error)
         }
     }
 

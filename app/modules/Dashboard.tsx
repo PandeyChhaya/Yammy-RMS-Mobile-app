@@ -1,16 +1,12 @@
 import { useRouter } from 'expo-router'
 import {
-  Banknote,
-  ChefHat,
   FileText,
-  HelpCircle,
   LayoutDashboard,
   Package,
   Receipt,
-  Settings,
+  Shield,
   ShoppingCart,
-  Store,
-  Users,
+  Video,
 } from 'lucide-react-native'
 import {
   ScrollView,
@@ -25,77 +21,62 @@ interface MenuItem {
   label: string
   icon: React.ReactNode
   route: string
+  badge?: string
 }
 
 export default function Dashboard() {
   const router = useRouter()
 
   const menuItems: MenuItem[] = [
+    // PRIMARY OPERATIONS
     {
-      id: 'order',
-      label: 'order',
-      icon: <ShoppingCart size={20} color="#1A1A1A" />,
+      id: 'pos',
+      label: 'Point of Sale',
+      icon: <ShoppingCart size={24} color="#1A1A1A" />,
+      route: '/modules/pos/POS',
+    },
+    {
+      id: 'orders',
+      label: 'Orders',
+      icon: <Receipt size={24} color="#1A1A1A" />,
       route: '/modules/orders/Orders',
     },
+
+    // INVENTORY MANAGEMENT
     {
-      id: 'active-orders',
-      label: 'Active Orders',
-      icon: <ChefHat size={20} color="#1A1A1A" />,
-      route: '/modules/orders/ActiveOrders',
-    },
-    {
-      id: 'table-management',
-      label: 'Table Management',
-      icon: <LayoutDashboard size={20} color="#1A1A1A" />,
-      route: '/modules/tables/Tables',
-    },
-    {
-      id: 'bills',
-      label: 'Bills & Receipts',
-      icon: <Receipt size={20} color="#1A1A1A" />,
-      route: '/modules/reports/Reports',
-    },
-    {
-      id: 'customers',
-      label: 'Customer Management',
-      icon: <Users size={20} color="#1A1A1A" />,
-      route: '/modules/customers/Customers',
-    },
-    {
-      id: 'stock',
-      label: 'Stock Management',
-      icon: <Package size={20} color="#1A1A1A" />,
+      id: 'products',
+      label: 'Products',
+      icon: <Package size={24} color="#1A1A1A" />,
       route: '/modules/products/Products',
     },
     {
-      id: 'cash-flow',
-      label: 'Cash Flow',
-      icon: <Banknote size={20} color="#1A1A1A" />,
-      route: '/modules/cashflow/CashFlow',
+      id: 'categories',
+      label: 'Categories',
+      icon: <LayoutDashboard size={24} color="#1A1A1A" />,
+      route: '/modules/categories/Categories',
+    },
+
+    // ANALYTICS & SECURITY
+    {
+      id: 'reports',
+      label: 'Reports',
+      icon: <FileText size={24} color="#1A1A1A" />,
+      route: '/modules/reports/Reports',
     },
     {
-      id: 'summary',
-      label: 'Daily Summary',
-      icon: <FileText size={20} color="#1A1A1A" />,
-      route: '/modules/reports/DailySummary',
+      id: 'auditguard',
+      label: 'Audit Logs',
+      icon: <Shield size={24} color="#1A1A1A" />,
+      route: '/modules/auditguard/AuditGuard',
     },
+
+    // MARKETING (OPTIONAL)
     {
-      id: 'restaurant',
-      label: 'My Restaurant',
-      icon: <Store size={20} color="#1A1A1A" />,
-      route: '/modules/settings/Restaurant',
-    },
-    {
-      id: 'settings',
-      label: 'App Settings',
-      icon: <Settings size={20} color="#1A1A1A" />,
-      route: '/modules/settings/Settings',
-    },
-    {
-      id: 'help',
-      label: 'Need Help?',
-      icon: <HelpCircle size={20} color="#1A1A1A" />,
-      route: '/modules/help/Help',
+      id: 'tiktok',
+      label: 'Social Media',
+      icon: <Video size={24} color="#1A1A1A" />,
+      route: '/modules/tiktok/TikTok',
+      badge: 'Beta',
     },
   ]
 
@@ -108,18 +89,15 @@ export default function Dashboard() {
       {/* Profile Section */}
       <View style={styles.profileSection}>
         <View style={styles.profileContent}>
-          {/* Profile Picture */}
           <View style={styles.profilePicture}>
             <Text style={styles.profileInitial}>Y</Text>
           </View>
 
-          {/* User Info */}
           <View style={styles.userInfo}>
             <Text style={styles.userName}>Yammy Fresh</Text>
             <Text style={styles.userEmail}>yammy@restaurant.com</Text>
           </View>
 
-          {/* Owner Badge */}
           <View style={styles.ownerBadge}>
             <Text style={styles.ownerBadgeText}>Owner</Text>
           </View>
@@ -140,6 +118,11 @@ export default function Dashboard() {
             >
               <View style={styles.menuItemIcon}>{item.icon}</View>
               <Text style={styles.menuItemText}>{item.label}</Text>
+              {item.badge && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{item.badge}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           ))}
         </View>
@@ -151,12 +134,10 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#FEF1A8', // Yammy Fresh yellow
+    backgroundColor: '#FEF1A8',
   },
-
-  // Profile Section
   profileSection: {
-    backgroundColor: '#2C2C2C', // Dark background like image
+    backgroundColor: '#2C2C2C',
     paddingTop: 60,
     paddingBottom: 24,
     paddingHorizontal: 20,
@@ -169,7 +150,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#C41E1E', // Yammy Fresh red
+    backgroundColor: '#C41E1E',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -178,7 +159,6 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: '700',
     color: '#FFFFFF',
-    fontFamily: 'Inter-Bold',
   },
   userInfo: {
     alignItems: 'center',
@@ -188,12 +168,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
-    fontFamily: 'Inter-Bold',
   },
   userEmail: {
     fontSize: 14,
     color: '#D1D5DB',
-    fontFamily: 'Inter',
   },
   ownerBadge: {
     backgroundColor: '#FEF1A8',
@@ -206,10 +184,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#1A1A1A',
-    fontFamily: 'Inter',
   },
-
-  // Menu Items
   menuScroll: {
     flex: 1,
   },
@@ -222,7 +197,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8D88A', // Slightly darker yellow for separator
+    borderBottomColor: '#E8D88A',
   },
   menuItemLast: {
     borderBottomWidth: 0,
@@ -231,9 +206,20 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   menuItemText: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '500',
     color: '#1A1A1A',
-    fontFamily: 'Inter',
+  },
+  badge: {
+    backgroundColor: '#C41E1E',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 })

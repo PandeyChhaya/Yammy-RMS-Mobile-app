@@ -7,6 +7,7 @@ export interface Category{
     name: string
     color?: string
     taxRateId?: string
+    description:string
 }
 
 const STORAGE_KEY= '@categories'

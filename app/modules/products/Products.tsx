@@ -262,7 +262,7 @@ export default function Products() {
         )
     }
 
-    // ── Form (reused for Add & Edit) ─────────────────────────
+    // ── Form  ─────────────────────────
 
     const renderForm = (
         form: ProductFormData,

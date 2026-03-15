@@ -16,6 +16,9 @@ export default function ProductCard({
 }: ProductCardProps) {
   const { formatAmount, calculateTax } = useTaxSettings()
 
+ 
+  if (!product) return null
+
   const getCategoryIcon = (categoryName: string) => {
     const name = categoryName?.toLowerCase() || ''
     if (name.includes('boisson') || name.includes('drink')) return Wine
@@ -24,7 +27,7 @@ export default function ProductCard({
   }
 
   const CategoryIcon = getCategoryIcon(product.category_name || '')
-  const productTaxAmount = product.tax_amount || calculateTax(product.price, product.category_id)
+  const productTaxAmount = product.tax_amount || calculateTax(product.price || 0, product.category_id)
 
   return (
     <TouchableOpacity
@@ -38,7 +41,7 @@ export default function ProductCard({
         </View>
 
         <Text style={styles.productName} numberOfLines={2}>
-          {product.name}
+          {product.name || 'Unknown Product'}
         </Text>
 
         <View style={styles.categoryContainer}>
@@ -46,29 +49,29 @@ export default function ProductCard({
             <View
               style={[
                 styles.categoryDot,
-                { backgroundColor: getCategoryColor(product.category_id) }
+                { backgroundColor: getCategoryColor(product.category_id || '') }
               ]}
             />
             <Text style={styles.categoryText}>
-              {product.category_name}
+              {product.category_name || 'Uncategorized'}
             </Text>
           </View>
         </View>
 
         <View style={styles.priceContainer}>
           <Text style={styles.price}>
-            {formatAmount(product.price)}
+            {formatAmount(product.price || 0)}
           </Text>
           {product.tax_rate && (
             <Text style={styles.taxText}>
-              +{formatAmount(productTaxAmount)} TVA
+              +{formatAmount(productTaxAmount || 0)} TVA
             </Text>
           )}
         </View>
 
         <View style={styles.stockBadge}>
           <Text style={styles.stockText}>
-            Stock: {product.stock_quantity}
+            Stock: {product.stock_quantity || 0}
           </Text>
         </View>
       </View>

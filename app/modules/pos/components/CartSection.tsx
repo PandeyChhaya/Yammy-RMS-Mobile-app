@@ -51,6 +51,16 @@ export default function CartSection({
     getCartTaxBreakdown,
     getCategoryColor,
 }: CartSectionProps) {
+     if (!cartItems) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.emptyState}>
+                    <ShoppingCart size={48} color="#9CA3AF" />
+                    <Text style={styles.emptyText}>Loading cart...</Text>
+                </View>
+            </View>
+        )
+    }
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -216,5 +226,22 @@ const styles = StyleSheet.create({
     },
     cartItemsList: {
         flex: 1,
+    },
+     emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 32,
+    },
+    emptyText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#6B7280',
+        marginTop: 16,
+    },
+    emptySubtext: {
+        fontSize: 14,
+        color: '#9CA3AF',
+        marginTop: 8,
     },
 })

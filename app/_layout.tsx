@@ -1,49 +1,42 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Stack } from 'expo-router'
+import { useEffect, useState } from 'react'
+import { ActivityIndicator, View } from 'react-native'
+import { AppProvider } from '../shared/contexts/AppContext'
+import { TabStateProvider } from '../shared/contexts/TabStateManager'; // ✅ ADD THIS
+import { UserSettingsProvider } from '../shared/contexts/UserSettingsContext'
+import { seedDatabase } from './modules/pos/utils/seedData'
 
-
-SplashScreen.preventAutoHideAsync();
-
-
-const queryClient = new QueryClient();
+const queryClient = new QueryClient()
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    'Inter': require('../assets/fonts/Inter_18pt-Regular.ttf'),
-    'Inter-SemiBold': require('../assets/fonts/Inter_18pt-SemiBold.ttf'),
-    'Inter-Bold': require('../assets/fonts/Inter_18pt-Bold.ttf'),
-    'SpaceMono': require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
+    const initialize = async () => {
+      await seedDatabase()
+      setReady(true)
     }
-  }, [fontsLoaded]);
+    initialize()
+  }, [])
 
-  if (!fontsLoaded) {
-    return null;
+  if (!ready) {
+    return (
+      <View style={{flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#FEF1A8'}}>
+        <ActivityIndicator size="large" color="#C41E1E" />
+      </View>
+    )
   }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Stack
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: '#f4511e',
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        }}
-      >
-        <Stack.Screen name="index" options={{ title: 'Home' }} />
-        <Stack.Screen name="modules" options={{ headerShown: false }} />
-      </Stack>
+      <AppProvider>
+        <UserSettingsProvider>
+          <TabStateProvider>  {/* ✅ ADD THIS */}
+            <Stack screenOptions={{ headerShown: false }} />
+          </TabStateProvider>  {/* ✅ ADD THIS */}
+        </UserSettingsProvider>
+      </AppProvider>
     </QueryClientProvider>
-  );
+  )
 }

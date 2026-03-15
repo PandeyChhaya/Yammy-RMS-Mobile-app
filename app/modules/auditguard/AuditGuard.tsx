@@ -1107,7 +1107,7 @@ const styles = StyleSheet.create({
         marginTop: 12,
         gap: 6,
     },
-    // ✅ FIX 2: color is now inside the style object where it belongs
+   
     configInput: {
         borderWidth: 1.5,
         borderColor: '#E8D88A',
