@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router'
 import {
+  MessageCircleQuestionIcon,
   Receipt
 } from 'lucide-react-native'
 import {
@@ -62,12 +63,13 @@ export default function Dashboard() {
       icon: <Receipt size={24} color="#1A1A1A" />,
       route: '/modules/pos/POS',
     },
-    {
-      id: 'tiktok',
-      label: 'Video Log',
-      icon: <Receipt size={24} color="#1A1A1A" />,
-      route: '/modules/tiktok/tiktok',
+     {
+      id: 'SMS Chat',
+      label: 'SMS Chat',
+      icon: < MessageCircleQuestionIcon size={24} color="#10B981" />,
+      route: '/modules/pos/components/SMSChatSection',
     },
+
      
     
     
