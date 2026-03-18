@@ -1,8 +1,8 @@
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native'
 import { AlertCircle, Calendar, CheckCircle, Clock, MoreVertical, Phone, Users, XCircle } from 'lucide-react-native'
 import { useState } from 'react'
-import { ReservationStatus } from '../types/reservation'
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { ReservationEvent } from '../types/orderHistory'
+import { ReservationStatus } from '../types/reservation'
 
 interface ReservationWidgetProps {
     reservation: ReservationEvent

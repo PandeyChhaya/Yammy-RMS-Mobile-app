@@ -67,7 +67,14 @@ export default function Dashboard() {
       id: 'SMS Chat',
       label: 'SMS Chat',
       icon: < MessageCircleQuestionIcon size={24} color="#10B981" />,
-      route: '/modules/pos/components/SMSChatSection',
+      route: '/modules/pos/components/SimpleSMSChat',
+    },
+
+   {
+      id: 'logs',
+      label: 'Logs',
+      icon: < MessageCircleQuestionIcon size={24} color="#10B981" />,
+      route: '/modules/logs/logs',
     },
 
      

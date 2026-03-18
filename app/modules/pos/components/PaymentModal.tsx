@@ -1,16 +1,31 @@
-import { CreditCard, X } from 'lucide-react-native'
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { useTaxSettings } from '../../../../shared/hooks/useTaxSettings'
+import { CreditCard, DollarSign, Wallet, X } from 'lucide-react-native'
+import { useState } from 'react'
+import {
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native'
 
 interface PaymentModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => void
+  onConfirm: () => Promise<void>
   totalAmount: number
   paymentMethod: string
   customerName: string
   isProcessing: boolean
 }
+
+const PAYMENT_METHODS = [
+  { id: 'cash', label: 'Cash', icon: DollarSign, color: '#22C55E' },
+  { id: 'card', label: 'Card', icon: CreditCard, color: '#3B82F6' },
+  { id: 'mobile', label: 'Mobile Pay', icon: Wallet, color: '#8B5CF6' },
+]
 
 export default function PaymentModal({
   isOpen,
@@ -19,72 +34,89 @@ export default function PaymentModal({
   totalAmount,
   paymentMethod,
   customerName,
-  isProcessing
+  isProcessing,
 }: PaymentModalProps) {
-  const { formatAmount } = useTaxSettings()
+  const [localName, setLocalName] = useState(customerName)
+  const [localMethod, setLocalMethod] = useState(paymentMethod)
 
-  const paymentMethods = [
-    { id: 'cash', name: 'Cash' },
-    { id: 'card', name: 'Card' },
-    { id: 'transfer', name: 'Transfer' },
-  ]
+  const handlePayment = async () => {
+    if (!localName.trim()) {
+      Alert.alert('Error', 'Please enter customer name')
+      return
+    }
+
+    try {
+      await onConfirm()
+    } catch (error) {
+      console.error('Payment error:', error)
+      Alert.alert('Error', 'Payment failed')
+    }
+  }
 
   return (
-    <Modal
-      visible={isOpen}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={isOpen} animationType="slide" transparent>
       <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
+        <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Payment Confirmation</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={24} color="#9CA3AF" />
+            <Text style={styles.title}>Payment</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <X size={20} color="#666" />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
-            <View style={styles.centerContent}>
-              <CreditCard size={64} color="#2563EB" style={styles.icon} />
-              <Text style={styles.totalText}>
-                Total to pay: {formatAmount(totalAmount)}
-              </Text>
-              <Text style={styles.methodText}>
-                Mode: {paymentMethods.find(m => m.id === paymentMethod)?.name}
-              </Text>
+          <ScrollView style={styles.scroll}>
+            <View style={styles.totalSection}>
+              <Text style={styles.totalLabel}>Total Amount</Text>
+              <Text style={styles.totalValue}>NPR {totalAmount.toFixed(2)}</Text>
             </View>
 
-            {customerName && (
-              <View style={styles.customerBox}>
-                <Text style={styles.customerLabel}>Customer:</Text>
-                <Text style={styles.customerName}>{customerName}</Text>
-              </View>
-            )}
-          </View>
+            <View style={styles.section}>
+              <Text style={styles.label}>Customer Name *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter customer name"
+                value={localName}
+                onChangeText={setLocalName}
+                autoFocus
+              />
+            </View>
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              onPress={onClose}
-              style={[styles.button, styles.cancelButton]}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={onConfirm}
-              disabled={isProcessing}
-              style={[
-                styles.button,
-                styles.confirmButton,
-                isProcessing && styles.buttonDisabled
-              ]}
-            >
-              <Text style={styles.confirmButtonText}>
-                {isProcessing ? 'Processing...' : 'Confirm'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+            <View style={styles.section}>
+              <Text style={styles.label}>Payment Method</Text>
+              <View style={styles.methods}>
+                {PAYMENT_METHODS.map(method => {
+                  const Icon = method.icon
+                  const isSelected = localMethod === method.id
+
+                  return (
+                    <TouchableOpacity
+                      key={method.id}
+                      style={[
+                        styles.methodCard,
+                        isSelected && { backgroundColor: method.color, borderColor: method.color }
+                      ]}
+                      onPress={() => setLocalMethod(method.id)}
+                    >
+                      <Icon size={24} color={isSelected ? '#FFF' : method.color} />
+                      <Text style={[styles.methodText, isSelected && styles.methodTextActive]}>
+                        {method.label}
+                      </Text>
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
+            </View>
+          </ScrollView>
+
+          <TouchableOpacity
+            style={[styles.confirmBtn, isProcessing && styles.confirmBtnDisabled]}
+            onPress={handlePayment}
+            disabled={isProcessing}
+          >
+            <Text style={styles.confirmText}>
+              {isProcessing ? 'Processing...' : `Pay NPR ${totalAmount.toFixed(2)}`}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -92,97 +124,32 @@ export default function PaymentModal({
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  container: { backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#E8D88A' },
+  title: { fontSize: 20, fontWeight: '700', color: '#1A1A1A' },
+  closeBtn: { padding: 4 },
+  scroll: { maxHeight: '65%' },
+  totalSection: { backgroundColor: '#FEF1A8', padding: 24, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#E8D88A' },
+  totalLabel: { fontSize: 13, color: '#5C5436', marginBottom: 6 },
+  totalValue: { fontSize: 36, fontWeight: '700', color: '#C41E1E' },
+  section: { padding: 20, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+  label: { fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 },
+  input: { borderWidth: 1, borderColor: '#E8D88A', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, backgroundColor: '#FFFDF0' },
+  methods: { flexDirection: 'row', gap: 12 },
+  methodCard: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
     alignItems: 'center',
-  },
-  modalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 32,
-    maxWidth: 448,
-    width: '90%',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  closeButton: {
-    padding: 8,
-  },
-  content: {
-    marginBottom: 24,
-  },
-  centerContent: {
-    alignItems: 'center',
-  },
-  icon: {
-    marginBottom: 16,
-  },
-  totalText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  methodText: {
-    fontSize: 14,
-    color: '#4B5563',
-    marginTop: 8,
-  },
-  customerBox: {
-    backgroundColor: '#F9FAFB',
-    padding: 16,
+    padding: 18,
     borderRadius: 12,
-    marginTop: 16,
+    borderWidth: 2,
+    borderColor: '#E8D88A',
+    backgroundColor: '#FFF',
+    gap: 8,
   },
-  customerLabel: {
-    fontSize: 12,
-    color: '#4B5563',
-  },
-  customerName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    backgroundColor: '#FFFFFF',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#374151',
-  },
-  confirmButton: {
-    backgroundColor: '#2563EB',
-  },
-  confirmButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#FFFFFF',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
+  methodText: { fontSize: 12, fontWeight: '600', color: '#666' },
+  methodTextActive: { color: '#FFF' },
+  confirmBtn: { backgroundColor: '#C41E1E', margin: 20, padding: 18, borderRadius: 12, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  confirmBtnDisabled: { opacity: 0.5 },
+  confirmText: { fontSize: 16, fontWeight: '700', color: '#FFF' },
 })

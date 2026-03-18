@@ -24,12 +24,12 @@ import { useApp } from '../../../shared/contexts/AppContext'
 import { useUserSettings } from '../../../shared/contexts/UserSettingsContext'
 import { useActiveTabState } from '../../../shared/hooks/useTabState'
 import { useTaxSettings } from '../../../shared/hooks/useTaxSettings'
+import { ordersService } from '../orders/services/orderService'
+import PaymentModal from './components/PaymentModal'
+import SplitTicketModal from './components/SplitTicketModal'
 import { Category, categoryService } from './services/categoriesService'
 import { productsService } from './services/productsService'
 import { TableCart, tablesService } from './services/tablesService'
-
-import PaymentModal from './components/PaymentModal'
-import SplitTicketModal from './components/SplitTicketModal'
 
 import { useCart, usePayment, useSplitTicket, useTables } from './hooks'
 import { ProductDisplay } from './types/products'
@@ -214,45 +214,48 @@ export default function POS() {
   }
 
   const handlePayment = async () => {
-    if (!cartItems || cartItems.length === 0) {
-      setShowErrorMessage('Cart is empty')
-      setTimeout(() => setShowErrorMessage(null), 3000)
-      return
-    }
-
-    try {
-      const totalAmount = getCartTotalWithTax()
-      const taxAmount = getCartTax()
-      const itemsCount = cartItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0)
-      const paymentMethods = [
-        { id: 'cash', name: 'Cash' },
-        { id: 'card', name: 'Card' },
-        { id: 'transfer', name: 'Transfer' },
-      ]
-      const paymentMethodName = paymentMethods.find(m => m.id === paymentMethod)?.name || 'Unknown'
-
-      await paymentHook.processPayment(
-        totalAmount,
-        taxAmount,
-        itemsCount,
-        paymentMethodName,
-        customerName,
-        () => {
-          clearCart()
-          if (selectedTable) {
-            tablesHook.setTableCleaning(selectedTable.id)
-          }
-          setShowSuccessMessage('Payment completed!')
-          setTimeout(() => setShowSuccessMessage(null), 3000)
-          setShowPaymentModal(false)
-        }
-      )
-    } catch (error) {
-      console.error('Payment error:', error)
-      setShowErrorMessage(`Payment failed`)
-      setTimeout(() => setShowErrorMessage(null), 5000)
-    }
+  if (!cartItems || cartItems.length === 0) {
+    setShowErrorMessage('Cart is empty')
+    setTimeout(() => setShowErrorMessage(null), 3000)
+    return
   }
+
+  try {
+    console.log('💳 Creating order...')
+    console.log('Table:', selectedTable?.id, selectedTable?.name)
+    console.log('Items:', cartItems.length)
+    console.log('Total:', getCartTotalWithTax())
+
+    // CREATE ORDER
+    const order = await ordersService.createOrderFromCart(
+      selectedTable?.id || 'direct-sale',
+      selectedTable?.name || 'Direct Sale',
+      cartItems
+    )
+
+    console.log('✅ Order created:', order.id, order.order_number)
+
+    // Clear cart
+    await clearCart()
+    
+    // Update table status
+    if (selectedTable) {
+      tablesHook.setTableCleaning(selectedTable.id)
+    }
+
+    setShowSuccessMessage(`Order ${order.order_number} created!`)
+    setTimeout(() => setShowSuccessMessage(null), 3000)
+    setShowPaymentModal(false)
+    
+    // Reset to products tab
+    setActiveTab('products')
+    
+  } catch (error) {
+    console.error('❌ Payment error:', error)
+    setShowErrorMessage('Payment failed: ' + error)
+    setTimeout(() => setShowErrorMessage(null), 5000)
+  }
+}
 
   const filteredProducts = enrichedProducts?.filter(product => {
     const matchesCategory = selectedCategory === 'all' || (product as any).category_id === selectedCategory

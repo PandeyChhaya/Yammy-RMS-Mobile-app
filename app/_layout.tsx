@@ -32,6 +32,12 @@ useEffect(() => {
   }
   initialize()
 }, [])
+const checkOrders = async () => {
+  const orders = await AsyncStorage.getItem('@orders')
+  console.log('🔍 ORDERS:', orders ? JSON.parse(orders).length : 'NONE')
+  console.log('🔍 ORDERS DATA:', orders ? JSON.parse(orders) : 'EMPTY')
+}
+checkOrders()
 
   if (!ready) {
     return (
