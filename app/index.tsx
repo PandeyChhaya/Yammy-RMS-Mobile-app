@@ -64,11 +64,18 @@ export default function Dashboard() {
       route: '/modules/pos/POS',
     },
      {
-      id: 'SMS Chat',
-      label: 'SMS Chat',
+      id: 'settings',
+      label: 'settings',
       icon: < MessageCircleQuestionIcon size={24} color="#10B981" />,
-      route: '/modules/pos/components/SimpleSMSChat',
+      route: '/modules/settings/settings',
     },
+    {
+      id: 'inventory',
+      label: 'inventory',
+      icon: < MessageCircleQuestionIcon size={24} color="#10B981" />,
+      route: '/modules/inventory/inventory',
+    },
+    
 
    {
       id: 'logs',

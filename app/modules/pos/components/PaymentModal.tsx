@@ -24,7 +24,7 @@ interface PaymentModalProps {
 const PAYMENT_METHODS = [
   { id: 'cash', label: 'Cash', icon: DollarSign, color: '#22C55E' },
   { id: 'card', label: 'Card', icon: CreditCard, color: '#3B82F6' },
-  { id: 'mobile', label: 'Mobile Pay', icon: Wallet, color: '#8B5CF6' },
+  { id: 'mobile', label: 'Mobile', icon: Wallet, color: '#8B5CF6' },
 ]
 
 export default function PaymentModal({
@@ -32,26 +32,31 @@ export default function PaymentModal({
   onClose,
   onConfirm,
   totalAmount,
-  paymentMethod,
-  customerName,
   isProcessing,
 }: PaymentModalProps) {
-  const [localName, setLocalName] = useState(customerName)
-  const [localMethod, setLocalMethod] = useState(paymentMethod)
+  const [localName, setLocalName] = useState('')
+  const [localMethod, setLocalMethod] = useState('cash')
+  const [processing, setProcessing] = useState(false)
 
-  const handlePayment = async () => {
-    if (!localName.trim()) {
-      Alert.alert('Error', 'Please enter customer name')
-      return
-    }
-
-    try {
-      await onConfirm()
-    } catch (error) {
-      console.error('Payment error:', error)
-      Alert.alert('Error', 'Payment failed')
-    }
+  const handleConfirm = async () => {
+  if (!localName.trim()) {
+    Alert.alert('Error', 'Please enter customer name')
+    return
   }
+
+  console.log('🔵 PaymentModal: Confirming payment with name:', localName)
+
+  setProcessing(true)
+  try {
+    await onConfirm()  // This calls POS handlePayment
+    setLocalName('')
+    setLocalMethod('cash')
+  } catch (error) {
+    console.error('❌ PaymentModal error:', error)
+  } finally {
+    setProcessing(false)
+  }
+}
 
   return (
     <Modal visible={isOpen} animationType="slide" transparent>
@@ -109,12 +114,12 @@ export default function PaymentModal({
           </ScrollView>
 
           <TouchableOpacity
-            style={[styles.confirmBtn, isProcessing && styles.confirmBtnDisabled]}
-            onPress={handlePayment}
-            disabled={isProcessing}
+            style={[styles.confirmBtn, processing && styles.confirmBtnDisabled]}
+            onPress={handleConfirm}
+            disabled={processing}
           >
             <Text style={styles.confirmText}>
-              {isProcessing ? 'Processing...' : `Pay NPR ${totalAmount.toFixed(2)}`}
+              {processing ? 'Processing...' : `Pay NPR ${totalAmount.toFixed(2)}`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -137,19 +142,10 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 },
   input: { borderWidth: 1, borderColor: '#E8D88A', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, backgroundColor: '#FFFDF0' },
   methods: { flexDirection: 'row', gap: 12 },
-  methodCard: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 18,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#E8D88A',
-    backgroundColor: '#FFF',
-    gap: 8,
-  },
+  methodCard: { flex: 1, alignItems: 'center', padding: 18, borderRadius: 12, borderWidth: 2, borderColor: '#E8D88A', backgroundColor: '#FFF', gap: 8 },
   methodText: { fontSize: 12, fontWeight: '600', color: '#666' },
   methodTextActive: { color: '#FFF' },
-  confirmBtn: { backgroundColor: '#C41E1E', margin: 20, padding: 18, borderRadius: 12, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  confirmBtn: { backgroundColor: '#C41E1E', margin: 20, padding: 18, borderRadius: 12, alignItems: 'center' },
   confirmBtnDisabled: { opacity: 0.5 },
   confirmText: { fontSize: 16, fontWeight: '700', color: '#FFF' },
 })
