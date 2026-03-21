@@ -70,10 +70,10 @@ export default function Dashboard() {
       route: '/modules/settings/settings',
     },
     {
-      id: 'inventory',
-      label: 'inventory',
+      id: 'login',
+      label: 'login',
       icon: < MessageCircleQuestionIcon size={24} color="#10B981" />,
-      route: '/modules/inventory/inventory',
+      route: '/modules/login/login',
     },
     
 

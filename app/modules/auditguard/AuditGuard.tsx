@@ -36,65 +36,65 @@ import {
     SecurityStats,
 } from '../../../shared/types/security'
 
-const Colors = {
-    background: '#FEF1A8',
-    card: '#FFFFFF',
-    brand: '#C41E1E',
-    buttonYellow: '#D4A843',
-    buttonText: '#1A1A1A',
-    textPrimary: '#1A1A1A',
-    textSecondary: '#5C5436',
-    border: '#E8D88A',
-    activeTab: '#C41E1E',
-    inactiveTab: '#9E8E50',
-    successGreen: '#2E7D32',
-    errorRed: '#C41E1E',
-    warningOrange: '#D97706',
-    infoBlue: '#1565C0',
-    severityLowBg: '#DBEAFE',
-    severityLowText: '#1565C0',
-    severityMedBg: '#FEF9C3',
-    severityMedText: '#92400E',
-    severityHighBg: '#FFEDD5',
-    severityHighText: '#9A3412',
-    severityCritBg: '#FEE2E2',
-    severityCritText: '#991B1B',
-    resolvedBg: '#F3F4F6',
-    resolvedText: '#4B5563',
+// same colors from POS
+const COLORS = {
+  brand: '#C41E1E',
+  brandLight: '#FFF0F0',
+  brandBorder: '#FECACA',
+  background: '#FDFAF3',
+  headerBg: '#FFFBEE',
+  surface: '#FFFFFF',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#6B5E3A',
+  textMuted: '#A89870',
+  gold: '#C4933E',
+  goldLight: '#FEF3DC',
+  goldBorder: '#F5D98A',
+  success: '#2E7D32',
+  successLight: '#F0FDF4',
+  successBorder: '#BBF7D0',
+  border: '#EDE0B8',
+  cardBorder: '#F5EBD0',
+  inputBg: '#FFFDF7',
+  divider: '#F0E6C8',
+  warning: '#D97706',
+  warningLight: '#FEF3C7',
+  info: '#1565C0',
+  infoLight: '#DBEAFE',
 }
 
-
 export default function AuditGuard() {
-    const [activeTab, setActiveTab] = useState<'overview' | 'anomalies' | 'compliance' | 'config'>('overview')
-    const [sessionId] = useState(() => securityService.generateSessionId())
+    const [currentTab, setCurrentTab] = useState<'overview' | 'anomalies' | 'compliance' | 'config'>('overview')
+    const [sessionToken] = useState(() => securityService.generateSessionId())
     const queryClient = useQueryClient()
 
-    
-    const { data: securityStats, isLoading: statsLoading } = useQuery<SecurityStats>({
+    // fetch security stats
+    const { data: statsData, isLoading: loadingStats } = useQuery<SecurityStats>({
         queryKey: ['security-stats'],
         queryFn: () => securityService.getSecurityStats(),
         refetchInterval: 30000,
     })
 
-    const { data: anomalies = [], isLoading: anomaliesLoading } = useQuery<Anomaly[]>({
+    // fetch anomaly list
+    const { data: anomalyList = [], isLoading: loadingAnomalies } = useQuery<Anomaly[]>({
         queryKey: ['anomalies'],
         queryFn: () => securityService.getAnomalies(50),
         refetchInterval: 60000,
     })
 
-    const { data: _unresolvedAnomalies = [] } = useQuery<Anomaly[]>({
+    const { data: _unresolvedList = [] } = useQuery<Anomaly[]>({
         queryKey: ['unresolved-anomalies'],
         queryFn: () => securityService.getUnresolvedAnomalies(),
         refetchInterval: 30000,
     })
 
-    const { data: securityConfig } = useQuery<SecurityConfig | null>({
+    const { data: configData } = useQuery<SecurityConfig | null>({
         queryKey: ['security-config'],
         queryFn: () => securityService.getSecurityConfig(),
     })
 
-
-    const resolveAnomalyMutation = useMutation({
+    // mutation to mark anomaly as resolved
+    const markAsResolvedMutation = useMutation({
         mutationFn: ({ anomalyId, resolvedBy }: { anomalyId: string; resolvedBy: string }) =>
             securityService.resolveAnomaly(anomalyId, resolvedBy),
         onSuccess: () => {
@@ -103,123 +103,130 @@ export default function AuditGuard() {
         },
     })
 
-    const saveConfigMutation = useMutation({
+    // mutation to save security config
+    const updateConfigMutation = useMutation({
         mutationFn: (config: SecurityConfig) => securityService.saveSecurityConfig(config),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['security-config'] })
         },
     })
 
-    
+    // init security on mount
     useEffect(() => {
-        const initSecurity = async () => {
+        const setupSecurity = async () => {
             try {
                 await securityService.initSecuritySystem()
-                await securityService.createAppClock(sessionId)
-            } catch (error) {
-                console.error('Error initializing security:', error)
+                await securityService.createAppClock(sessionToken)
+            } catch (err) {
+                console.error('Security init failed:', err)
             }
         }
-        initSecurity()
-    }, [sessionId])
+        setupSecurity()
+    }, [sessionToken])
 
-  
+    // start monitoring if config exists
     useEffect(() => {
-        if (securityConfig) {
-            securityService.startRealTimeMonitoring(sessionId, securityConfig)
+        if (configData) {
+            securityService.startRealTimeMonitoring(sessionToken, configData)
         }
-    }, [sessionId, securityConfig])
+    }, [sessionToken, configData])
 
-   
+    // listen for security alerts
     useEffect(() => {
-        const subscription = DeviceEventEmitter.addListener('security-alert', (data) => {
-            console.log('Security alert received:', data)
+        const alertListener = DeviceEventEmitter.addListener('security-alert', (data) => {
+            console.log('Security alert:', data)
         })
-        return () => subscription.remove()
+        return () => alertListener.remove()
     }, [])
 
- 
-    const getSeverityStyle = (severity: AnomalySeverity) => {
+    // get styling for severity levels
+    const getSeverityColors = (severity: AnomalySeverity) => {
         switch (severity) {
             case AnomalySeverity.Low:
-                return { bg: Colors.severityLowBg, text: Colors.severityLowText }
+                return { bg: COLORS.infoLight, text: COLORS.info }
             case AnomalySeverity.Medium:
-                return { bg: Colors.severityMedBg, text: Colors.severityMedText }
+                return { bg: COLORS.warningLight, text: COLORS.warning }
             case AnomalySeverity.High:
-                return { bg: Colors.severityHighBg, text: Colors.severityHighText }
+                return { bg: '#FFEDD5', text: '#9A3412' }
             case AnomalySeverity.Critical:
-                return { bg: Colors.severityCritBg, text: Colors.severityCritText }
+                return { bg: COLORS.brandLight, text: COLORS.brand }
             default:
-                return { bg: Colors.resolvedBg, text: Colors.resolvedText }
+                return { bg: '#F3F4F6', text: '#4B5563' }
         }
     }
 
-    const getSeverityIcon = (severity: AnomalySeverity) => {
-        const colorMap: Record<string, string> = {
-            [AnomalySeverity.Low]: Colors.infoBlue,
-            [AnomalySeverity.Medium]: Colors.warningOrange,
-            [AnomalySeverity.High]: Colors.warningOrange,
-            [AnomalySeverity.Critical]: Colors.errorRed,
+    const getSeverityIconComponent = (severity: AnomalySeverity) => {
+        const colorLookup: Record<string, string> = {
+            [AnomalySeverity.Low]: COLORS.info,
+            [AnomalySeverity.Medium]: COLORS.warning,
+            [AnomalySeverity.High]: COLORS.warning,
+            [AnomalySeverity.Critical]: COLORS.brand,
         }
-        const color = colorMap[severity] || Colors.inactiveTab
+        const iconColor = colorLookup[severity] || COLORS.textMuted
+        
         switch (severity) {
-            case AnomalySeverity.Low: return <Eye size={16} color={color} />
-            case AnomalySeverity.Medium: return <AlertTriangle size={16} color={color} />
-            case AnomalySeverity.High: return <XCircle size={16} color={color} />
-            case AnomalySeverity.Critical: return <Shield size={16} color={color} />
-            default: return <Activity size={16} color={color} />
+            case AnomalySeverity.Low: return <Eye size={16} color={iconColor} />
+            case AnomalySeverity.Medium: return <AlertTriangle size={16} color={iconColor} />
+            case AnomalySeverity.High: return <XCircle size={16} color={iconColor} />
+            case AnomalySeverity.Critical: return <Shield size={16} color={iconColor} />
+            default: return <Activity size={16} color={iconColor} />
         }
     }
 
-    const handleResolveAnomaly = (anomalyId: string) => {
-        resolveAnomalyMutation.mutate({ anomalyId, resolvedBy: 'admin' })
+    const handleFixAnomaly = (anomalyId: string) => {
+        markAsResolvedMutation.mutate({ anomalyId, resolvedBy: 'admin' })
     }
 
-   
- const handleExportData = async (format: 'json' | 'csv') => {
-    try {
-  
-        const docDir = FileSystem.documentDirectory
-        
-        if (!docDir) {
-            Alert.alert('Error', 'Document directory not available')
-            return
-        }
-        
-        const data = await securityService.exportSecurityData(format)
-        const fileName = `security-export-${new Date().toISOString().split('T')[0]}.${format}`
-        const fileUri = `${docDir}${fileName}`
-        
-        await FileSystem.writeAsStringAsync(fileUri, data, {
-            encoding: 'utf8',
-        })
-        
-        const canShare = await Sharing.isAvailableAsync()
-        if (canShare) {
-            await Sharing.shareAsync(fileUri, {
-                mimeType: format === 'json' ? 'application/json' : 'text/csv',
-                dialogTitle: `Export ${format.toUpperCase()}`,
+    // export security data
+    const handleDataExport = async (fileFormat: 'json' | 'csv') => {
+        try {
+            const docFolder = FileSystem.documentDirectory
+            
+            if (!docFolder) {
+                Alert.alert('Error', 'Cannot access document directory')
+                return
+            }
+            
+            const exportedData = await securityService.exportSecurityData(fileFormat)
+            const timestamp = new Date().toISOString().split('T')[0]
+            const filename = `security-export-${timestamp}.${fileFormat}`
+            const filePath = `${docFolder}${filename}`
+            
+            await FileSystem.writeAsStringAsync(filePath, exportedData, {
+                encoding: 'utf8',
             })
-        } else {
-            Alert.alert('Export saved', `File saved to: ${fileUri}`)
+            
+            const sharingAvailable = await Sharing.isAvailableAsync()
+            if (sharingAvailable) {
+                await Sharing.shareAsync(filePath, {
+                    mimeType: fileFormat === 'json' ? 'application/json' : 'text/csv',
+                    dialogTitle: `Export ${fileFormat.toUpperCase()}`,
+                })
+            } else {
+                Alert.alert('Saved', `File saved to: ${filePath}`)
+            }
+        } catch (err) {
+            console.error('Export error:', err)
+            Alert.alert('Export Failed', 'Could not export data')
         }
-    } catch (error) {
-        console.error('Error exporting data:', error)
-        Alert.alert('Export Failed', 'Could not export security data.')
     }
-}
-     
-  
-    if (statsLoading) {
+
+    if (loadingStats) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={Colors.brand} />
+            <View style={styles.loadingScreen}>
+                <View style={styles.loadingCard}>
+                    <View style={styles.loadingIconWrap}>
+                        <Shield size={28} color={COLORS.brand} />
+                    </View>
+                    <ActivityIndicator size="large" color={COLORS.brand} style={{ marginTop: 16 }} />
+                    <Text style={styles.loadingTitle}>AuditGuard</Text>
+                    <Text style={styles.loadingText}>Loading security dashboard...</Text>
+                </View>
             </View>
         )
     }
 
-   
-    const tabs = [
+    const tabsList = [
         { id: 'overview', name: 'Overview', icon: Activity },
         { id: 'anomalies', name: 'Anomalies', icon: AlertTriangle },
         { id: 'compliance', name: 'Compliance', icon: FileText },
@@ -227,55 +234,54 @@ export default function AuditGuard() {
     ]
 
     return (
-        <View style={styles.root}>
-
-           
+        <View style={styles.container}>
+            {/* header section */}
             <View style={styles.header}>
                 <View style={styles.headerTop}>
-                    <View style={styles.headerTitle}>
-                        <View style={styles.shieldBadge}>
-                            <Shield size={20} color={Colors.card} />
+                    <View style={styles.brandSection}>
+                        <View style={styles.logoBadge}>
+                            <Shield size={20} color={COLORS.surface} />
                         </View>
                         <View>
-                            <Text style={styles.headerTitleText}>AuditGuard</Text>
-                            <Text style={styles.headerSubtitle}>Security & compliance</Text>
+                            <Text style={styles.brandName}>AuditGuard</Text>
+                            <Text style={styles.brandSub}>Security & Compliance</Text>
                         </View>
                     </View>
 
-                    <View style={styles.exportRow}>
+                    <View style={styles.exportButtons}>
                         <TouchableOpacity
-                            style={[styles.exportBtn, { backgroundColor: Colors.brand }]}
-                            onPress={() => handleExportData('json')}
+                            style={[styles.exportBtn, { backgroundColor: COLORS.brand }]}
+                            onPress={() => handleDataExport('json')}
+                            activeOpacity={0.85}
                         >
-                            <Download size={14} color={Colors.card} />
+                            <Download size={13} color={COLORS.surface} />
                             <Text style={styles.exportBtnText}>JSON</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.exportBtn, { backgroundColor: Colors.successGreen }]}
-                            onPress={() => handleExportData('csv')}
+                            style={[styles.exportBtn, { backgroundColor: COLORS.success }]}
+                            onPress={() => handleDataExport('csv')}
+                            activeOpacity={0.85}
                         >
-                            <Download size={14} color={Colors.card} />
+                            <Download size={13} color={COLORS.surface} />
                             <Text style={styles.exportBtnText}>CSV</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
-              
+                {/* tabs navigation */}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll}>
                     <View style={styles.tabsRow}>
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon
-                            const isActive = activeTab === tab.id
+                        {tabsList.map((tab) => {
+                            const TabIcon = tab.icon
+                            const isActive = currentTab === tab.id
                             return (
                                 <TouchableOpacity
                                     key={tab.id}
                                     style={[styles.tab, isActive && styles.tabActive]}
-                                    onPress={() => setActiveTab(tab.id as any)}
+                                    onPress={() => setCurrentTab(tab.id as any)}
+                                    activeOpacity={0.75}
                                 >
-                                    <Icon
-                                        size={15}
-                                        color={isActive ? Colors.activeTab : Colors.inactiveTab}
-                                    />
+                                    <TabIcon size={15} color={isActive ? COLORS.brand : COLORS.textMuted} />
                                     <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
                                         {tab.name}
                                     </Text>
@@ -286,57 +292,55 @@ export default function AuditGuard() {
                 </ScrollView>
             </View>
 
-          
+            {/* main content */}
             <ScrollView
-                style={styles.content}
+                style={styles.contentScroll}
                 contentContainerStyle={styles.contentInner}
                 showsVerticalScrollIndicator={false}
             >
-
-               
-                {activeTab === 'overview' && (
+                {/* overview tab */}
+                {currentTab === 'overview' && (
                     <View style={styles.tabContent}>
-
-                       
+                        {/* stats grid */}
                         <View style={styles.statsGrid}>
-                            <StatCard
+                            <MetricCard
                                 label="Secure Logs"
-                                value={securityStats?.total_secure_logs || 0}
-                                icon={<FileText size={24} color={Colors.infoBlue} />}
+                                value={statsData?.total_secure_logs || 0}
+                                icon={<FileText size={22} color={COLORS.info} />}
                             />
-                            <StatCard
+                            <MetricCard
                                 label="Total Anomalies"
-                                value={securityStats?.total_anomalies || 0}
-                                icon={<AlertTriangle size={24} color={Colors.warningOrange} />}
+                                value={statsData?.total_anomalies || 0}
+                                icon={<AlertTriangle size={22} color={COLORS.warning} />}
                             />
-                            <StatCard
+                            <MetricCard
                                 label="Unresolved"
-                                value={securityStats?.unresolved_anomalies || 0}
-                                icon={<XCircle size={24} color={Colors.errorRed} />}
-                                valueColor={Colors.errorRed}
+                                value={statsData?.unresolved_anomalies || 0}
+                                icon={<XCircle size={22} color={COLORS.brand} />}
+                                valueColor={COLORS.brand}
                             />
-                            <StatCard
+                            <MetricCard
                                 label="Uptime"
-                                value={`${Math.floor((securityStats?.system_uptime || 0) / (1000 * 60 * 60))}h`}
-                                icon={<Clock size={24} color={Colors.successGreen} />}
+                                value={`${Math.floor((statsData?.system_uptime || 0) / (1000 * 60 * 60))}h`}
+                                icon={<Clock size={22} color={COLORS.success} />}
                             />
                         </View>
 
-                      
+                        {/* system integrity card */}
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>System Integrity</Text>
 
                             <View style={styles.integrityRow}>
                                 <Text style={styles.integrityLabel}>Transaction Chain</Text>
                                 <View style={styles.integrityStatus}>
-                                    {securityStats?.chain_integrity
-                                        ? <CheckCircle size={18} color={Colors.successGreen} />
-                                        : <XCircle size={18} color={Colors.errorRed} />}
+                                    {statsData?.chain_integrity
+                                        ? <CheckCircle size={18} color={COLORS.success} />
+                                        : <XCircle size={18} color={COLORS.brand} />}
                                     <Text style={[
                                         styles.integrityText,
-                                        { color: securityStats?.chain_integrity ? Colors.successGreen : Colors.errorRed }
+                                        { color: statsData?.chain_integrity ? COLORS.success : COLORS.brand }
                                     ]}>
-                                        {securityStats?.chain_integrity ? 'Integral' : 'Compromised'}
+                                        {statsData?.chain_integrity ? 'Integral' : 'Compromised'}
                                     </Text>
                                 </View>
                             </View>
@@ -346,82 +350,84 @@ export default function AuditGuard() {
                             <View style={styles.integrityRow}>
                                 <Text style={styles.integrityLabel}>Temporal Consistency</Text>
                                 <View style={styles.integrityStatus}>
-                                    {securityStats?.time_consistency
-                                        ? <CheckCircle size={18} color={Colors.successGreen} />
-                                        : <XCircle size={18} color={Colors.errorRed} />}
+                                    {statsData?.time_consistency
+                                        ? <CheckCircle size={18} color={COLORS.success} />
+                                        : <XCircle size={18} color={COLORS.brand} />}
                                     <Text style={[
                                         styles.integrityText,
-                                        { color: securityStats?.time_consistency ? Colors.successGreen : Colors.errorRed }
+                                        { color: statsData?.time_consistency ? COLORS.success : COLORS.brand }
                                     ]}>
-                                        {securityStats?.time_consistency ? 'Consistent' : 'Anomalous'}
+                                        {statsData?.time_consistency ? 'Consistent' : 'Anomalous'}
                                     </Text>
                                 </View>
                             </View>
                         </View>
 
-                     
+                        {/* recent activity */}
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>Recent Activity</Text>
-                            {anomalies.slice(0, 5).map((anomaly) => (
-                                <View key={anomaly.id} style={styles.recentItem}>
-                                    {getSeverityIcon(anomaly.severity)}
-                                    <View style={styles.recentItemText}>
-                                        <Text style={styles.recentItemTitle} numberOfLines={1}>
+                            {anomalyList.slice(0, 5).map((anomaly) => (
+                                <View key={anomaly.id} style={styles.activityItem}>
+                                    {getSeverityIconComponent(anomaly.severity)}
+                                    <View style={styles.activityContent}>
+                                        <Text style={styles.activityTitle} numberOfLines={1}>
                                             {anomaly.description}
                                         </Text>
-                                        <Text style={styles.recentItemTime}>
+                                        <Text style={styles.activityTime}>
                                             {new Date(anomaly.timestamp).toLocaleString('en-US')}
                                         </Text>
                                     </View>
                                 </View>
                             ))}
-                            {anomalies.length === 0 && (
+                            {anomalyList.length === 0 && (
                                 <Text style={styles.emptyText}>No recent activity</Text>
                             )}
                         </View>
                     </View>
                 )}
 
-                {activeTab === 'anomalies' && (
+                {/* anomalies tab */}
+                {currentTab === 'anomalies' && (
                     <View style={styles.tabContent}>
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionTitle}>Detected Anomalies</Text>
                             <TouchableOpacity
-                                style={styles.refreshBtn}
+                                style={styles.refreshButton}
                                 onPress={() => queryClient.invalidateQueries({ queryKey: ['anomalies'] })}
+                                activeOpacity={0.85}
                             >
-                                <RefreshCw size={15} color={Colors.card} />
-                                <Text style={styles.refreshBtnText}>Refresh</Text>
+                                <RefreshCw size={14} color={COLORS.surface} />
+                                <Text style={styles.refreshButtonText}>Refresh</Text>
                             </TouchableOpacity>
                         </View>
 
-                        {anomaliesLoading ? (
+                        {loadingAnomalies ? (
                             <View style={styles.centerLoader}>
-                                <ActivityIndicator size="large" color={Colors.brand} />
+                                <ActivityIndicator size="large" color={COLORS.brand} />
                             </View>
-                        ) : anomalies.length === 0 ? (
+                        ) : anomalyList.length === 0 ? (
                             <View style={styles.emptyState}>
-                                <CheckCircle size={48} color={Colors.successGreen} />
+                                <View style={styles.emptyIconWrap}>
+                                    <CheckCircle size={36} color={COLORS.success} />
+                                </View>
                                 <Text style={styles.emptyStateTitle}>No Anomalies</Text>
-                                <Text style={styles.emptyStateSubtitle}>System is operating normally</Text>
+                                <Text style={styles.emptyStateText}>System operating normally</Text>
                             </View>
                         ) : (
-                            anomalies.map((anomaly) => {
-                                const sev = getSeverityStyle(anomaly.severity)
+                            anomalyList.map((anomaly) => {
+                                const severityStyle = getSeverityColors(anomaly.severity)
                                 return (
                                     <View key={anomaly.id} style={styles.card}>
-
-                                        {}
-                                        <View style={styles.anomalyBadgeRow}>
-                                            <View style={styles.anomalyBadgeLeft}>
-                                                {getSeverityIcon(anomaly.severity)}
-                                                <View style={[styles.severityBadge, { backgroundColor: sev.bg }]}>
-                                                    <Text style={[styles.severityBadgeText, { color: sev.text }]}>
+                                        <View style={styles.anomalyHeader}>
+                                            <View style={styles.anomalyBadges}>
+                                                {getSeverityIconComponent(anomaly.severity)}
+                                                <View style={[styles.severityBadge, { backgroundColor: severityStyle.bg }]}>
+                                                    <Text style={[styles.severityText, { color: severityStyle.text }]}>
                                                         {anomaly.severity}
                                                     </Text>
                                                 </View>
                                             </View>
-                                            <Text style={styles.anomalyTime}>
+                                            <Text style={styles.anomalyTimestamp}>
                                                 {new Date(anomaly.timestamp).toLocaleString('en-US')}
                                             </Text>
                                         </View>
@@ -435,31 +441,31 @@ export default function AuditGuard() {
                                         {anomaly.recommendations.length > 0 && (
                                             <View style={styles.recommendationsBox}>
                                                 <Text style={styles.recommendationsTitle}>Recommendations:</Text>
-                                                {anomaly.recommendations.map((rec, i) => (
-                                                    <Text key={i} style={styles.recommendationItem}>
-                                                        • {rec}
+                                                {anomaly.recommendations.map((recommendation, idx) => (
+                                                    <Text key={idx} style={styles.recommendationItem}>
+                                                        • {recommendation}
                                                     </Text>
                                                 ))}
                                             </View>
                                         )}
 
-                                        
-                                        <View style={styles.anomalyAction}>
+                                        <View style={styles.anomalyActions}>
                                             {!anomaly.resolved ? (
                                                 <TouchableOpacity
                                                     style={[
-                                                        styles.resolveBtn,
-                                                        resolveAnomalyMutation.isPending && styles.disabledBtn,
+                                                        styles.resolveButton,
+                                                        markAsResolvedMutation.isPending && styles.disabledButton,
                                                     ]}
-                                                    onPress={() => handleResolveAnomaly(anomaly.id)}
-                                                    disabled={resolveAnomalyMutation.isPending}
+                                                    onPress={() => handleFixAnomaly(anomaly.id)}
+                                                    disabled={markAsResolvedMutation.isPending}
+                                                    activeOpacity={0.85}
                                                 >
-                                                    <Text style={styles.resolveBtnText}>Resolve</Text>
+                                                    <Text style={styles.resolveButtonText}>Resolve</Text>
                                                 </TouchableOpacity>
                                             ) : (
-                                                <View style={styles.resolvedTag}>
-                                                    <CheckCircle size={13} color={Colors.successGreen} />
-                                                    <Text style={styles.resolvedTagText}>Resolved</Text>
+                                                <View style={styles.resolvedBadge}>
+                                                    <CheckCircle size={13} color={COLORS.success} />
+                                                    <Text style={styles.resolvedText}>Resolved</Text>
                                                 </View>
                                             )}
                                         </View>
@@ -470,48 +476,48 @@ export default function AuditGuard() {
                     </View>
                 )}
 
-               
-                {activeTab === 'compliance' && (
+                {/* compliance tab */}
+                {currentTab === 'compliance' && (
                     <View style={styles.tabContent}>
                         <Text style={styles.sectionTitle}>Regulatory Compliance</Text>
-                        {Object.entries(COUNTRY_COMPLIANCE_CONFIGS).map(([code, config]) => (
-                            <View key={code} style={styles.card}>
-                                <View style={styles.complianceCardHeader}>
-                                    <View style={styles.countryCodeBadge}>
-                                        <Text style={styles.countryCodeText}>{code}</Text>
+                        {Object.entries(COUNTRY_COMPLIANCE_CONFIGS).map(([countryCode, config]) => (
+                            <View key={countryCode} style={styles.card}>
+                                <View style={styles.complianceHeader}>
+                                    <View style={styles.countryBadge}>
+                                        <Text style={styles.countryCode}>{countryCode}</Text>
                                     </View>
                                     <View>
                                         <Text style={styles.countryName}>{config.country_name}</Text>
-                                        <Text style={styles.taxName}>{config.tax_name}</Text>
+                                        <Text style={styles.taxLabel}>{config.tax_name}</Text>
                                     </View>
                                 </View>
                                 <View style={styles.divider} />
                                 <View style={styles.complianceRow}>
-                                    <Text style={styles.complianceKey}>Currency</Text>
+                                    <Text style={styles.complianceLabel}>Currency</Text>
                                     <Text style={styles.complianceValue}>{config.currency}</Text>
                                 </View>
                                 <View style={styles.complianceRow}>
-                                    <Text style={styles.complianceKey}>Retention</Text>
+                                    <Text style={styles.complianceLabel}>Retention</Text>
                                     <Text style={styles.complianceValue}>{config.retention_period_days} days</Text>
                                 </View>
                                 <View style={styles.complianceRow}>
-                                    <Text style={styles.complianceKey}>Reporting</Text>
+                                    <Text style={styles.complianceLabel}>Reporting</Text>
                                     <Text style={styles.complianceValue}>{config.submission_frequency}</Text>
                                 </View>
                                 <View style={styles.complianceRow}>
-                                    <Text style={styles.complianceKey}>Signature</Text>
+                                    <Text style={styles.complianceLabel}>Digital Signature</Text>
                                     <Text style={[
                                         styles.complianceValue,
-                                        { color: config.digital_signature_required ? Colors.successGreen : Colors.inactiveTab }
+                                        { color: config.digital_signature_required ? COLORS.success : COLORS.textMuted }
                                     ]}>
                                         {config.digital_signature_required ? 'Required' : 'Optional'}
                                     </Text>
                                 </View>
                                 <View style={styles.complianceRow}>
-                                    <Text style={styles.complianceKey}>Audit Trail</Text>
+                                    <Text style={styles.complianceLabel}>Audit Trail</Text>
                                     <Text style={[
                                         styles.complianceValue,
-                                        { color: config.audit_trail_required ? Colors.successGreen : Colors.inactiveTab }
+                                        { color: config.audit_trail_required ? COLORS.success : COLORS.textMuted }
                                     ]}>
                                         {config.audit_trail_required ? 'Required' : 'Optional'}
                                     </Text>
@@ -521,99 +527,95 @@ export default function AuditGuard() {
                     </View>
                 )}
 
-               
-                {activeTab === 'config' && (
+                {/* config tab */}
+                {currentTab === 'config' && (
                     <View style={styles.tabContent}>
                         <Text style={styles.sectionTitle}>Security Configuration</Text>
 
-                        {securityConfig && (
+                        {configData && (
                             <View style={styles.card}>
-
                                 {[
                                     {
                                         label: 'Chain Validation',
-                                        sub: 'Enable chain integrity validation',
-                                        key: 'enable_chain_validation' as keyof SecurityConfig,
+                                        subtitle: 'Enable chain integrity validation',
+                                        configKey: 'enable_chain_validation' as keyof SecurityConfig,
                                     },
                                     {
                                         label: 'Temporal Validation',
-                                        sub: 'Enable temporal consistency checks',
-                                        key: 'enable_time_validation' as keyof SecurityConfig,
+                                        subtitle: 'Enable temporal consistency checks',
+                                        configKey: 'enable_time_validation' as keyof SecurityConfig,
                                     },
                                     {
                                         label: 'Anomaly Detection',
-                                        sub: 'Enable automatic anomaly detection',
-                                        key: 'enable_anomaly_detection' as keyof SecurityConfig,
+                                        subtitle: 'Enable automatic anomaly detection',
+                                        configKey: 'enable_anomaly_detection' as keyof SecurityConfig,
                                     },
                                     {
                                         label: 'Real-time Monitoring',
-                                        sub: 'Enable continuous monitoring',
-                                        key: 'enable_real_time_monitoring' as keyof SecurityConfig,
+                                        subtitle: 'Enable continuous monitoring',
+                                        configKey: 'enable_real_time_monitoring' as keyof SecurityConfig,
                                     },
-                                ].map(({ label, sub, key }) => (
-                                    <View key={key} style={styles.configToggleRow}>
-                                        <View style={styles.configToggleText}>
+                                ].map(({ label, subtitle, configKey }) => (
+                                    <View key={configKey} style={styles.configRow}>
+                                        <View style={styles.configInfo}>
                                             <Text style={styles.configLabel}>{label}</Text>
-                                            <Text style={styles.configSub}>{sub}</Text>
+                                            <Text style={styles.configSubtitle}>{subtitle}</Text>
                                         </View>
                                         <Switch
-                                            value={securityConfig[key] as boolean}
-                                            onValueChange={(val) =>
-                                                saveConfigMutation.mutate({ ...securityConfig, [key]: val })
+                                            value={configData[configKey] as boolean}
+                                            onValueChange={(newValue) =>
+                                                updateConfigMutation.mutate({ ...configData, [configKey]: newValue })
                                             }
-                                            trackColor={{ false: Colors.border, true: Colors.brand }}
-                                            thumbColor={Colors.card}
+                                            trackColor={{ false: COLORS.border, true: COLORS.brand }}
+                                            thumbColor={COLORS.surface}
                                         />
                                     </View>
                                 ))}
 
                                 <View style={styles.divider} />
 
-                                
-                                <View style={styles.configInputGroup}>
+                                <View style={styles.inputGroup}>
                                     <Text style={styles.configLabel}>Max Time Drift (seconds)</Text>
                                     <TextInput
                                         style={styles.configInput}
-                                        value={String(securityConfig.max_time_drift)}
-                                        onChangeText={(val) =>
-                                            saveConfigMutation.mutate({
-                                                ...securityConfig,
-                                                max_time_drift: parseInt(val) || 0,
+                                        value={String(configData.max_time_drift)}
+                                        onChangeText={(text) =>
+                                            updateConfigMutation.mutate({
+                                                ...configData,
+                                                max_time_drift: parseInt(text) || 0,
                                             })
                                         }
                                         keyboardType="numeric"
-                                        placeholderTextColor={Colors.inactiveTab}
+                                        placeholderTextColor={COLORS.textMuted}
                                     />
                                 </View>
 
-                                <View style={styles.configInputGroup}>
+                                <View style={styles.inputGroup}>
                                     <Text style={styles.configLabel}>Suspicious Amount Threshold (NPR)</Text>
                                     <TextInput
                                         style={styles.configInput}
-                                        value={String(securityConfig.suspicious_amount_threshold)}
-                                        onChangeText={(val) =>
-                                            saveConfigMutation.mutate({
-                                                ...securityConfig,
-                                                suspicious_amount_threshold: parseFloat(val) || 0,
+                                        value={String(configData.suspicious_amount_threshold)}
+                                        onChangeText={(text) =>
+                                            updateConfigMutation.mutate({
+                                                ...configData,
+                                                suspicious_amount_threshold: parseFloat(text) || 0,
                                             })
                                         }
                                         keyboardType="numeric"
-                                        placeholderTextColor={Colors.inactiveTab}
+                                        placeholderTextColor={COLORS.textMuted}
                                     />
                                 </View>
-
                             </View>
                         )}
                     </View>
                 )}
-
             </ScrollView>
         </View>
     )
 }
 
-
-function StatCard({
+// metric card component
+function MetricCard({
     label,
     value,
     icon,
@@ -625,79 +627,85 @@ function StatCard({
     valueColor?: string
 }) {
     return (
-        <View style={styles.statCard}>
-            <View style={styles.statCardTop}>
-                <View style={styles.statCardIcon}>{icon}</View>
-            </View>
-            <Text style={[styles.statCardValue, valueColor ? { color: valueColor } : {}]}>
+        <View style={styles.metricCard}>
+            <View style={styles.metricIconWrap}>{icon}</View>
+            <Text style={[styles.metricValue, valueColor ? { color: valueColor } : {}]}>
                 {value}
             </Text>
-            <Text style={styles.statCardLabel}>{label}</Text>
+            <Text style={styles.metricLabel}>{label}</Text>
         </View>
     )
 }
 
-
 const styles = StyleSheet.create({
-    root: {
-        flex: 1,
-        backgroundColor: '#FEF1A8',
+    container: { flex: 1, backgroundColor: COLORS.background },
+    
+    // loading screen
+    loadingScreen: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background, padding: 24 },
+    loadingCard: {
+        backgroundColor: COLORS.surface,
+        borderRadius: 20,
+        padding: 32,
+        alignItems: 'center',
+        width: '80%',
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        shadowColor: COLORS.brand,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 6,
     },
-    loadingContainer: {
-        flex: 1,
+    loadingIconWrap: {
+        width: 56,
+        height: 56,
+        borderRadius: 16,
+        backgroundColor: COLORS.brandLight,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#FEF1A8',
+        borderWidth: 1,
+        borderColor: COLORS.brandBorder,
     },
+    loadingTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary, marginTop: 12 },
+    loadingText: { fontSize: 13, color: COLORS.textMuted, marginTop: 4 },
 
-   
+    // header
     header: {
-        backgroundColor: '#FFF1C1',
+        backgroundColor: COLORS.headerBg,
         paddingTop: 52,
         paddingHorizontal: 16,
         paddingBottom: 0,
         borderBottomWidth: 1,
-        borderBottomColor: '#E8D88A',
+        borderBottomColor: COLORS.border,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.06,
-        shadowRadius: 4,
-        elevation: 3,
+        shadowRadius: 6,
+        elevation: 4,
     },
     headerTop: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 14,
+        marginBottom: 12,
     },
-    headerTitle: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-    },
-    shieldBadge: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        backgroundColor: '#C41E1E',
+    brandSection: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    logoBadge: {
+        width: 42,
+        height: 42,
+        borderRadius: 13,
+        backgroundColor: COLORS.brand,
         alignItems: 'center',
         justifyContent: 'center',
+        shadowColor: COLORS.brand,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        elevation: 3,
     },
-    headerTitleText: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        fontFamily: 'Inter',
-    },
-    headerSubtitle: {
-        fontSize: 12,
-        color: '#5C5436',
-        fontFamily: 'Inter',
-    },
-    exportRow: {
-        flexDirection: 'row',
-        gap: 8,
-    },
+    brandName: { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: 0.2 },
+    brandSub: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
+    exportButtons: { flexDirection: 'row', gap: 8 },
     exportBtn: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -705,418 +713,221 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 7,
         borderRadius: 20,
+        shadowColor: COLORS.brand,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    exportBtnText: {
-        color: '#FFFFFF',
-        fontSize: 12,
-        fontWeight: '600',
-        fontFamily: 'Inter',
-    },
+    exportBtnText: { color: COLORS.surface, fontSize: 12, fontWeight: '700' },
 
- 
-    tabsScroll: {
-        marginTop: 4,
-    },
-    tabsRow: {
-        flexDirection: 'row',
-        gap: 4,
-        paddingBottom: 0,
-    },
+    // tabs
+    tabsScroll: { marginTop: 2 },
+    tabsRow: { flexDirection: 'row', gap: 2, paddingBottom: 0 },
     tab: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 5,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderBottomWidth: 2,
+        paddingHorizontal: 16,
+        paddingVertical: 11,
+        borderBottomWidth: 2.5,
         borderBottomColor: 'transparent',
     },
-    tabActive: {
-        borderBottomColor: '#C41E1E',
-    },
-    tabText: {
-        fontSize: 13,
-        fontWeight: '500',
-        color: '#9E8E50',
-        fontFamily: 'Inter',
-    },
-    tabTextActive: {
-        color: '#C41E1E',
-        fontWeight: '600',
-    },
+    tabActive: { borderBottomColor: COLORS.brand },
+    tabText: { fontSize: 13, fontWeight: '500', color: COLORS.textMuted },
+    tabTextActive: { color: COLORS.brand, fontWeight: '700' },
 
-   
-    content: {
-        flex: 1,
-    },
-    contentInner: {
-        padding: 16,
-        paddingBottom: 32,
-    },
-    tabContent: {
-        gap: 14,
-    },
+    // content
+    contentScroll: { flex: 1 },
+    contentInner: { padding: 16, paddingBottom: 40 },
+    tabContent: { gap: 14 },
 
-    
+    // cards
     card: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
+        backgroundColor: COLORS.surface,
+        borderRadius: 14,
         padding: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.07,
-        shadowRadius: 4,
-        elevation: 2,
         borderWidth: 1,
-        borderColor: '#F0E88A',
+        borderColor: COLORS.cardBorder,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+        elevation: 2,
     },
-    cardTitle: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        marginBottom: 12,
-        fontFamily: 'Inter',
-    },
+    cardTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 12, letterSpacing: 0.2 },
 
-    
-    statsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 12,
-    },
-    statCard: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
+    // metrics grid
+    statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    metricCard: {
+        backgroundColor: COLORS.surface,
+        borderRadius: 14,
         padding: 14,
         width: '47%',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.07,
-        shadowRadius: 4,
-        elevation: 2,
+        alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#F0E88A',
+        borderColor: COLORS.cardBorder,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+        elevation: 2,
     },
-    statCardTop: {
-        marginBottom: 8,
-    },
-    statCardIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 10,
-        backgroundColor: '#FEF1A8',
+    metricIconWrap: {
+        width: 46,
+        height: 46,
+        borderRadius: 12,
+        backgroundColor: COLORS.goldLight,
         alignItems: 'center',
         justifyContent: 'center',
+        marginBottom: 10,
+        borderWidth: 1.5,
+        borderColor: COLORS.goldBorder,
     },
-    statCardValue: {
-        fontSize: 26,
-        fontWeight: '800',
-        color: '#1A1A1A',
-        fontFamily: 'Inter',
-    },
-    statCardLabel: {
-        fontSize: 12,
-        color: '#5C5436',
-        marginTop: 2,
-        fontFamily: 'Inter',
-    },
+    metricValue: { fontSize: 24, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 2 },
+    metricLabel: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
 
-   
-    integrityRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 6,
-    },
-    integrityLabel: {
-        fontSize: 14,
-        color: '#1A1A1A',
-        fontFamily: 'Inter',
-    },
-    integrityStatus: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 5,
-    },
-    integrityText: {
-        fontSize: 13,
-        fontWeight: '600',
-        fontFamily: 'Inter',
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#F0E88A',
-        marginVertical: 8,
-    },
+    // integrity section
+    integrityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
+    integrityLabel: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '500' },
+    integrityStatus: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    integrityText: { fontSize: 13, fontWeight: '700' },
+    divider: { height: 1, backgroundColor: COLORS.divider, marginVertical: 10 },
 
-    
-    recentItem: {
+    // recent activity
+    activityItem: {
         flexDirection: 'row',
         alignItems: 'flex-start',
         gap: 10,
-        paddingVertical: 7,
+        paddingVertical: 10,
         borderBottomWidth: 1,
-        borderBottomColor: '#FEF1A8',
+        borderBottomColor: COLORS.divider,
     },
-    recentItemText: {
-        flex: 1,
-    },
-    recentItemTitle: {
-        fontSize: 13,
-        fontWeight: '500',
-        color: '#1A1A1A',
-        fontFamily: 'Inter',
-    },
-    recentItemTime: {
-        fontSize: 11,
-        color: '#9E8E50',
-        marginTop: 1,
-        fontFamily: 'Inter',
-    },
-    emptyText: {
-        fontSize: 13,
-        color: '#9E8E50',
-        textAlign: 'center',
-        paddingVertical: 12,
-        fontFamily: 'Inter',
-    },
+    activityContent: { flex: 1 },
+    activityTitle: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 2 },
+    activityTime: { fontSize: 11, color: COLORS.textMuted },
+    emptyText: { fontSize: 13, color: COLORS.textMuted, textAlign: 'center', paddingVertical: 16 },
 
-
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 4,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        fontFamily: 'Inter',
-    },
-    refreshBtn: {
+    // section header
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+    sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, letterSpacing: 0.3 },
+    refreshButton: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 5,
-        backgroundColor: '#C41E1E',
+        backgroundColor: COLORS.brand,
         paddingHorizontal: 12,
         paddingVertical: 7,
         borderRadius: 20,
+        shadowColor: COLORS.brand,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    refreshBtnText: {
-        color: '#FFFFFF',
-        fontSize: 12,
-        fontWeight: '600',
-        fontFamily: 'Inter',
-    },
+    refreshButtonText: { color: COLORS.surface, fontSize: 12, fontWeight: '700' },
 
-    centerLoader: {
-        paddingVertical: 48,
-        alignItems: 'center',
-    },
-    emptyState: {
-        alignItems: 'center',
-        paddingVertical: 48,
-        gap: 8,
-    },
-    emptyStateTitle: {
-        fontSize: 17,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        fontFamily: 'Inter',
-    },
-    emptyStateSubtitle: {
-        fontSize: 13,
-        color: '#5C5436',
-        fontFamily: 'Inter',
-    },
-
-    anomalyBadgeRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 10,
-    },
-    anomalyBadgeLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    severityBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 3,
+    // loader and empty states
+    centerLoader: { paddingVertical: 48, alignItems: 'center' },
+    emptyState: { alignItems: 'center', paddingVertical: 48, gap: 10 },
+    emptyIconWrap: {
+        width: 72,
+        height: 72,
         borderRadius: 20,
+        backgroundColor: COLORS.successLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.successBorder,
     },
-    severityBadgeText: {
-        fontSize: 11,
-        fontWeight: '600',
-        textTransform: 'capitalize',
-        fontFamily: 'Inter',
-    },
-    anomalyTime: {
-        fontSize: 11,
-        color: '#9E8E50',
-        fontFamily: 'Inter',
-    },
-    anomalyDescription: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#1A1A1A',
-        marginBottom: 4,
-        fontFamily: 'Inter',
-    },
-    anomalyType: {
-        fontSize: 13,
-        color: '#5C5436',
-        marginBottom: 10,
-        fontFamily: 'Inter',
-    },
+    emptyStateTitle: { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
+    emptyStateText: { fontSize: 13, color: COLORS.textMuted },
+
+    // anomaly cards
+    anomalyHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+    anomalyBadges: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    severityBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+    severityText: { fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+    anomalyTimestamp: { fontSize: 11, color: COLORS.textMuted },
+    anomalyDescription: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
+    anomalyType: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 10 },
     recommendationsBox: {
-        backgroundColor: '#FFFDE7',
+        backgroundColor: COLORS.warningLight,
         borderRadius: 10,
-        padding: 10,
-        marginBottom: 10,
+        padding: 12,
+        marginBottom: 12,
         borderLeftWidth: 3,
-        borderLeftColor: '#D4A843',
+        borderLeftColor: COLORS.gold,
     },
-    recommendationsTitle: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        marginBottom: 4,
-        fontFamily: 'Inter',
-    },
-    recommendationItem: {
-        fontSize: 12,
-        color: '#5C5436',
-        lineHeight: 18,
-        fontFamily: 'Inter',
-    },
-    anomalyAction: {
-        alignItems: 'flex-end',
-    },
-    resolveBtn: {
-        backgroundColor: '#2E7D32',
+    recommendationsTitle: { fontSize: 12, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 6 },
+    recommendationItem: { fontSize: 12, color: COLORS.textSecondary, lineHeight: 18, marginBottom: 2 },
+    anomalyActions: { alignItems: 'flex-end' },
+    resolveButton: {
+        backgroundColor: COLORS.success,
         paddingHorizontal: 16,
-        paddingVertical: 7,
+        paddingVertical: 8,
         borderRadius: 20,
+        shadowColor: COLORS.success,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    resolveBtnText: {
-        color: '#FFFFFF',
-        fontSize: 13,
-        fontWeight: '600',
-        fontFamily: 'Inter',
-    },
-    disabledBtn: {
-        opacity: 0.5,
-    },
-    resolvedTag: {
+    resolveButtonText: { color: COLORS.surface, fontSize: 13, fontWeight: '700' },
+    disabledButton: { opacity: 0.5 },
+    resolvedBadge: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#F0FFF4',
+        backgroundColor: COLORS.successLight,
         paddingHorizontal: 12,
-        paddingVertical: 5,
+        paddingVertical: 6,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#BBF7D0',
+        borderColor: COLORS.successBorder,
     },
-    resolvedTagText: {
-        fontSize: 12,
-        color: '#2E7D32',
-        fontWeight: '600',
-        fontFamily: 'Inter',
-    },
+    resolvedText: { fontSize: 12, color: COLORS.success, fontWeight: '700' },
 
-
-    complianceCardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        marginBottom: 12,
-    },
-    countryCodeBadge: {
+    // compliance section
+    complianceHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+    countryBadge: {
         width: 44,
         height: 44,
         borderRadius: 12,
-        backgroundColor: '#FEF1A8',
+        backgroundColor: COLORS.goldLight,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1.5,
-        borderColor: '#D4A843',
+        borderColor: COLORS.goldBorder,
     },
-    countryCodeText: {
-        fontSize: 13,
-        fontWeight: '800',
-        color: '#C41E1E',
-        fontFamily: 'Inter',
-    },
-    countryName: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        fontFamily: 'Inter',
-    },
-    taxName: {
-        fontSize: 12,
-        color: '#5C5436',
-        fontFamily: 'Inter',
-    },
-    complianceRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingVertical: 5,
-    },
-    complianceKey: {
-        fontSize: 13,
-        color: '#5C5436',
-        fontFamily: 'Inter',
-    },
-    complianceValue: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#1A1A1A',
-        fontFamily: 'Inter',
-    },
+    countryCode: { fontSize: 13, fontWeight: '800', color: COLORS.brand },
+    countryName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
+    taxLabel: { fontSize: 12, color: COLORS.textSecondary },
+    complianceRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
+    complianceLabel: { fontSize: 13, color: COLORS.textSecondary },
+    complianceValue: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary },
 
-    configToggleRow: {
+    // config section
+    configRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 10,
+        paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#FEF1A8',
+        borderBottomColor: COLORS.divider,
     },
-    configToggleText: {
-        flex: 1,
-        paddingRight: 12,
-    },
-    configLabel: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#1A1A1A',
-        fontFamily: 'Inter',
-    },
-    configSub: {
-        fontSize: 12,
-        color: '#5C5436',
-        marginTop: 1,
-        fontFamily: 'Inter',
-    },
-    configInputGroup: {
-        marginTop: 12,
-        gap: 6,
-    },
-   
+    configInfo: { flex: 1, paddingRight: 12 },
+    configLabel: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 2 },
+    configSubtitle: { fontSize: 12, color: COLORS.textSecondary },
+    inputGroup: { marginTop: 12, gap: 8 },
     configInput: {
         borderWidth: 1.5,
-        borderColor: '#E8D88A',
+        borderColor: COLORS.border,
         borderRadius: 12,
         paddingHorizontal: 14,
         paddingVertical: 10,
         fontSize: 14,
-        backgroundColor: '#FFFDE7',
-        fontFamily: 'Inter',
-        color: '#1A1A1A',
+        backgroundColor: COLORS.inputBg,
+        color: COLORS.textPrimary,
     },
 })
