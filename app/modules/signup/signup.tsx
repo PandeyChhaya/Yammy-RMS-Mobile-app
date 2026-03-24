@@ -1,20 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
-import { CheckCircle2, Eye, EyeOff, Lock, Mail, Phone, User, Utensils } from 'lucide-react-native'
+import { CheckCircle2, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react-native'
 import { useState } from 'react'
 import {
-    Alert,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
-import Svg, { Path } from 'react-native-svg'
 
 const { height } = Dimensions.get('window')
 
@@ -32,7 +30,7 @@ const COLORS = {
   successLight: '#F0FDF4',
 }
 
-const API_URL = 'http://localhost:3000/api'
+const API_URL = 'http://10.23.1.14:3000/api'
 
 const staffRoles = [
   { id: 'admin', label: 'Admin' },
@@ -55,12 +53,10 @@ export default function Signup() {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [isCreatingAccount, setIsCreatingAccount] = useState(false)
 
-  // check if passwords actually match
   const passwordsMatch = passwordFirst.length > 0 && passwordFirst === passwordSecond
   const passwordsDontMatch = passwordSecond.length > 0 && passwordFirst !== passwordSecond
 
   const createTheAccount = async () => {
-    // some basic checks
     if (!fullName.trim() || !emailAddress.trim() || !phoneNum.trim() || !passwordFirst.trim()) {
       Alert.alert('Missing Info', 'Please fill in all the fields')
       return
@@ -98,12 +94,10 @@ export default function Signup() {
         throw new Error(result.error || 'Could not create account')
       }
 
-      // save token and user data
       await AsyncStorage.setItem('@auth_token', result.token)
       await AsyncStorage.setItem('@user', JSON.stringify(result.user))
 
-      // go to main app
-      router.replace('/index')
+      router.replace('/modules/pos/POS')
       
     } catch (err: any) {
       Alert.alert('Signup Failed', err.message || 'Something went wrong, try again?')
@@ -113,13 +107,9 @@ export default function Signup() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      {/* Zone 1 — Shorter Brand Header */}
+    <View style={styles.container}>
+      {/* Zone 1 — Brand Header */}
       <View style={styles.topZone}>
-        {/* pattern dots like login */}
         <View style={styles.patternOverlay}>
           {Array.from({ length: 30 }).map((_, i) => (
             <View
@@ -135,32 +125,22 @@ export default function Signup() {
           ))}
         </View>
 
-        {/* same logo badge with gold ring */}
         <View style={styles.logoBadge}>
-          <View style={styles.logoInner}>
-            <Utensils size={28} color={COLORS.brand} />
-          </View>
+          <Image
+            source={require('../../../assets/images/Yammy.png')}
+            style={{ width: 162, height: 88, borderRadius: 44 }}
+            resizeMode="cover"
+          />
         </View>
 
-        <Text style={styles.appTitle}>Yammy Fresh</Text>
-        <Text style={styles.appSubtitle}>Create your account</Text>
+        <Text style={styles.appTitle}>Yammy</Text>
 
-        {/* same curved wave */}
-        <Svg
-          height="60"
-          width="100%"
-          viewBox="0 0 1440 120"
-          style={styles.wave}
-          preserveAspectRatio="none"
-        >
-          <Path
-            fill={COLORS.surface}
-            d="M0,64 C320,100 420,100 720,64 C1020,28 1120,28 1440,64 L1440,120 L0,120 Z"
-          />
-        </Svg>
+        {/* Wave at bottom */}
+        
+         
       </View>
 
-      {/* Zone 2 — Signup Card (scrollable) */}
+      {/* Zone 2 — Signup Card */}
       <View style={styles.signupCard}>
         <ScrollView
           style={styles.scrollArea}
@@ -168,7 +148,7 @@ export default function Signup() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* heading - more compact */}
+          {/* heading */}
           <View style={styles.headingArea}>
             <Text style={styles.welcomeText}>Create Account</Text>
             <Text style={styles.welcomeSub}>Fill in your details to get started</Text>
@@ -252,7 +232,7 @@ export default function Signup() {
             </View>
           </View>
 
-          {/* confirm password with real-time validation */}
+          {/* confirm password with validation */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Confirm Password</Text>
             <View style={[
@@ -354,9 +334,9 @@ export default function Signup() {
         </ScrollView>
       </View>
 
-      {/* version string */}
-     
-    </KeyboardAvoidingView>
+      {/* version */}
+      <Text style={styles.versionText}></Text>
+    </View>
   )
 }
 
@@ -366,9 +346,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
 
-  // zone 1 - shorter header
+  // zone 1
   topZone: {
-    height: height * 0.3,
+    height: height * 0.28,
     backgroundColor: COLORS.brand,
     alignItems: 'center',
     justifyContent: 'center',
@@ -391,9 +371,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   logoBadge: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -401,25 +381,11 @@ const styles = StyleSheet.create({
     borderColor: COLORS.gold,
     marginBottom: 16,
   },
-  logoInner: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: '#FEF3DC',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   appTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '800',
     color: COLORS.surface,
-    letterSpacing: 0.4,
-  },
-  appSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.85)',
-    fontWeight: '400',
-    marginTop: 4,
+    letterSpacing: 0.5,
   },
   wave: {
     position: 'absolute',
@@ -428,13 +394,14 @@ const styles = StyleSheet.create({
     right: 0,
   },
 
-  // zone 2 - scrollable card
+  // zone 2
   signupCard: {
     flex: 1,
     backgroundColor: COLORS.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     marginTop: -30,
+    marginHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
@@ -446,11 +413,11 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     padding: 24,
-    paddingTop: 28,
+    paddingTop: 48,
     paddingBottom: 40,
   },
 
-  // heading - compact
+  // heading
   headingArea: {
     marginBottom: 24,
   },
@@ -507,7 +474,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
 
-  // country code section
+  // country code
   countryCode: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -603,6 +570,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 18,
+    width: '75%',
+    alignSelf: 'center',
     shadowColor: COLORS.brand,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,

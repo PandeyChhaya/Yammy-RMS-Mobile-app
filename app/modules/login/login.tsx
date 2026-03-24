@@ -1,23 +1,21 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
-import { Eye, EyeOff, Lock, Mail, Utensils } from 'lucide-react-native'
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native'
 import { useState } from 'react'
 import {
-    Alert,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
-import Svg, { Path } from 'react-native-svg'
 
 const { height } = Dimensions.get('window')
 
-// same colors from POS
 const COLORS = {
   brand: '#C41E1E',
   gold: '#C4933E',
@@ -30,7 +28,7 @@ const COLORS = {
   inputBg: '#FFFDF7',
 }
 
-const API_URL = 'http://localhost:3000/api'
+const API_URL = 'http://10.23.1.14:3000/api'
 
 export default function Login() {
   const router = useRouter()
@@ -41,7 +39,6 @@ export default function Login() {
   const [isProcessing, setIsProcessing] = useState(false)
 
   const doLogin = async () => {
-    // basic check
     if (!emailText.trim() || !passwordText.trim()) {
       Alert.alert('Oops', 'Fill in your email and password first')
       return
@@ -65,12 +62,10 @@ export default function Login() {
         throw new Error(result.error || 'Login didnt work')
       }
 
-      // save the token and user stuff
       await AsyncStorage.setItem('@auth_token', result.token)
       await AsyncStorage.setItem('@user', JSON.stringify(result.user))
 
-      // go to main app
-      router.replace('/(index)')
+      router.replace('./index')
       
     } catch (err: any) {
       Alert.alert('Could not log in', err.message || 'Wrong email or password maybe?')
@@ -80,13 +75,9 @@ export default function Login() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      {/* Zone 1 — Brand Header with pattern */}
+    <View style={styles.container}>
+      {/* Zone 1 — Brand Header */}
       <View style={styles.topZone}>
-        {/* subtle dot pattern overlay */}
         <View style={styles.patternOverlay}>
           {Array.from({ length: 40 }).map((_, i) => (
             <View
@@ -102,42 +93,34 @@ export default function Login() {
           ))}
         </View>
 
-        {/* logo badge with gold ring */}
         <View style={styles.logoBadge}>
-          <View style={styles.logoInner}>
-            <Utensils size={32} color={COLORS.brand} />
-          </View>
+          <Image
+            source={require('../../../assets/images/Yammy.png')}
+            style={{ width: 162, height: 88, borderRadius: 44 }}
+            resizeMode="cover"
+          />
         </View>
 
-        <Text style={styles.appTitle}>Yammy Fresh</Text>
-        <Text style={styles.appSubtitle}>Point of Sale System</Text>
+        <Text style={styles.appTitle}>Yammy</Text>
 
-        {/* curved wave at bottom */}
-        <Svg
-          height="60"
-          width="100%"
-          viewBox="0 0 1440 120"
-          style={styles.wave}
-          preserveAspectRatio="none"
-        >
-          <Path
-            fill={COLORS.surface}
-            d="M0,64 C320,100 420,100 720,64 C1020,28 1120,28 1440,64 L1440,120 L0,120 Z"
-          />
-        </Svg>
+       
       </View>
 
       {/* Zone 2 — Login Card */}
       <View style={styles.loginCard}>
-        <View style={styles.cardContent}>
-          
-          {/* heading area */}
+        <ScrollView
+          style={styles.scrollArea}
+          contentContainerStyle={styles.cardContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* heading */}
           <View style={styles.headingArea}>
             <Text style={styles.welcomeText}>Welcome Back</Text>
             <Text style={styles.welcomeSub}>Sign in to your account</Text>
           </View>
 
-          {/* email input */}
+          {/* email */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
             <View style={styles.inputWrapper}>
@@ -155,7 +138,7 @@ export default function Login() {
             </View>
           </View>
 
-          {/* password input */}
+          {/* password */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
             <View style={styles.inputWrapper}>
@@ -187,7 +170,7 @@ export default function Login() {
             <Text style={styles.forgotText}>Forgot Password?</Text>
           </TouchableOpacity>
 
-          {/* sign in button with shadow */}
+          {/* sign in button */}
           <TouchableOpacity
             style={[styles.signInBtn, isProcessing && { opacity: 0.6 }]}
             onPress={doLogin}
@@ -206,18 +189,19 @@ export default function Login() {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* guest button */}
+          {/* create account button */}
           <TouchableOpacity
             style={styles.guestBtn}
-            onPress={() => router.push('../signup/signup')}
+            onPress={() => router.push('/modules/signup/signup')}
           >
             <Text style={styles.guestText}>Create New Account</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       </View>
 
-  
-    </KeyboardAvoidingView>
+      {/* version */}
+      <Text style={styles.versionText}></Text>
+    </View>
   )
 }
 
@@ -227,9 +211,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
 
-  // zone 1 styles
+  // zone 1
   topZone: {
-    height: height * 0.38,
+    height: height * 0.28,
     backgroundColor: COLORS.brand,
     alignItems: 'center',
     justifyContent: 'center',
@@ -260,27 +244,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 3,
     borderColor: COLORS.gold,
-    marginBottom: 20,
-  },
-  logoInner: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#FEF3DC',
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 16,
   },
   appTitle: {
     fontSize: 32,
     fontWeight: '800',
     color: COLORS.surface,
     letterSpacing: 0.5,
-  },
-  appSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.85)',
-    fontWeight: '400',
-    marginTop: 6,
   },
   wave: {
     position: 'absolute',
@@ -289,22 +259,27 @@ const styles = StyleSheet.create({
     right: 0,
   },
 
-  // zone 2 card
+  // zone 2
   loginCard: {
     flex: 1,
     backgroundColor: COLORS.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     marginTop: -30,
+    marginHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 8,
   },
+  scrollArea: {
+    flex: 1,
+  },
   cardContent: {
-    padding: 28,
-    paddingTop: 36,
+    padding: 24,
+    paddingTop: 48,
+    paddingBottom: 40,
   },
 
   // heading
@@ -375,6 +350,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    width: '75%',
+    alignSelf: 'center',
     shadowColor: COLORS.brand,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
@@ -406,7 +383,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // guest button
+  // create account button
   guestBtn: {
     height: 54,
     borderRadius: 14,
@@ -415,6 +392,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    width: '75%',
+    alignSelf: 'center',
   },
   guestText: {
     fontSize: 15,
