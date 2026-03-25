@@ -36,7 +36,7 @@ import {
     SecurityStats,
 } from '../../../shared/types/security'
 
-// same colors from POS
+
 const COLORS = {
   brand: '#C41E1E',
   brandLight: '#FFF0F0',
