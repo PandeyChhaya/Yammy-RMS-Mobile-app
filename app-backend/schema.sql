@@ -23,16 +23,16 @@ CREATE TABLE customers(
     updated_at      TIMESTAMP       DEFAULT NOW()
 );
 CREATE TABLE categories(
-    category_id SERIAL PRIMARY KEY AUTO_INCREMENT,
-    category_name VARCHAR(299) NOT NULL,
-    slug,
+    category_id     SERIAL PRIMARY KEY,
+    category_name   VARCHAR(299)    NOT NULL,
+    slug            VARCHAR(299)    UNIQUE  NOT NULL,       
     category_description TEXT,
-    parent_id SERIAL NOT NULL AUTO_INCREMENT,
-    display_order TEXT UNIQUE,
-    image_url,
-    is_active BOOLEAN DEFAULT VALUE TRUE, -- TRUE /FALSE
-    created_at TIMESTAMP DEFAULT VALUE NOW(),
-    updated_at TIMESTAMP DEFAULT VALUE NOW()
+    parent_id       INT             REFERENCES categories(category_id) ON DELETE SET NULL,
+    display_order  INT DEFAULT 0,
+    image_url       VARCHAR(500),
+    is_active       BOOLEAN         DEFAULT TRUE, -- TRUE /FALSE
+    created_at      TIMESTAMP       DEFAULT NOW(),
+    updated_at      TIMESTAMP       DEFAULT NOW()
 );
 CREATE TABLE menu_items(
     menu_items_id SERIAL PRIMARY KEY AUTO_INCREMENT,
