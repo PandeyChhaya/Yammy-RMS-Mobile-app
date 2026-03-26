@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS audit_logs, shifts, kitchen_display, discounts, inventory, reservations, payments, order_items, orders, menu_item_modifiers, menu_items, tables, categories, customers, users CASCADE;
+DROP TABLE IF EXISTS "User", "Product", "Restaurant", "Video", "Order", "OrderItem", "Table" CASCADE;
 
 CREATE TABLE users (
     user_id         SERIAL          PRIMARY KEY,
