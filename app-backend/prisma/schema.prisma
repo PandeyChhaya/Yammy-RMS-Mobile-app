@@ -1,0 +1,359 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id            String     @id
+  name          String
+  color         String     @default("#3B82F6")
+  description   String?
+  restaurant_id String
+  created_at    DateTime   @default(now())
+  Restaurant    Restaurant @relation(fields: [restaurant_id], references: [id])
+  Product       Product[]
+}
+
+model Order {
+  id            String      @id
+  order_number  String
+  table_id      String?
+  restaurant_id String
+  total_amount  Float
+  status        String      @default("pending")
+  created_at    DateTime    @default(now())
+  Restaurant    Restaurant  @relation(fields: [restaurant_id], references: [id])
+  Table         Table?      @relation(fields: [table_id], references: [id])
+  OrderItem     OrderItem[]
+}
+
+model OrderItem {
+  id          String  @id
+  order_id    String
+  product_id  String
+  quantity    Int
+  unit_price  Float
+  total_price Float
+  status      String  @default("active")
+  Order       Order   @relation(fields: [order_id], references: [id])
+  Product     Product @relation(fields: [product_id], references: [id])
+}
+
+model Product {
+  id             String      @id
+  name           String
+  price          Float
+  cost           Float       @default(0)
+  category_id    String
+  restaurant_id  String
+  stock_quantity Int         @default(0)
+  min_stock      Int         @default(0)
+  is_active      Boolean     @default(true)
+  created_at     DateTime    @default(now())
+  updated_at     DateTime
+  OrderItem      OrderItem[]
+  Category       Category    @relation(fields: [category_id], references: [id])
+  Restaurant     Restaurant  @relation(fields: [restaurant_id], references: [id])
+}
+
+model Restaurant {
+  id          String     @id
+  name        String
+  owner_email String     @unique
+  phone       String
+  address     String
+  logo_url    String?
+  status      String     @default("active")
+  created_at  DateTime   @default(now())
+  Category    Category[]
+  Order       Order[]
+  Product     Product[]
+  Table       Table[]
+  User        User[]
+  Video       Video[]
+}
+
+model Table {
+  id            String     @id
+  number        String
+  name          String
+  capacity      Int
+  status        String     @default("free")
+  restaurant_id String
+  created_at    DateTime   @default(now())
+  Order         Order[]
+  Restaurant    Restaurant @relation(fields: [restaurant_id], references: [id])
+}
+
+model User {
+  id            String     @id
+  email         String     @unique
+  password      String
+  name          String
+  role          String     @default("waiter")
+  restaurant_id String
+  created_at    DateTime   @default(now())
+  Restaurant    Restaurant @relation(fields: [restaurant_id], references: [id])
+}
+
+model Video {
+  id               String     @id
+  restaurant_id    String
+  title            String
+  description      String
+  video_url        String
+  thumbnail_url    String?
+  duration         Int
+  status           String     @default("pending")
+  rejection_reason String?
+  views            Int        @default(0)
+  likes            Int        @default(0)
+  created_at       DateTime   @default(now())
+  published_at     DateTime?
+  Restaurant       Restaurant @relation(fields: [restaurant_id], references: [id])
+}
+
+model audit_logs {
+  audit_id    Int       @id @default(autoincrement())
+  user_id     Int?
+  user_action String    @db.VarChar(100)
+  table_name  String    @db.VarChar(100)
+  record_id   Int
+  old_value   Json?
+  new_value   Json?
+  ip_address  String    @db.VarChar(45)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  users       users?    @relation(fields: [user_id], references: [user_id], onUpdate: NoAction)
+}
+
+model categories {
+  category_id          Int          @id @default(autoincrement())
+  category_name        String       @db.VarChar(299)
+  slug                 String       @unique @db.VarChar(299)
+  category_description String?
+  parent_id            Int?
+  display_order        Int?         @default(0)
+  image_url            String?      @db.VarChar(500)
+  is_active            Boolean?     @default(true)
+  created_at           DateTime?    @default(now()) @db.Timestamp(6)
+  updated_at           DateTime?    @default(now()) @db.Timestamp(6)
+  categories           categories?  @relation("categoriesTocategories", fields: [parent_id], references: [category_id], onUpdate: NoAction)
+  other_categories     categories[] @relation("categoriesTocategories")
+  menu_items           menu_items[]
+}
+
+model customers {
+  customer_id    Int            @id @default(autoincrement())
+  customer_name  String         @db.VarChar(200)
+  phone_number   String         @db.VarChar(20)
+  user_email     String?        @unique @db.VarChar(200)
+  user_address   String?
+  loyalty_points Int?           @default(0)
+  is_active      Boolean?       @default(true)
+  created_at     DateTime?      @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?      @default(now()) @db.Timestamp(6)
+  orders         orders[]
+  reservations   reservations[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model discounts {
+  discount_id      Int       @id @default(autoincrement())
+  discount_code    String    @unique @db.VarChar(50)
+  discount_name    String    @db.VarChar(200)
+  discount_type    String?   @default("fixed") @db.VarChar(20)
+  discount_value   Decimal?  @default(0.00) @db.Decimal(10, 2)
+  min_order_amount Decimal?  @default(0.00) @db.Decimal(10, 2)
+  max_uses         Int?      @default(1)
+  used_count       Int?      @default(0)
+  valid_from       DateTime? @default(now()) @db.Timestamp(6)
+  valid_until      DateTime  @db.Timestamp(6)
+  is_active        Boolean?  @default(true)
+  created_at       DateTime? @default(now()) @db.Timestamp(6)
+  updated_at       DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model inventory {
+  inventory_id  Int       @id @default(autoincrement())
+  item_name     String    @db.VarChar(200)
+  unit          String    @db.VarChar(50)
+  quantity      Decimal?  @default(0) @db.Decimal(10, 2)
+  reorder_level Decimal?  @default(0) @db.Decimal(10, 2)
+  cost_per_unit Decimal?  @default(0.00) @db.Decimal(10, 2)
+  supplier      String?   @db.VarChar(300)
+  is_active     Boolean?  @default(true)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model kitchen_display {
+  kitchen_display_id Int         @id @default(autoincrement())
+  order_id           Int
+  order_item_id      Int
+  order_status       String?     @default("received") @db.VarChar(20)
+  order_priority     String?     @default("in_queue") @db.VarChar(20)
+  received_at        DateTime?   @default(now()) @db.Timestamp(6)
+  prepared_at        DateTime?   @db.Timestamp(6)
+  completed_at       DateTime?   @db.Timestamp(6)
+  orders             orders      @relation(fields: [order_id], references: [order_id], onDelete: Cascade, onUpdate: NoAction)
+  order_items        order_items @relation(fields: [order_item_id], references: [order_item_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model menu_item_modifiers {
+  id            Int         @id @default(autoincrement())
+  menu_item_id  Int?
+  modifier_name String      @db.VarChar(300)
+  extra_charge  Decimal?    @default(0.00) @db.Decimal(10, 2)
+  is_available  Boolean?    @default(true)
+  created_at    DateTime?   @default(now()) @db.Timestamp(6)
+  updated_at    DateTime?   @default(now()) @db.Timestamp(6)
+  menu_items    menu_items? @relation(fields: [menu_item_id], references: [menu_items_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model menu_items {
+  menu_items_id          Int                   @id @default(autoincrement())
+  menu_items_category_id Int?
+  menu_items_name        String                @db.VarChar(200)
+  slug                   String                @unique @db.VarChar(200)
+  menu_items_description String?
+  price                  Decimal               @db.Decimal(10, 2)
+  cost_price             Decimal?              @db.Decimal(10, 2)
+  image_url              String?               @db.VarChar(500)
+  is_available           Boolean?              @default(true)
+  prep_time              Int?
+  calories               Int?
+  display_order          Int?                  @default(0)
+  created_at             DateTime?             @default(now()) @db.Timestamp(6)
+  updated_at             DateTime?             @default(now()) @db.Timestamp(6)
+  menu_item_modifiers    menu_item_modifiers[]
+  categories             categories?           @relation(fields: [menu_items_category_id], references: [category_id], onUpdate: NoAction)
+  order_items            order_items[]
+}
+
+model menu_items_modifiers {
+  id            Int       @id @default(autoincrement())
+  menu_item_id  Int?
+  modifier_name String    @db.VarChar(300)
+  extra_charge  Decimal?  @default(0.00) @db.Decimal(10, 2)
+  is_availabe   Boolean?  @default(true)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model order_items {
+  order_item_id     Int               @id @default(autoincrement())
+  order_id          Int
+  menu_item_id      Int
+  quantity          Int               @default(1)
+  unit_price        Decimal           @db.Decimal(10, 2)
+  subtotal          Decimal           @db.Decimal(10, 2)
+  special_request   String?
+  order_item_status String?           @default("pending") @db.VarChar(20)
+  created_at        DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at        DateTime?         @default(now()) @db.Timestamp(6)
+  kitchen_display   kitchen_display[]
+  menu_items        menu_items        @relation(fields: [menu_item_id], references: [menu_items_id], onUpdate: NoAction)
+  orders            orders            @relation(fields: [order_id], references: [order_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model orders {
+  order_id        Int               @id @default(autoincrement())
+  table_id        Int?
+  user_id         Int?
+  customer_id     Int?
+  order_type      String            @db.VarChar(20)
+  order_status    String?           @default("pending") @db.VarChar(20)
+  special_notes   String?
+  subtotal        Decimal?          @default(0.00) @db.Decimal(10, 2)
+  discount        Decimal?          @default(0.00) @db.Decimal(10, 2)
+  tax             Decimal?          @default(0.00) @db.Decimal(10, 2)
+  total_amount    Decimal?          @default(0.00) @db.Decimal(10, 2)
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?         @default(now()) @db.Timestamp(6)
+  kitchen_display kitchen_display[]
+  order_items     order_items[]
+  customers       customers?        @relation(fields: [customer_id], references: [customer_id], onUpdate: NoAction)
+  tables          tables?           @relation(fields: [table_id], references: [table_id], onUpdate: NoAction)
+  users           users?            @relation(fields: [user_id], references: [user_id], onUpdate: NoAction)
+  payments        payments[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model payments {
+  payment_id      Int       @id @default(autoincrement())
+  order_id        Int
+  payment_method  String    @db.VarChar(30)
+  amount_paid     Decimal   @db.Decimal(10, 2)
+  change_given    Decimal?  @default(0.00) @db.Decimal(10, 2)
+  payment_status  String?   @default("pending") @db.VarChar(20)
+  transaction_ref String?   @db.VarChar(100)
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  updated_at      DateTime? @default(now()) @db.Timestamp(6)
+  orders          orders    @relation(fields: [order_id], references: [order_id], onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reservations {
+  reservation_id     Int        @id @default(autoincrement())
+  customer_id        Int?
+  table_id           Int?
+  party_size         Int        @default(1)
+  reserved_at        DateTime   @db.Timestamp(6)
+  reservation_status String?    @default("pending") @db.VarChar(20)
+  reservation_notes  String?
+  created_at         DateTime?  @default(now()) @db.Timestamp(6)
+  updated_at         DateTime?  @default(now()) @db.Timestamp(6)
+  customers          customers? @relation(fields: [customer_id], references: [customer_id], onUpdate: NoAction)
+  tables             tables?    @relation(fields: [table_id], references: [table_id], onUpdate: NoAction)
+}
+
+model shifts {
+  shift_id      Int       @id @default(autoincrement())
+  user_id       Int
+  start_time    DateTime  @db.Timestamp(6)
+  end_time      DateTime? @db.Timestamp(6)
+  break_minutes Int?      @default(0)
+  total_hours   Decimal?  @db.Decimal(5, 2)
+  notes         String?
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  users         users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model tables {
+  table_id     Int            @id @default(autoincrement())
+  table_number String         @unique @db.VarChar(20)
+  floor        String?        @default("Ground Floor") @db.VarChar(20)
+  capacity     Int            @default(1)
+  table_status String?        @default("Available") @db.VarChar(20)
+  is_active    Boolean?       @default(true)
+  created_at   DateTime?      @default(now()) @db.Timestamp(6)
+  updated_at   DateTime?      @default(now()) @db.Timestamp(6)
+  orders       orders[]
+  reservations reservations[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  user_id       Int          @id @default(autoincrement())
+  user_name     String       @db.VarChar(200)
+  user_password String       @db.VarChar(200)
+  user_email    String       @unique @db.VarChar(260)
+  user_role     String       @db.VarChar(50)
+  is_active     Boolean?     @default(true)
+  last_login    DateTime?    @db.Timestamp(6)
+  refresh_token String?
+  created_at    DateTime?    @default(now()) @db.Timestamp(6)
+  updated_at    DateTime?    @default(now()) @db.Timestamp(6)
+  audit_logs    audit_logs[]
+  orders        orders[]
+  shifts        shifts[]
+}
