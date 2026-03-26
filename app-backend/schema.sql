@@ -1,13 +1,14 @@
 CREATE TABLE users(
-    user_id SERIAL PRIMARY KEY,
-    user_name VARCHAR(200) NOT NULL,
-    user_password CHAR(50) UNIQUE NOT NULL,
-    user_role VARCHAR(50) NOT NULL,
-    is_active BOOLEAN DEFAULT VALUE TRUE,
-    last_login DATETIME ,
-    refresh_token,
-    created_at TIMESTAMP DEFAULT VALUE NOW(),
-    updted_at TIMESTAMP DEFAULT VALUE NOW()
+    user_id         SERIAL          PRIMARY KEY,
+    user_name       VARCHAR(200)    NOT NULL,
+    user_password   VARCHAR(200)    NOT NULL,
+    user_email      VARCHAR(260)    UNIQUE    NOT NULL,
+    user_role       VARCHAR(50)     NOT NULL    CHECK(user_role IN ('Admin', 'Cashier', 'Waiter' , 'Kitchen')),
+    is_active       BOOLEAN         DEFAULT TRUE,
+    last_login      TIMESTAMP ,
+    refresh_token   TEXT,
+    created_at      TIMESTAMP       DEFAULT NOW(),
+    updated_at       TIMESTAMP       DEFAULT NOW()
 );
 
 CREATE TABLE customers(
