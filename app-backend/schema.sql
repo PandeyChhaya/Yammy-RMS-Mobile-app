@@ -8,19 +8,19 @@ CREATE TABLE users(
     last_login      TIMESTAMP ,
     refresh_token   TEXT,
     created_at      TIMESTAMP       DEFAULT NOW(),
-    updated_at       TIMESTAMP       DEFAULT NOW()
+    updated_at      TIMESTAMP       DEFAULT NOW()
 );
 
 CREATE TABLE customers(
-    customer_id SERIAL PRIMARY KEY AUTO_INCREMENT,
-    customer_name VARCHAR(200) DEFAULT VALUE CUSTOMER, 
-    phone_number INT DEFAULT VALUE XXXXXXXXXX,
-    user_email VARCHAR(200) NULL,
-    user_address VARCHAR(200) NULL,
-    loyalty_points INT NULL,
-    is_active BOOLEAN DEFAULT VALUE TRUE, --TRUE OR FALSE
-    created_at TIMESTAMP DEFAULT VALUE NOW(),
-    updated_at TIMESTAMP DEFAULT VALUE NOW()
+    customer_id     SERIAL PRIMARY KEY ,
+    customer_name   VARCHAR(200)    NOT NULL, 
+    phone_number    VARCHAR(20)     NOT NULL,
+    user_email      VARCHAR(200)    UNIQUE,
+    user_address    TEXT,
+    loyalty_points  INT             DEFAULT 0,
+    is_active       BOOLEAN         DEFAULT TRUE, --TRUE OR FALSE
+    created_at      TIMESTAMP       DEFAULT NOW(),
+    updated_at      TIMESTAMP       DEFAULT NOW()
 );
 CREATE TABLE categories(
     category_id SERIAL PRIMARY KEY AUTO_INCREMENT,
