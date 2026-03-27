@@ -7,6 +7,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: "postgresql://postgres:Herald%4054321@localhost:5432/yammy_fresh",
+    url: process.env.DATABASE_URL!,
   },
 });
