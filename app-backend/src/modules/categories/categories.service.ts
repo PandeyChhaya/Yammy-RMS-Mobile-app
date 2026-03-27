@@ -29,7 +29,7 @@ export const getCategory= async(body:any)=>{
             where:{category_id},
         }
     );
-    if(!categoryExists) throw new Error ("Categories does'nt exist!!");
+    if(!categoryExists) throw new Error ("Categories doesnt exist!!");
      return categoryExists;
 };
 
@@ -39,14 +39,14 @@ export const getAllCategory= async()=>{
     return categories;
 } 
 
-const putCategory=async(body:any)=>{
+export const putCategory=async(body:any)=>{
 
     const {category_id, category_name,category_description, slug}= body;
 
     const categoryExists= await prisma.categories.findUnique({
         where: {category_id},
     });
-    if (!categoryExists) throw new Error ("Category does'nt exist!!");
+    if (!categoryExists) throw new Error ("Category doesnt exist!!");
 
     const updatedCategory = await prisma.categories.update({
         where:{
@@ -70,7 +70,7 @@ const putCategory=async(body:any)=>{
             where:{category_id},
         });
 
-        if(!categoryExists) throw new Error("Category does'nt exist!!");
+        if(!categoryExists) throw new Error("Category doesnt exist!!");
 
         
         
