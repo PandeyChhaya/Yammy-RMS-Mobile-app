@@ -1,5 +1,3 @@
-// modules/products/Products.tsx
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertCircle, CheckCircle, Edit, Plus, Search, Trash2 } from 'lucide-react-native'
 import { useState } from 'react'
