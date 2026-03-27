@@ -1,31 +1,11 @@
 import { Router } from "express";
+import { login, logout, refresh, register } from "./auth.controller.js";
 
 const router = Router();
 
-router.post("/register",(req,res)=>
-            {
-                res.json({
-                    "message":"registered"
-                })
-            }
-);
-
-router.post("/login", (req,res)=>{
-    res.json({
-        "message": "logged in"
-    })
-});
-
-router.post("/logout", (req,res)=>{
-    res.json({
-        "message":"logged out"
-    })
-})
-
-router.post("/refresh-token", (req,res)=>{
-    res.json({
-        "message":"Refreshed"
-    })
-})
+router.post("/register", register);
+router.post("/login", login);
+router.post("/logout", logout);
+router.post("/refresh-token", refresh);
 
 export default router;

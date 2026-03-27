@@ -1,7 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) throw new Error("JWT_SECRET is not defined");
 
 
 export const protect = (req: Request, res: Response, next: NextFunction) => {
@@ -14,7 +16,7 @@ export const protect = (req: Request, res: Response, next: NextFunction) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET as string);
     (req as any).user = decoded;
     next();
   } catch (error) {
