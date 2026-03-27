@@ -13,7 +13,7 @@ export const postCategoryController= async(req:Request, res:Response)=>{
 
 export const getCategoryController= async(req:Request, res:Response)=>{
     try{
-        const response= await getCategory({category_id: parseInt(req.params.id || "0")});
+        const response= await getCategory({category_id: parseInt(String(req.params.id))});
         res.status(201).json(response);
     }
     catch(error){
@@ -31,7 +31,7 @@ export const getAllCategoryController = async(res:Response)=>{
 } ;
 export const putCategoryController= async(req:Request, res: Response)=>{
     try{
-        const response= await putCategory({...req.body, category_id: parseInt(req.params.id || "0")});
+        const response= await putCategory({...req.body, category_id: parseInt(String(req.params.id))});
         res.status(201).json(response);
     }
     catch(error){
@@ -40,7 +40,7 @@ export const putCategoryController= async(req:Request, res: Response)=>{
 };
 export const deleteCategoryController= async(req:Request, res:Response)=>{
     try{
-        const response= await deleteCategory({ category_id: parseInt(req.params.id || "0") });
+        const response= await deleteCategory({ category_id: parseInt(String(req.params.id)) });
         res.status(201).json(response)
     }catch(error){
         res.status(400).json({message:error});

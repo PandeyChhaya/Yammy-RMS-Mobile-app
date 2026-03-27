@@ -1,5 +1,3 @@
-
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, CheckCircle, Edit, Plus, Tags, Trash2 } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -446,7 +444,7 @@ export default function Categories() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FEF1A8',
+    backgroundColor: '#FDFAF3',
   },
   content: {
     padding: 16,
