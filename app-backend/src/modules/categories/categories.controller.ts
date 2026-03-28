@@ -20,10 +20,10 @@ export const getCategoryController= async(req:Request, res:Response)=>{
         res.status(400).json({message:error});
     }
 };
-export const getAllCategoryController = async(res:Response)=>{
+export const getAllCategoryController = async(req:Request, res:Response)=>{
     try{
-        const response= getAllCategory();
-        res.status(201).json(response);
+        const response= await getAllCategory();
+        res.status(400).json(response);
     }
     catch(error){
         res.status(400).json({message:error});
@@ -32,7 +32,7 @@ export const getAllCategoryController = async(res:Response)=>{
 export const putCategoryController= async(req:Request, res: Response)=>{
     try{
         const response= await putCategory({...req.body, category_id: parseInt(String(req.params.id))});
-        res.status(201).json(response);
+        res.status(20).json(response);
     }
     catch(error){
         res.status(400).json({message:error});

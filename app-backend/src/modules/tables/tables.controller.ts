@@ -14,16 +14,16 @@ export const postTableController= async(req:Request, res:Response)=>{
 export const getTableController= async(req:Request, res:Response)=>{
     try{
         const response= await getTable({table_id: parseInt(String(req.params.id))});
-        res.status(201).json(response);
+        res.status(200).json(response);
     }
     catch(error){
         res.status(400).json({message:error});
     }
 };
-export const getAllTableController = async(res:Response)=>{
+export const getAllTableController = async(req:Request, res:Response)=>{
     try{
-        const response= getAllTable();
-        res.status(201).json(response);
+        const response= await getAllTable();
+        res.status(200).json(response);
     }
     catch(error){
         res.status(400).json({message:error});
@@ -32,7 +32,7 @@ export const getAllTableController = async(res:Response)=>{
 export const putTableController= async(req:Request, res: Response)=>{
     try{
         const response= await putTable({...req.body, table_id: parseInt(String(req.params.id))});
-        res.status(201).json(response);
+        res.status(200).json(response);
     }
     catch(error){
         res.status(400).json({message:error});
@@ -41,7 +41,7 @@ export const putTableController= async(req:Request, res: Response)=>{
 export const deleteTableController= async(req:Request, res:Response)=>{
     try{
         const response= await deleteTable({ table_id: parseInt(String(req.params.id)) });
-        res.status(201).json(response)
+        res.status(200).json(response)
     }catch(error){
         res.status(400).json({message:error});
     }
