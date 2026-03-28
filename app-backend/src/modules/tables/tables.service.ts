@@ -64,5 +64,9 @@ export const deleteTable = async(body:any)=>{
     });
     if(!checkTableExists) throw new Error ("Table doesnt exist!!");
 
+     await prisma.tables.delete ({
+        where:{table_id}
+    })
+
     return{message:("Table deleted successfully!!"), table_id};
 }
