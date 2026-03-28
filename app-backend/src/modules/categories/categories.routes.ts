@@ -9,6 +9,6 @@ router.post("/",protect, postCategoryController);
 router.get("/", protect, getAllCategoryController);
 router.get("/:id", protect, getCategoryController);
 router.put("/:id", protect, putCategoryController);
-router.delete(":/id", protect , deleteCategoryController);
+router.delete("/:id", protect , deleteCategoryController);
 
 export default router;
