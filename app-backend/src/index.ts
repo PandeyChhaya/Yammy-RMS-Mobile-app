@@ -6,6 +6,7 @@ import express from "express";
 import authRouter from "./modules/auth/auth.routes.js";
 import categoriesRouter from "./modules/categories/categories.routes.js";
 import menuItemsRouter from "./modules/menu-items/menu-items.routes.js";
+import orderItemRouter from "./modules/order_items/order_items.routes.js";
 import orderRouter from "./modules/orders/orders.routes.js";
 import tableRouter from "./modules/tables/tables.routes.js";
 
@@ -19,6 +20,7 @@ app.use("/api/categories", categoriesRouter);
 app.use("/api/menuItems", menuItemsRouter);
 app.use("/api/table/", tableRouter);
 app.use("/api/order",orderRouter);
+app.use("/api/orderItem", orderItemRouter);
 
 
 
