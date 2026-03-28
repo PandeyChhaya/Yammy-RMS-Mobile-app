@@ -35,41 +35,32 @@ import { useCart, usePayment, useSplitTicket, useTables } from './hooks'
 import { ProductDisplay } from './types/products'
 import { TableData } from './types/tables'
 
-// ─── Design Tokens ─────────────────────────────────────────────────────────────
-// Direction: "Upscale café — aged parchment, dark espresso, burnished brass"
+
 const C = {
-  // Core palette
-  espresso:    '#1C1008',   // near-black with warmth — primary text, nav bg
-  roast:       '#3D2010',   // deep brown — secondary text, icon fills
-  clay:        '#7A4528',   // mid-brown — muted text, placeholders
-  latte:       '#C8956A',   // warm tan — borders, dividers
-  cream:       '#FDF6EC',   // warm off-white — app background
-  parchment:   '#F5E9D4',   // slightly deeper cream — card bg, inputs
-  vellum:      '#EDD9BC',   // warm tan surface — headers, modals
-
-  // Accent: burnished brass / aged gold
-  brass:       '#B5822A',   // primary accent — CTAs, active states
-  brassLight:  '#F7EDD8',   // brass tint — badge fills, highlights
-  brassBorder: '#DEC07A',   // brass border
-  brassGlow:   '#B5822A40', // subtle shadow
-
-  // Status
-  sage:        '#3B6E52',   // success green — earthy, not clinical
+  
+  espresso:    '#1C1008',   
+  roast:       '#3D2010',   
+  clay:        '#7A4528',  
+  latte:       '#C8956A', 
+  cream:       '#FDF6EC',   
+  parchment:   '#F5E9D4',   
+  vellum:      '#EDD9BC',   
+  brass:       '#B5822A',   
+  brassLight:  '#F7EDD8',   
+  brassBorder: '#DEC07A', 
+  brassGlow:   '#B5822A40', 
+  sage:        '#3B6E52',   
   sageLight:   '#EBF4EE',
   sageBorder:  '#9FCFB4',
-
-  terracotta:  '#A03020',   // error / occupied — warm red
+  terracotta:  '#A03020',   
   tcLight:     '#FAECEA',
   tcBorder:    '#E8A898',
-
-  // Always
-  onDark:      '#FDF6EC',   // text on dark/colored bg
+  onDark:      '#FDF6EC',   
 }
 
-// ─── Shared token shortcuts ─────────────────────────────────────────────────────
+
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
-// ─── Live Clock ─────────────────────────────────────────────────────────────────
 function LiveClock() {
   const [time, setTime] = useState(new Date())
   useEffect(() => {
@@ -100,7 +91,6 @@ const clockStyles = StyleSheet.create({
   date:  { fontSize: 10, color: C.latte, fontWeight: '500', marginTop: 2, letterSpacing: 0.6 },
 })
 
-// ─── Status Banner ──────────────────────────────────────────────────────────────
 function StatusBanner({ message, type }: { message: string; type: 'success' | 'error' }) {
   const isSuccess = type === 'success'
   return (
@@ -129,7 +119,7 @@ const bannerStyles = StyleSheet.create({
   text:    { fontSize: 13, fontWeight: '600', color: C.espresso, flex: 1, textAlign: 'center' },
 })
 
-// ─── Divider ────────────────────────────────────────────────────────────────────
+
 function Divider() {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 4 }}>
@@ -139,8 +129,6 @@ function Divider() {
     </View>
   )
 }
-
-// ─── Section Header ─────────────────────────────────────────────────────────────
 function SectionHeader({ icon, title, count }: { icon: string; title: string; count?: number }) {
   return (
     <View style={shStyles.wrap}>
@@ -179,10 +167,9 @@ const shStyles = StyleSheet.create({
   countText: { fontSize: 11, fontWeight: '700', color: C.brass },
 })
 
-// ─── Main Component ─────────────────────────────────────────────────────────────
 export default function POS() {
 
-  // ── Hooks ──
+  
   const { tabs, activeTabId } = useApp()
   const { settings } = useUserSettings()
   const currentTab = tabs.find(tab => tab.id === activeTabId)
@@ -265,7 +252,7 @@ export default function POS() {
     }
   }, [shouldGenerateTicket])
 
-  // ── Loading ──
+  
   if (loadingProducts || loadingCategories || loadingTables) {
     return (
       <View style={s.loading}>
@@ -281,7 +268,7 @@ export default function POS() {
     )
   }
 
-  // ── Helpers ──
+  
   const enrichedProducts: ProductDisplay[] = (products || []).map((product: any) => {
     const category  = categories.find(c => c.id === product.category_id)
     const taxAmount = calculateTax(product.price || 0, product.category_id, categories)
@@ -353,15 +340,15 @@ export default function POS() {
   const freeTablesCount     = tables.filter(t => t.status === 'free').length
   const occupiedTablesCount = tables.filter(t => t.status !== 'free').length
 
-  // ── Render ──
+  
   return (
     <View style={s.root}>
 
-      {/* ── Header ── */}
+      
       <View style={s.header}>
         <View style={s.headerTop}>
 
-          {/* Brand */}
+          
           <View style={s.brand}>
             <View style={s.logoBadge}>
               <Utensils size={18} color={C.cream} />
@@ -372,7 +359,7 @@ export default function POS() {
             </View>
           </View>
 
-          {/* Right: clock + clear */}
+          
           <View style={s.headerRight}>
             <LiveClock />
             {cartItems.length > 0 && (
@@ -384,7 +371,7 @@ export default function POS() {
           </View>
         </View>
 
-        {/* Context strip */}
+       
         <View style={s.contextStrip}>
           <View style={[s.contextBadge, selectedTable ? s.ctxTable : s.ctxDirect]}>
             <Text style={s.contextEmoji}>{selectedTable ? '🪑' : '🛒'}</Text>
@@ -400,7 +387,7 @@ export default function POS() {
           </View>
         </View>
 
-        {/* Tabs */}
+      
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.tabsScroll}>
           <View style={s.tabsRow}>
             {tabOptions.map((tab) => {
@@ -427,18 +414,18 @@ export default function POS() {
         </ScrollView>
       </View>
 
-      {/* ── Banners ── */}
+      
       {showSuccessMessage && <StatusBanner message={showSuccessMessage} type="success" />}
       {showErrorMessage   && <StatusBanner message={showErrorMessage}   type="error"   />}
 
-      {/* ── Content ── */}
+      
       <ScrollView style={s.content} contentContainerStyle={s.contentInner} showsVerticalScrollIndicator={false}>
 
-        {/* ── TABLES TAB ── */}
+        
         {activeTab === 'tables' && (
           <View style={s.tabContent}>
 
-            {/* Stats */}
+           
             <View style={s.statsRow}>
               {[
                 { num: freeTablesCount,     label: 'Free',     color: C.sage,       border: C.sageBorder },
@@ -452,7 +439,7 @@ export default function POS() {
               ))}
             </View>
 
-            {/* Direct sale */}
+            
             <TouchableOpacity
               style={s.directSaleBtn}
               onPress={() => { setSelectedTable(null); setActiveTab('products') }}
@@ -504,11 +491,11 @@ export default function POS() {
           </View>
         )}
 
-        {/* ── PRODUCTS TAB ── */}
+      
         {activeTab === 'products' && (
           <View style={s.tabContent}>
 
-            {/* Search */}
+           
             <View style={s.searchCard}>
               <Text style={{ fontSize: 13, color: C.clay }}>🔍</Text>
               <TextInput
@@ -525,7 +512,7 @@ export default function POS() {
               )}
             </View>
 
-            {/* Categories */}
+            
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={s.categoriesRow}>
                 <TouchableOpacity
@@ -552,7 +539,7 @@ export default function POS() {
 
             <Text style={s.resultCount}>{filteredProducts.length} items</Text>
 
-            {/* Products grid */}
+            
             <View style={s.productsGrid}>
               {filteredProducts.map((product) => (
                 <TouchableOpacity
@@ -561,7 +548,7 @@ export default function POS() {
                   onPress={() => addToCart(product)}
                   activeOpacity={0.82}
                 >
-                  {/* Accent stripe */}
+                  
                   <View style={[s.productStripe, { backgroundColor: getCategoryColor(product.category_id) }]} />
 
                   <View style={[s.productIconWrap, { borderColor: getCategoryColor(product.category_id) + '50' }]}>
@@ -585,7 +572,7 @@ export default function POS() {
                     </View>
                   </View>
 
-                  {/* Add button */}
+                  
                   <View style={s.productAddBtn}>
                     <Text style={s.productAddText}>+</Text>
                   </View>
@@ -595,7 +582,7 @@ export default function POS() {
           </View>
         )}
 
-        {/* ── CART TAB ── */}
+        
         {activeTab === 'cart' && (
           <View style={s.tabContent}>
             {cartItems.length === 0 ? (
@@ -648,7 +635,7 @@ export default function POS() {
                   </View>
                 ))}
 
-                {/* Summary */}
+               
                 <View style={s.summaryCard}>
                   <Text style={s.summaryTitle}>Order Summary</Text>
                   <Divider />
@@ -667,7 +654,7 @@ export default function POS() {
                   </View>
                 </View>
 
-                {/* Actions */}
+                
                 <View style={s.actionsRow}>
                   <TouchableOpacity style={s.payBtn} onPress={() => setShowPaymentModal(true)} activeOpacity={0.85}>
                     <CreditCard size={17} color={C.cream} />
@@ -683,7 +670,7 @@ export default function POS() {
         )}
       </ScrollView>
 
-      {/* ── Modals ── */}
+      
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
@@ -703,10 +690,10 @@ export default function POS() {
   )
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────────
+
 const s = StyleSheet.create({
 
-  // ── Root / Loading ──
+  
   root:    { flex: 1, backgroundColor: C.cream },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.cream, padding: 24 },
   loadingCard: {
@@ -732,8 +719,9 @@ const s = StyleSheet.create({
   loadingTitle: { fontSize: 20, fontWeight: '800', color: C.espresso, marginTop: 14, letterSpacing: 0.4 },
   loadingText:  { fontSize: 13, color: C.clay, marginTop: 4, letterSpacing: 0.2 },
 
-  // ── Header ──
-  // Dark espresso header for strong contrast — premium feel
+
+  
+
   header: {
     backgroundColor: C.espresso,
     paddingTop: 52,
@@ -774,7 +762,7 @@ const s = StyleSheet.create({
   },
   clearBtnText: { color: C.cream, fontSize: 11, fontWeight: '700', letterSpacing: 0.2 },
 
-  // ── Context Strip ──
+  
   contextStrip: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     marginBottom: 12,
@@ -798,7 +786,7 @@ const s = StyleSheet.create({
   onlineDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: C.sage },
   onlineText: { fontSize: 10, fontWeight: '700', color: C.sage },
 
-  // ── Tabs ──
+
   tabsScroll: { marginTop: 2 },
   tabsRow:    { flexDirection: 'row', gap: 0, paddingBottom: 0 },
   tab: {
@@ -816,12 +804,12 @@ const s = StyleSheet.create({
   },
   badgeText: { color: C.cream, fontSize: 9, fontWeight: '900' },
 
-  // ── Content ──
+  
   content:      { flex: 1 },
   contentInner: { padding: 16, paddingBottom: 48 },
   tabContent:   { gap: 14 },
 
-  // ── Stats ──
+
   statsRow: { flexDirection: 'row', gap: 10 },
   statCard: {
     flex: 1,
@@ -839,7 +827,7 @@ const s = StyleSheet.create({
   statNumber: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
   statLabel:  { fontSize: 10, color: C.clay, fontWeight: '600', marginTop: 3, letterSpacing: 0.5 },
 
-  // ── Direct Sale ──
+  
   directSaleBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9,
     backgroundColor: C.roast,
@@ -853,7 +841,7 @@ const s = StyleSheet.create({
   },
   directSaleText: { color: C.cream, fontSize: 14, fontWeight: '700', letterSpacing: 0.3 },
 
-  // ── Tables Grid ──
+  
   tablesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   tableCard: {
     backgroundColor: C.parchment,
@@ -891,7 +879,7 @@ const s = StyleSheet.create({
   tableStatusText: { fontSize: 10, fontWeight: '700' },
   tableCapacity:   { fontSize: 10, color: C.clay, marginTop: 2 },
 
-  // ── Search ──
+  
   searchCard: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: C.parchment,
@@ -912,7 +900,7 @@ const s = StyleSheet.create({
     paddingVertical: 12,
   },
 
-  // ── Categories ──
+  
   categoriesRow: { flexDirection: 'row', gap: 8, paddingVertical: 2 },
   categoryBtn: {
     backgroundColor: C.parchment,
@@ -924,10 +912,10 @@ const s = StyleSheet.create({
   categoryBtnText:       { fontSize: 12, fontWeight: '600', color: C.clay },
   categoryBtnTextActive: { color: C.cream },
 
-  // ── Result count ──
+  
   resultCount: { fontSize: 11, color: C.clay, fontWeight: '500', letterSpacing: 0.3 },
 
-  // ── Products Grid ──
+  
   productsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   productCard: {
     backgroundColor: C.parchment,
@@ -944,7 +932,7 @@ const s = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  // Thin coloured top stripe per category
+  
   productStripe: {
     position: 'absolute', top: 0, left: 0, right: 0, height: 3,
   },
@@ -969,7 +957,7 @@ const s = StyleSheet.create({
   },
   productAddText: { color: C.cream, fontSize: 16, fontWeight: '700', lineHeight: 20 },
 
-  // ── Empty Cart ──
+  
   emptyCart:     { alignItems: 'center', paddingVertical: 56, gap: 10 },
   emptyCartIcon: {
     width: 72, height: 72, borderRadius: radius.lg,
@@ -988,7 +976,7 @@ const s = StyleSheet.create({
   },
   browseBtnText: { color: C.cream, fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
 
-  // ── Cart Items ──
+  
   cartItemCard: {
     backgroundColor: C.parchment,
     borderRadius: radius.md,
@@ -1027,7 +1015,7 @@ const s = StyleSheet.create({
   qtyText:       { fontSize: 15, fontWeight: '800', color: C.espresso, minWidth: 22, textAlign: 'center' },
   cartItemPrice: { fontSize: 15, fontWeight: '900', color: C.brass },
 
-  // ── Summary ──
+  
   summaryCard: {
     backgroundColor: C.parchment,
     borderRadius: radius.md,
@@ -1048,7 +1036,7 @@ const s = StyleSheet.create({
   summaryLabelTotal: { fontSize: 16, fontWeight: '800', color: C.espresso },
   summaryValueTotal: { fontSize: 19, fontWeight: '900', color: C.brass },
 
-  // ── Actions ──
+  
   actionsRow: { flexDirection: 'row', gap: 12 },
   payBtn: {
     flex: 2,
