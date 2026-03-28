@@ -73,7 +73,7 @@ export default function Dashboard() {
       id: 'login',
       label: 'login',
       icon: < MessageCircleQuestionIcon size={24} color="#10B981" />,
-      route: '/modules/login/login',
+      route: '/modules/auth/login',
     },
     
 

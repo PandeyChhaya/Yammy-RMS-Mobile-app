@@ -28,7 +28,7 @@ const COLORS = {
   inputBg: '#FFFDF7',
 }
 
-const API_URL = 'http://10.23.1.14:3000/api'
+const API_URL = 'http://192.168.1.71:5000/api';
 
 export default function Login() {
   const router = useRouter()
@@ -51,8 +51,8 @@ export default function Login() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: emailText.trim(),
-          password: passwordText.trim(),
+          user_email: emailText.trim(),
+          user_password: passwordText.trim(),
         }),
       })
 
@@ -62,10 +62,11 @@ export default function Login() {
         throw new Error(result.error || 'Login didnt work')
       }
 
-      await AsyncStorage.setItem('@auth_token', result.token)
-      await AsyncStorage.setItem('@user', JSON.stringify(result.user))
+      await AsyncStorage.setItem('@accessToken', result.accessToken)
+      await AsyncStorage.setItem('@refreshToken', result.refreshToken)
+     
 
-      router.replace('./index')
+      router.replace('./modules')
       
     } catch (err: any) {
       Alert.alert('Could not log in', err.message || 'Wrong email or password maybe?')
@@ -76,7 +77,7 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      {/* Zone 1 — Brand Header */}
+      
       <View style={styles.topZone}>
         <View style={styles.patternOverlay}>
           {Array.from({ length: 40 }).map((_, i) => (
@@ -102,11 +103,9 @@ export default function Login() {
         </View>
 
         <Text style={styles.appTitle}>Yammy</Text>
-
-       
       </View>
 
-      {/* Zone 2 — Login Card */}
+      
       <View style={styles.loginCard}>
         <ScrollView
           style={styles.scrollArea}
@@ -114,13 +113,13 @@ export default function Login() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* heading */}
+        
           <View style={styles.headingArea}>
             <Text style={styles.welcomeText}>Welcome Back</Text>
             <Text style={styles.welcomeSub}>Sign in to your account</Text>
           </View>
 
-          {/* email */}
+          
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
             <View style={styles.inputWrapper}>
@@ -138,7 +137,7 @@ export default function Login() {
             </View>
           </View>
 
-          {/* password */}
+         
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
             <View style={styles.inputWrapper}>
@@ -165,12 +164,12 @@ export default function Login() {
             </View>
           </View>
 
-          {/* forgot password */}
+          
           <TouchableOpacity style={styles.forgotBtn}>
             <Text style={styles.forgotText}>Forgot Password?</Text>
           </TouchableOpacity>
 
-          {/* sign in button */}
+         
           <TouchableOpacity
             style={[styles.signInBtn, isProcessing && { opacity: 0.6 }]}
             onPress={doLogin}
@@ -182,24 +181,24 @@ export default function Login() {
             </Text>
           </TouchableOpacity>
 
-          {/* divider */}
+         
+
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>or</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* create account button */}
+         
           <TouchableOpacity
             style={styles.guestBtn}
-            onPress={() => router.push('/modules/signup/signup')}
+            onPress={() => router.push('/modules/auth/signup')}
           >
             <Text style={styles.guestText}>Create New Account</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
 
-      {/* version */}
       <Text style={styles.versionText}></Text>
     </View>
   )
@@ -211,7 +210,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
 
-  // zone 1
+  
   topZone: {
     height: height * 0.28,
     backgroundColor: COLORS.brand,
