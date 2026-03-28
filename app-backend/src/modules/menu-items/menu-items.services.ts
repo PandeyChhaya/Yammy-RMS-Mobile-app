@@ -9,7 +9,7 @@ export const postMenuItems = async(body:any)=>{
         where :{slug},
     
     })
-    if (existingMenuItems) throw new Error("Menu Item already exists"!!);
+    if (existingMenuItems) throw new Error("Menu Item already exists!!");
 
     const updatedMenuItem=await  prisma.menu_items.create({
         data:{
@@ -33,13 +33,13 @@ export const getMenuItems= async(body:any)=>{
 
     if(!menuItemsExist) throw new Error("Menu Item doesnt exist!!" );
 
-    return getMenuItems;
+    return menuItemsExist;
 
 };
 
 export const getAllMenuItems = async()=>{
 
-    const menuItems= prisma.menu_items.findMany();
+    const menuItems= await prisma.menu_items.findMany();
     return menuItems;
 
 };
