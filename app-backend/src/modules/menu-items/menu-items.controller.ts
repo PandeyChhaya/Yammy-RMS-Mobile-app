@@ -13,20 +13,20 @@ export const postMenuItemsController = async(req: Request, res: Response)=>{
 
     
 };
-export const getAllMenuItemsController= async( res: Response)=>{
+export const getAllMenuItemsController= async(req: Request,  res: Response)=>{
     try{
-        const response= getAllMenuItems();
-        res.status(201).json(response);
+        const response= await getAllMenuItems();
+        res.status(200).json(response);
     
     }
     catch(error){
-        res.status(401).json({message:error});
+        res.status(400).json({message:error});
     }
 };
 export const getMenuItemsController= async(req: Request, res: Response)=>{
     try{
         const response = await getMenuItems({menu_items_id: parseInt(String(req.params.id))});
-        res.status(201).json(response);
+        res.status(200).json(response);
     }
     catch(error){
         res.status(400).json({message:error});
@@ -34,17 +34,17 @@ export const getMenuItemsController= async(req: Request, res: Response)=>{
 };
 export const putMenuItemsController= async(req:Request , res:Response)=>{
     try{
-        const response =  await putMenuItems({menu_item_id: parseInt(String(req.params.id))});
-        res.status(201).json(response);
+        const response =  await putMenuItems({...req.body,menu_item_id: parseInt(String(req.params.id))});
+        res.status(200).json(response);
     }
     catch(error){
-        res.status(401).json({message:error});
+        res.status(400).json({message:error});
     }
 }
 export const deleteMenuItemsController= async(req:Request, res: Response)=>{
     try{
         const response = await deleteMenuItem({menu_items_id: parseInt(String(req.params.id))});
-        res.status(201).json(response);
+        res.status(200).json(response);
     }
     catch(error){
         res.status(400).json({message:error});
