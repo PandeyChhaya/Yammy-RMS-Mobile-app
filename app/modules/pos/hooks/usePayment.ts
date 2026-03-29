@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTaxSettings } from '../../../../shared/hooks/useTaxSettings'
 import { logsService } from '../../../../shared/services/logsService'
 import { ordersService } from '../../orders/services/orderService'
-import { Product } from '../../products/types/products'
+import { Product } from '../../products/types/menu-items'
 import { CartItem } from '../types/cart'
 import { TableData } from '../types/tables'
 

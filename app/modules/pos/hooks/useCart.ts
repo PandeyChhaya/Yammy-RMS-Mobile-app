@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useActiveTabState } from '../../../../shared/hooks/useTabState'
 import { useTaxSettings } from '../../../../shared/hooks/useTaxSettings'
-import { Product } from '../../products/types/products'
+import { Product } from '../../products/types/menu-items'
 import { Category } from '../services/categoriesService'
 import { tablesService } from '../services/tablesService'
 import { CartItem, CartItemDisplay, LocalCart } from '../types/cart'
