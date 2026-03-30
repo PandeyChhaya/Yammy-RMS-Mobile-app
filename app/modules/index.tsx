@@ -44,10 +44,10 @@ export default function Dashboard() {
     },
       
     {
-      id: 'products',
-      label: 'Products',
+      id: 'menu-items',
+      label: 'Menu-Items',
       icon: <Receipt size={24} color="#1A1A1A" />,
-      route: '/modules/products/Products',
+      route: '/modules/menu-items/menu-items',
     },
       
     {

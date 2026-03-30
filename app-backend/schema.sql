@@ -192,3 +192,9 @@ CREATE TABLE audit_logs (
     ip_address      VARCHAR(45)     NOT NULL,
     created_at      TIMESTAMP       DEFAULT NOW()
 );
+
+CREATE TABLE reports(
+    report_id SERIAL PRIMARY KEY,
+    report_name VARCHAR(100) ,
+    report_status VARCHAR(100),
+)
