@@ -36,23 +36,21 @@ export const getAllUsers= async()=>{
     return users;
 };
 export const updateUser= async(body:any)=>{
-    const{user_id, user_email, user_name, user_role, user_password}= body;
+    const{user_id, user_email, user_name, user_role}= body;
 
     const userExists= await prisma.users.findUnique({
         where:{user_id},
     });
     if(!userExists) throw new Error ("User doesnt exist!!");
 
-    const updatedUser=({
-        where:{
-            user_id
+    const updatedUser=await prisma.users.update({
+        where:{ 
+            user_id,
         },
         data:{
-            user_email,
             user_name,
-            user_role,
-            user_password,
-            
+            user_email,
+            user_role
         }
     })
 
