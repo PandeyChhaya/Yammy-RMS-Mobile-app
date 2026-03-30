@@ -35,7 +35,7 @@ export const getAllUsers= async()=>{
     const users= await prisma.users.findMany();
     return users;
 };
-export const updateUser= async(body:any)=>{
+export const putUser= async(body:any)=>{
     const{user_id, user_email, user_name, user_role}= body;
 
     const userExists= await prisma.users.findUnique({
