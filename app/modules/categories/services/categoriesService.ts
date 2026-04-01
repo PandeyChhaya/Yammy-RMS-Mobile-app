@@ -1,73 +1,67 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import authService from '../../auth/services/auth.service';
 
-export interface CreateCategoryRequest {
-  name: string
-  description?: string
-  color?: string
-  tax_rate_id?: string
-  is_active?: boolean
-}
+const BASE_URL = 'http://192.168.1.71:5000/api/categories';
 
-export interface UpdateCategoryRequest {
-  name?: string
-  description?: string
-  color?: string
-  tax_rate_id?: string
-  is_active?: boolean
-}
-
+// One single type that matches backend exactly
 export interface Category {
-  id: string
-  name: string
-  description?: string
-  color: string
-  tax_rate_id?: string
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  category_id: string;
+  category_name: string;
+  category_description: string;
 }
 
-export const categoriesService = {
-  getCategories: async (): Promise<Category[]> => {
-    const json = await AsyncStorage.getItem('@categories')
-    return json ? JSON.parse(json) : []
-  },
+// Build auth headers
+const authHeaders = async () => {
+  const token = await authService.getToken();
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  };
+};
 
-  createCategory: async (request: CreateCategoryRequest): Promise<Category> => {
-    const categories = await categoriesService.getCategories()
-    const newCategory: Category = {
-      id: `cat-${Date.now()}`,
-      name: request.name,
-      description: request.description || '',
-      color: request.color || '#3B82F6',
-      tax_rate_id: request.tax_rate_id || '',
-      is_active: request.is_active !== undefined ? request.is_active : true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
-    categories.push(newCategory)
-    await AsyncStorage.setItem('@categories', JSON.stringify(categories))
-    return newCategory
-  },
+// GET all categories
+const getCategories = async (): Promise<Category[]> => {
+  const response = await fetch(BASE_URL, {
+    method: 'GET',
+    headers: await authHeaders(),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message);
+  return data;
+};
 
-  updateCategory: async (id: string, request: UpdateCategoryRequest): Promise<Category> => {
-    const categories = await categoriesService.getCategories()
-    const index = categories.findIndex(c => c.id === id)
-    if (index === -1) throw new Error('Category not found')
-    
-    const updated = {
-      ...categories[index],
-      ...request,
-      updated_at: new Date().toISOString(),
-    }
-    categories[index] = updated
-    await AsyncStorage.setItem('@categories', JSON.stringify(categories))
-    return updated
-  },
+// POST create a category
+const createCategory = async (category: Omit<Category, 'category_id'>): Promise<Category> => {
+  const response = await fetch(BASE_URL, {
+    method: 'POST',
+    headers: await authHeaders(),
+    body: JSON.stringify(category),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message);
+  return data;
+};
 
-  deleteCategory: async (id: string): Promise<void> => {
-    const categories = await categoriesService.getCategories()
-    const filtered = categories.filter(c => c.id !== id)
-    await AsyncStorage.setItem('@categories', JSON.stringify(filtered))
-  },
-}
+// PUT update a category
+const updateCategory = async (id: string, updates: Partial<Omit<Category, 'category_id'>>): Promise<Category> => {
+  const response = await fetch(`${BASE_URL}/${id}`, {
+    method: 'PUT',
+    headers: await authHeaders(),
+    body: JSON.stringify(updates),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message);
+  return data;
+};
+
+// DELETE a category
+const deleteCategory = async (id: string): Promise<void> => {
+  const response = await fetch(`${BASE_URL}/${id}`, {
+    method: 'DELETE',
+    headers: await authHeaders(),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message);
+};
+
+const categoriesService = { getCategories, createCategory, updateCategory, deleteCategory };
+export default categoriesService;
