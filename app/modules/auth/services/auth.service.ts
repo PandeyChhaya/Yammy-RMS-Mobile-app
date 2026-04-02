@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const BASE_URL = 'http://192.168.1.71:5000/api/auth'
 
-export const authService = {
+export  const authService = {
 
   getToken: async (): Promise<string | null> => {
     const token = await AsyncStorage.getItem('@accessToken')
@@ -35,7 +35,7 @@ export const authService = {
     const userId = await AsyncStorage.getItem('user_id')
 
     await fetch(`${BASE_URL}/logout`, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
