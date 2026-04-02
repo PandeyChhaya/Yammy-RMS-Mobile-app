@@ -1,6 +1,6 @@
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http:// 192.168.1.71:5000/api/categories';
+const BASE_URL= 'http://192.168.1.71:5000/api/categories';
 
 
 export interface Category{
@@ -38,7 +38,7 @@ const getCategory= async():  Promise<Category> =>{
   return data;
 };
 const putCategory= async(category_id: number, updates: Partial<Omit<Category, 'category_id'>>) : Promise<Category> => {
-    const response = await fetch (`${BASE_URL}/ ${category_id}`,{
+    const response = await fetch (`${BASE_URL}/${category_id}`,{
       method: 'PUT',
       headers: await auth_headers(),
       body: JSON.stringify(updates),
@@ -49,8 +49,8 @@ const putCategory= async(category_id: number, updates: Partial<Omit<Category, 'c
     return data;
 };
 const deleteCategory= async(category_id:number) : Promise<Category> =>{
-    const response = await fetch(`${BASE_URL}/ ${category_id}`,{
-      method:'DELETECATEGORY',
+    const response = await fetch(`${BASE_URL}/${category_id}`,{
+      method:'DELETE',
       headers: await auth_headers(),
     
     });
