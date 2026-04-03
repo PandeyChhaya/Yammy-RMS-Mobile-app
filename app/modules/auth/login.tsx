@@ -74,7 +74,7 @@ export default function Login() {
       await AsyncStorage.setItem('@accessToken',  result.accessToken)
       await AsyncStorage.setItem('@refreshToken', result.refreshToken)
 
-      router.replace('./modules')
+      router.replace('./modules/Dashboard')
 
     } catch (err: any) {
       Alert.alert('Could not log in', err.message || 'Wrong email or password maybe?')

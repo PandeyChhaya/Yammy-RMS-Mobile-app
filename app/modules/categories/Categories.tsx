@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { useTaxSettings } from '../../../shared/hooks/useTaxSettings';
-import { categoriesService } from './services/categoriesService';
+import categoriesService from './services/categoriesService';
 
 interface Category {
   id: string

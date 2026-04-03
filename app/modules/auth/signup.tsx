@@ -1,11 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
-import { CheckCircle2, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react-native'
+import { CheckCircle2, Eye, EyeOff, Lock, Mail, Phone, User, Utensils } from 'lucide-react-native'
 import { useState } from 'react'
 import {
   Alert,
   Dimensions,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,44 +15,52 @@ import {
 
 const { height } = Dimensions.get('window')
 
-const COLORS = {
-  brand: '#C41E1E',
-  gold: '#C4933E',
-  background: '#FDFAF3',
-  surface: '#FFFFFF',
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B5E3A',
-  textMuted: '#A89870',
-  border: '#EDE0B8',
-  inputBg: '#FFFDF7',
-  success: '#2E7D32',
-  successLight: '#F0FDF4',
+const C = {
+  espresso:    '#1C1008',
+  roast:       '#3D2010',
+  clay:        '#7A4528',
+  latte:       '#C8956A',
+  cream:       '#FDF6EC',
+  parchment:   '#F5E9D4',
+  vellum:      '#EDD9BC',
+  brass:       '#B5822A',
+  brassLight:  '#F7EDD8',
+  brassBorder: '#DEC07A',
+  sage:        '#3B6E52',
+  sageLight:   '#EBF4EE',
+  sageBorder:  '#9FCFB4',
+  terracotta:  '#A03020',
+  tcLight:     '#FAECEA',
+  tcBorder:    '#E8A898',
+  onDark:      '#FDF6EC',
 }
+
+const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
 const API_URL = 'http://10.23.1.14:3000/api'
 
 const staffRoles = [
-  { id: 'admin', label: 'Admin' },
+  { id: 'admin',   label: 'Admin' },
   { id: 'manager', label: 'Manager' },
-  { id: 'waiter', label: 'Waiter' },
+  { id: 'waiter',  label: 'Waiter' },
   { id: 'kitchen', label: 'Kitchen Staff' },
 ]
 
 export default function Signup() {
   const router = useRouter()
 
-  const [fullName, setFullName] = useState('')
-  const [emailAddress, setEmailAddress] = useState('')
-  const [phoneNum, setPhoneNum] = useState('')
-  const [passwordFirst, setPasswordFirst] = useState('')
-  const [passwordSecond, setPasswordSecond] = useState('')
-  const [pickedRole, setPickedRole] = useState('waiter')
+  const [fullName,        setFullName]        = useState('')
+  const [emailAddress,    setEmailAddress]    = useState('')
+  const [phoneNum,        setPhoneNum]        = useState('')
+  const [passwordFirst,   setPasswordFirst]   = useState('')
+  const [passwordSecond,  setPasswordSecond]  = useState('')
+  const [pickedRole,      setPickedRole]      = useState('waiter')
   const [showingPassword1, setShowingPassword1] = useState(false)
   const [showingPassword2, setShowingPassword2] = useState(false)
-  const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [agreedToTerms,   setAgreedToTerms]  = useState(false)
   const [isCreatingAccount, setIsCreatingAccount] = useState(false)
 
-  const passwordsMatch = passwordFirst.length > 0 && passwordFirst === passwordSecond
+  const passwordsMatch     = passwordFirst.length > 0 && passwordFirst === passwordSecond
   const passwordsDontMatch = passwordSecond.length > 0 && passwordFirst !== passwordSecond
 
   const createTheAccount = async () => {
@@ -79,12 +86,12 @@ export default function Signup() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: emailAddress.trim(),
-          password: passwordFirst.trim(),
-          name: fullName.trim(),
+          email:          emailAddress.trim(),
+          password:       passwordFirst.trim(),
+          name:           fullName.trim(),
           restaurantName: `${fullName.trim()}'s Restaurant`,
-          phone: `+977 ${phoneNum.trim()}`,
-          address: 'Kathmandu, Nepal',
+          phone:          `+977 ${phoneNum.trim()}`,
+          address:        'Kathmandu, Nepal',
         }),
       })
 
@@ -98,7 +105,7 @@ export default function Signup() {
       await AsyncStorage.setItem('@user', JSON.stringify(result.user))
 
       router.replace('/modules/pos/POS')
-      
+
     } catch (err: any) {
       Alert.alert('Signup Failed', err.message || 'Something went wrong, try again?')
     } finally {
@@ -108,7 +115,8 @@ export default function Signup() {
 
   return (
     <View style={styles.container}>
-      {/* Zone 1 — Brand Header */}
+
+      {/* Top Zone */}
       <View style={styles.topZone}>
         <View style={styles.patternOverlay}>
           {Array.from({ length: 30 }).map((_, i) => (
@@ -118,7 +126,7 @@ export default function Signup() {
                 styles.dot,
                 {
                   left: `${(i % 8) * 12.5}%`,
-                  top: `${Math.floor(i / 8) * 25}%`,
+                  top:  `${Math.floor(i / 8) * 25}%`,
                 },
               ]}
             />
@@ -126,21 +134,14 @@ export default function Signup() {
         </View>
 
         <View style={styles.logoBadge}>
-          <Image
-            source={require('../../../assets/images/Yammy.png')}
-            style={{ width: 162, height: 88, borderRadius: 44 }}
-            resizeMode="cover"
-          />
+          <Utensils size={36} color={C.cream} />
         </View>
 
-        <Text style={styles.appTitle}>Yammy</Text>
-
-        {/* Wave at bottom */}
-        
-         
+        <Text style={styles.appTitle}>Yammy Fresh</Text>
+        <Text style={styles.appSub}>Point of Sale</Text>
       </View>
 
-      {/* Zone 2 — Signup Card */}
+      {/* Signup Card */}
       <View style={styles.signupCard}>
         <ScrollView
           style={styles.scrollArea}
@@ -148,36 +149,37 @@ export default function Signup() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* heading */}
+
+          {/* Heading */}
           <View style={styles.headingArea}>
             <Text style={styles.welcomeText}>Create Account</Text>
             <Text style={styles.welcomeSub}>Fill in your details to get started</Text>
           </View>
 
-          {/* full name */}
+          {/* Full Name */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Full Name</Text>
             <View style={styles.inputWrapper}>
-              <User size={18} color={COLORS.textMuted} style={styles.inputIcon} />
+              <User size={18} color={C.latte} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="John Doe"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.latte}
                 value={fullName}
                 onChangeText={setFullName}
               />
             </View>
           </View>
 
-          {/* email */}
+          {/* Email */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
             <View style={styles.inputWrapper}>
-              <Mail size={18} color={COLORS.textMuted} style={styles.inputIcon} />
+              <Mail size={18} color={C.latte} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="you@restaurant.com"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.latte}
                 value={emailAddress}
                 onChangeText={setEmailAddress}
                 keyboardType="email-address"
@@ -186,11 +188,11 @@ export default function Signup() {
             </View>
           </View>
 
-          {/* phone with country code */}
+          {/* Phone */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Phone Number</Text>
             <View style={styles.inputWrapper}>
-              <Phone size={18} color={COLORS.textMuted} style={styles.inputIcon} />
+              <Phone size={18} color={C.latte} style={styles.inputIcon} />
               <View style={styles.countryCode}>
                 <Text style={styles.countryFlag}>🇳🇵</Text>
                 <Text style={styles.countryPrefix}>+977</Text>
@@ -198,7 +200,7 @@ export default function Signup() {
               <TextInput
                 style={[styles.input, { flex: 1 }]}
                 placeholder="98 1234 5678"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.latte}
                 value={phoneNum}
                 onChangeText={setPhoneNum}
                 keyboardType="phone-pad"
@@ -206,15 +208,15 @@ export default function Signup() {
             </View>
           </View>
 
-          {/* password */}
+          {/* Password */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
             <View style={styles.inputWrapper}>
-              <Lock size={18} color={COLORS.textMuted} style={styles.inputIcon} />
+              <Lock size={18} color={C.latte} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.latte}
                 value={passwordFirst}
                 onChangeText={setPasswordFirst}
                 secureTextEntry={!showingPassword1}
@@ -223,50 +225,46 @@ export default function Signup() {
                 onPress={() => setShowingPassword1(!showingPassword1)}
                 style={styles.eyeButton}
               >
-                {showingPassword1 ? (
-                  <EyeOff size={18} color={COLORS.textMuted} />
-                ) : (
-                  <Eye size={18} color={COLORS.textMuted} />
-                )}
+                {showingPassword1
+                  ? <EyeOff size={18} color={C.latte} />
+                  : <Eye    size={18} color={C.latte} />}
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* confirm password with validation */}
+          {/* Confirm Password */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Confirm Password</Text>
             <View style={[
               styles.inputWrapper,
-              passwordsMatch && styles.inputWrapperMatch,
+              passwordsMatch     && styles.inputWrapperMatch,
               passwordsDontMatch && styles.inputWrapperMismatch,
             ]}>
-              <Lock size={18} color={COLORS.textMuted} style={styles.inputIcon} />
+              <Lock size={18} color={C.latte} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={C.latte}
                 value={passwordSecond}
                 onChangeText={setPasswordSecond}
                 secureTextEntry={!showingPassword2}
               />
               {passwordsMatch ? (
-                <CheckCircle2 size={18} color={COLORS.success} style={styles.eyeButton} />
+                <CheckCircle2 size={18} color={C.sage} style={styles.eyeButton} />
               ) : (
                 <TouchableOpacity
                   onPress={() => setShowingPassword2(!showingPassword2)}
                   style={styles.eyeButton}
                 >
-                  {showingPassword2 ? (
-                    <EyeOff size={18} color={COLORS.textMuted} />
-                  ) : (
-                    <Eye size={18} color={COLORS.textMuted} />
-                  )}
+                  {showingPassword2
+                    ? <EyeOff size={18} color={C.latte} />
+                    : <Eye    size={18} color={C.latte} />}
                 </TouchableOpacity>
               )}
             </View>
           </View>
 
-          {/* role selector pills */}
+          {/* Role Selector */}
           <View style={styles.roleSection}>
             <Text style={styles.inputLabel}>Your Role</Text>
             <ScrollView
@@ -294,7 +292,7 @@ export default function Signup() {
             </ScrollView>
           </View>
 
-          {/* terms checkbox */}
+          {/* Terms Checkbox */}
           <TouchableOpacity
             style={styles.termsRow}
             onPress={() => setAgreedToTerms(!agreedToTerms)}
@@ -309,7 +307,7 @@ export default function Signup() {
             </Text>
           </TouchableOpacity>
 
-          {/* create account button */}
+          {/* Create Account Button */}
           <TouchableOpacity
             style={[styles.createBtn, isCreatingAccount && { opacity: 0.6 }]}
             onPress={createTheAccount}
@@ -321,7 +319,7 @@ export default function Signup() {
             </Text>
           </TouchableOpacity>
 
-          {/* sign in redirect */}
+          {/* Sign In Redirect */}
           <TouchableOpacity
             style={styles.signInRedirect}
             onPress={() => router.back()}
@@ -331,11 +329,11 @@ export default function Signup() {
               <Text style={styles.signInLink}>Sign In</Text>
             </Text>
           </TouchableOpacity>
+
         </ScrollView>
       </View>
 
-      {/* version */}
-      <Text style={styles.versionText}></Text>
+      <Text style={styles.versionText} />
     </View>
   )
 }
@@ -343,66 +341,74 @@ export default function Signup() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: C.cream,
   },
 
-  // zone 1
+  // Top Zone
   topZone: {
-    height: height * 0.28,
-    backgroundColor: COLORS.brand,
+    height: height * 0.26,
+    backgroundColor: C.espresso,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    overflow: 'visible',
+    overflow: 'hidden',
+    shadowColor: C.espresso,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
   },
   patternOverlay: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.08,
+    top: 0, left: 0, right: 0, bottom: 0,
+    opacity: 0.06,
   },
   dot: {
     position: 'absolute',
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: '#000',
+    width: 3, height: 3,
+    borderRadius: 2,
+    backgroundColor: C.cream,
   },
   logoBadge: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: COLORS.surface,
+    width: 64, height: 64,
+    borderRadius: radius.md,
+    backgroundColor: C.brass,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: COLORS.gold,
-    marginBottom: 16,
+    marginBottom: 12,
+    borderWidth: 1.5,
+    borderColor: C.brassBorder,
+    shadowColor: C.brass,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
   },
   appTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: COLORS.surface,
-    letterSpacing: 0.5,
+    fontSize: 22,
+    fontWeight: '900',
+    color: C.cream,
+    letterSpacing: 0.6,
   },
-  wave: {
-    position: 'absolute',
-    bottom: -1,
-    left: 0,
-    right: 0,
+  appSub: {
+    fontSize: 11,
+    color: C.latte,
+    fontWeight: '500',
+    letterSpacing: 0.8,
+    marginTop: 3,
   },
 
-  // zone 2
+  // Signup Card
   signupCard: {
     flex: 1,
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    marginTop: -30,
-    marginHorizontal: 20,
-    shadowColor: '#000',
+    backgroundColor: C.parchment,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    marginTop: -20,
+    marginHorizontal: 12,
+    borderWidth: 1.5,
+    borderColor: C.vellum,
+    shadowColor: C.espresso,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -413,68 +419,72 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     padding: 24,
-    paddingTop: 48,
+    paddingTop: 32,
     paddingBottom: 40,
   },
 
-  // heading
+  // Heading
   headingArea: {
-    marginBottom: 24,
+    marginBottom: 22,
   },
   welcomeText: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
+    fontSize: 24,
+    fontWeight: '900',
+    color: C.espresso,
     marginBottom: 4,
+    letterSpacing: 0.3,
   },
   welcomeSub: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    fontWeight: '400',
+    fontSize: 13,
+    color: C.clay,
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
 
-  // inputs
+  // Inputs
   inputContainer: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    marginBottom: 8,
+    fontSize: 11,
+    fontWeight: '800',
+    color: C.clay,
+    marginBottom: 7,
     marginLeft: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.inputBg,
-    borderRadius: 14,
+    backgroundColor: C.cream,
+    borderRadius: radius.md,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
-    paddingHorizontal: 16,
+    borderColor: C.vellum,
+    paddingHorizontal: 14,
     height: 52,
   },
   inputWrapperMatch: {
-    borderColor: COLORS.success,
-    backgroundColor: COLORS.successLight,
+    borderColor: C.sageBorder,
+    backgroundColor: C.sageLight,
   },
   inputWrapperMismatch: {
-    borderColor: COLORS.brand,
-    backgroundColor: '#FFF0F0',
+    borderColor: C.tcBorder,
+    backgroundColor: C.tcLight,
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: 10,
   },
   input: {
     flex: 1,
     fontSize: 15,
-    color: COLORS.textPrimary,
+    color: C.espresso,
   },
   eyeButton: {
     padding: 4,
   },
 
-  // country code
+  // Country Code
   countryCode: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -482,7 +492,7 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     marginRight: 12,
     borderRightWidth: 1,
-    borderRightColor: COLORS.border,
+    borderRightColor: C.vellum,
   },
   countryFlag: {
     fontSize: 16,
@@ -490,12 +500,12 @@ const styles = StyleSheet.create({
   countryPrefix: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: C.roast,
   },
 
-  // role selector
+  // Role Selector
   roleSection: {
-    marginBottom: 22,
+    marginBottom: 20,
   },
   rolesScroll: {
     marginTop: 2,
@@ -505,106 +515,105 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   rolePill: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: radius.pill,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    borderColor: C.vellum,
+    backgroundColor: C.cream,
   },
   rolePillActive: {
-    backgroundColor: COLORS.brand,
-    borderColor: COLORS.brand,
+    backgroundColor: C.roast,
+    borderColor: C.roast,
   },
   rolePillText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: COLORS.textSecondary,
+    color: C.clay,
   },
   rolePillTextActive: {
-    color: COLORS.surface,
+    color: C.cream,
   },
 
-  // terms checkbox
+  // Terms Checkbox
   termsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 22,
     gap: 10,
   },
   checkbox: {
     width: 22,
     height: 22,
-    borderRadius: 6,
+    borderRadius: radius.xs,
     borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    borderColor: C.vellum,
+    backgroundColor: C.cream,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: COLORS.brand,
-    borderColor: COLORS.brand,
+    backgroundColor: C.brass,
+    borderColor: C.brassBorder,
   },
   checkmark: {
-    color: COLORS.surface,
-    fontSize: 14,
+    color: C.cream,
+    fontSize: 13,
     fontWeight: '700',
   },
   termsText: {
     fontSize: 13,
-    color: COLORS.textSecondary,
+    color: C.clay,
     flex: 1,
   },
   termsLink: {
-    color: COLORS.brand,
-    fontWeight: '600',
+    color: C.brass,
+    fontWeight: '700',
     textDecorationLine: 'underline',
   },
 
-  // create button
+  // Create Button
   createBtn: {
-    backgroundColor: COLORS.brand,
-    height: 54,
-    borderRadius: 14,
+    backgroundColor: C.brass,
+    height: 52,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
     width: '75%',
     alignSelf: 'center',
-    shadowColor: COLORS.brand,
-    shadowOffset: { width: 0, height: 6 },
+    shadowColor: C.brass,
+    shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowRadius: 10,
+    elevation: 4,
   },
   createText: {
-    color: COLORS.surface,
-    fontSize: 16,
-    fontWeight: '700',
+    color: C.cream,
+    fontSize: 15,
+    fontWeight: '800',
     letterSpacing: 0.3,
   },
 
-  // sign in redirect
+  // Sign In Redirect
   signInRedirect: {
     alignItems: 'center',
     paddingVertical: 8,
   },
   signInText: {
-    fontSize: 14,
-    color: COLORS.textMuted,
+    fontSize: 13,
+    color: C.clay,
   },
   signInLink: {
-    color: COLORS.brand,
+    color: C.brass,
     fontWeight: '700',
   },
 
-  // version
+  // Version
   versionText: {
     textAlign: 'center',
     fontSize: 11,
-    color: COLORS.textMuted,
+    color: C.latte,
     paddingVertical: 12,
-    fontWeight: '400',
   },
 })
