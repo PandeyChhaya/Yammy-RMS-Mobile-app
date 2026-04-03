@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, CheckCircle, Edit, Plus, Tags, Trash2 } from 'lucide-react-native';
+import { AlertCircle, CheckCircle, Edit, Plus, Tags, Trash2, Utensils } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,69 +12,68 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useTaxSettings } from '../../../shared/hooks/useTaxSettings';
 import categoriesService from './services/categoriesService';
 
+const C = {
+  espresso:    '#1C1008',
+  roast:       '#3D2010',
+  clay:        '#7A4528',
+  latte:       '#C8956A',
+  cream:       '#FDF6EC',
+  parchment:   '#F5E9D4',
+  vellum:      '#EDD9BC',
+  brass:       '#B5822A',
+  brassLight:  '#F7EDD8',
+  brassBorder: '#DEC07A',
+  brassGlow:   '#B5822A40',
+  sage:        '#3B6E52',
+  sageLight:   '#EBF4EE',
+  sageBorder:  '#9FCFB4',
+  terracotta:  '#A03020',
+  tcLight:     '#FAECEA',
+  tcBorder:    '#E8A898',
+  onDark:      '#FDF6EC',
+}
+
+const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
+
 interface Category {
-  id: string
-  name: string
-  description?: string
-  color: string
-  tax_rate_id?: string
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  category_id:          number
+  category_name:        string
+  category_description?: string
+  is_active:            boolean
 }
 
 interface CategoryFormData {
-  name: string
-  description: string
-  color: string
-  tax_rate_id: string
+  category_name:        string
+  category_description: string
+  is_active:            boolean
 }
 
-const COLOR_PRESETS = [
-  '#C41E1E', '#D4A843', '#2E7D32', '#1565C0',
-  '#7B1FA2', '#E65100', '#00838F', '#37474F',
-]
-
 const DEFAULT_FORM: CategoryFormData = {
-  name: '',
-  description: '',
-  color: '#C41E1E',
-  tax_rate_id: '',
+  category_name:        '',
+  category_description: '',
+  is_active:            true,
 }
 
 export default function Categories() {
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
-  const [addForm, setAddForm] = useState<CategoryFormData>(DEFAULT_FORM)
-  const [editForm, setEditForm] = useState<CategoryFormData>(DEFAULT_FORM)
-  const [addErrors, setAddErrors] = useState<Partial<CategoryFormData>>({})
-  const [editErrors, setEditErrors] = useState<Partial<CategoryFormData>>({})
+  const [showAddModal,       setShowAddModal]       = useState(false)
+  const [showEditModal,      setShowEditModal]      = useState(false)
+  const [editingCategory,    setEditingCategory]    = useState<Category | null>(null)
+  const [addForm,            setAddForm]            = useState<CategoryFormData>(DEFAULT_FORM)
+  const [editForm,           setEditForm]           = useState<CategoryFormData>(DEFAULT_FORM)
+  const [addErrors,          setAddErrors]          = useState<Partial<CategoryFormData>>({})
+  const [editErrors,         setEditErrors]         = useState<Partial<CategoryFormData>>({})
   const [showSuccessMessage, setShowSuccessMessage] = useState<string | null>(null)
-  const [showErrorMessage, setShowErrorMessage] = useState<string | null>(null)
+  const [showErrorMessage,   setShowErrorMessage]   = useState<string | null>(null)
 
   const queryClient = useQueryClient()
-  const { currentConfig } = useTaxSettings()
-
-  const taxRateOptions = currentConfig.tax_rates.map(rate => ({
-    value: rate.id,
-    label: `${rate.name} (${rate.rate}%)`,
-    isDefault: rate.is_default,
-  }))
-
-  const defaultTaxRate =
-    currentConfig.tax_rates.find(r => r.is_default)?.id ||
-    currentConfig.tax_rates[0]?.id ||
-    ''
 
   // ── Queries ──────────────────────────────────────────────
 
   const { data: categories, isLoading, error } = useQuery<Category[]>({
     queryKey: ['categories'],
-    queryFn: () => categoriesService.getCategory(),
+    queryFn:  () => categoriesService.getCategory(),
     retry: 3,
   })
 
@@ -85,7 +84,7 @@ export default function Categories() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       setShowAddModal(false)
-      setAddForm({ ...DEFAULT_FORM, tax_rate_id: defaultTaxRate })
+      setAddForm(DEFAULT_FORM)
       showSuccess('Category created successfully!')
     },
     onError: (err) => showError('Error creating category: ' + err),
@@ -104,7 +103,7 @@ export default function Categories() {
   })
 
   const deleteCategoryMutation = useMutation({
-    mutationFn: (id: string) => categoriesService.deleteCategory(id),
+    mutationFn: (id: number) => categoriesService.deleteCategory(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       showSuccess('Category deleted successfully!')
@@ -126,15 +125,14 @@ export default function Categories() {
 
   const validateForm = (form: CategoryFormData): Partial<CategoryFormData> => {
     const errs: Partial<CategoryFormData> = {}
-    if (!form.name.trim()) errs.name = 'Name is required'
-    if (!form.color.trim()) errs.color = 'Color is required'
+    if (!form.category_name.trim()) errs.category_name = 'Name is required'
     return errs
   }
 
   // ── Handlers ─────────────────────────────────────────────
 
   const handleAddNew = () => {
-    setAddForm({ ...DEFAULT_FORM, tax_rate_id: defaultTaxRate })
+    setAddForm(DEFAULT_FORM)
     setAddErrors({})
     setShowAddModal(true)
   }
@@ -148,10 +146,9 @@ export default function Categories() {
   const handleEdit = (category: Category) => {
     setEditingCategory(category)
     setEditForm({
-      name: category_name,
-      description: category_description|| '',
-      color: category.color,
-      tax_rate_id: category.tax_rate_id || defaultTaxRate,
+      category_name:        category.category_name,
+      category_description: category.category_description || '',
+      is_active:            category.is_active,
     })
     setEditErrors({})
     setShowEditModal(true)
@@ -161,11 +158,11 @@ export default function Categories() {
     const errs = validateForm(editForm)
     if (Object.keys(errs).length > 0) { setEditErrors(errs); return }
     if (editingCategory) {
-      updateCategoryMutation.mutate({ id: editingCategory_id, data: editForm })
+      updateCategoryMutation.mutate({ id: String(editingCategory.category_id), data: editForm })
     }
   }
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = (id: number, name: string) => {
     Alert.alert(
       'Delete Category',
       `Are you sure you want to delete "${name}"?`,
@@ -181,7 +178,11 @@ export default function Categories() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#C41E1E" />
+        <View style={styles.loadingIcon}>
+          <Utensils size={26} color={C.brass} />
+        </View>
+        <ActivityIndicator size="large" color={C.brass} style={{ marginTop: 20 }} />
+        <Text style={styles.loadingTitle}>Loading Categories…</Text>
       </View>
     )
   }
@@ -189,14 +190,14 @@ export default function Categories() {
   if (error) {
     return (
       <View style={styles.centered}>
-        <AlertCircle size={48} color="#C41E1E" />
+        <AlertCircle size={48} color={C.terracotta} />
         <Text style={styles.errorTitle}>Error loading categories</Text>
         <Text style={styles.errorSub}>{String(error)}</Text>
       </View>
     )
   }
 
-  // ── Form Component ───────────────
+  // ── Form Component ───────────────────────────────────────
 
   const renderForm = (
     form: CategoryFormData,
@@ -209,77 +210,29 @@ export default function Categories() {
     pendingLabel: string,
   ) => (
     <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+
       {/* Name */}
       <Text style={styles.label}>Name *</Text>
       <TextInput
-        style={[styles.input, errors.name ? styles.inputError : null]}
+        style={[styles.input, errors.category_name ? styles.inputError : null]}
         placeholder="Category name"
-        placeholderTextColor="#9E8E50"
-        value={form.name}
-        onChangeText={text => setForm({ ...form, name: text })}
+        placeholderTextColor={C.latte}
+        value={form.category_name}
+        onChangeText={text => setForm({ ...form, category_name: text })}
       />
-      {errors.name && <Text style={styles.fieldError}>{errors.name}</Text>}
+      {errors.category_name && <Text style={styles.fieldError}>{errors.category_name}</Text>}
 
       {/* Description */}
       <Text style={styles.label}>Description</Text>
       <TextInput
         style={[styles.input, styles.textArea]}
         placeholder="Optional description"
-        placeholderTextColor="#9E8E50"
-        value={form.description}
-        onChangeText={text => setForm({ ...form, description: text })}
+        placeholderTextColor={C.latte}
+        value={form.category_description}
+        onChangeText={text => setForm({ ...form, category_description: text })}
         multiline
         numberOfLines={3}
       />
-
-      {/* Color */}
-      <Text style={styles.label}>Color *</Text>
-      <View style={styles.colorRow}>
-        {COLOR_PRESETS.map(c => (
-          <TouchableOpacity
-            key={c}
-            style={[
-              styles.colorSwatch,
-              { backgroundColor: c },
-              form.color === c && styles.colorSwatchSelected,
-            ]}
-            onPress={() => setForm({ ...form, color: c })}
-          />
-        ))}
-      </View>
-      <TextInput
-        style={[styles.input, { marginTop: 8 }]}
-        placeholder="#C41E1E"
-        placeholderTextColor="#9E8E50"
-        value={form.color}
-        onChangeText={text => setForm({ ...form, color: text })}
-        autoCapitalize="none"
-      />
-      {errors.color && <Text style={styles.fieldError}>{errors.color}</Text>}
-
-      {/* Tax Rate */}
-      <Text style={styles.label}>Tax Rate</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.taxRateScroll}>
-        {taxRateOptions.map(option => (
-          <TouchableOpacity
-            key={option.value}
-            style={[
-              styles.taxPill,
-              form.tax_rate_id === option.value && styles.taxPillActive,
-            ]}
-            onPress={() => setForm({ ...form, tax_rate_id: option.value })}
-          >
-            <Text
-              style={[
-                styles.taxPillText,
-                form.tax_rate_id === option.value && styles.taxPillTextActive,
-              ]}
-            >
-              {option.label}{option.isDefault ? ' (Default)' : ''}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
 
       {/* Buttons */}
       <View style={styles.modalButtons}>
@@ -312,23 +265,23 @@ export default function Categories() {
             <Text style={styles.subtitle}>Manage your product categories</Text>
           </View>
           <TouchableOpacity style={styles.addButton} onPress={handleAddNew}>
-            <Plus size={16} color="#FFFFFF" />
+            <Plus size={16} color={C.cream} />
             <Text style={styles.addButtonText}>New Category</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Success Message */}
+        {/* Success Banner */}
         {showSuccessMessage && (
           <View style={styles.successBanner}>
-            <CheckCircle size={18} color="#2E7D32" />
+            <CheckCircle size={16} color={C.sage} />
             <Text style={styles.successText}>{showSuccessMessage}</Text>
           </View>
         )}
 
-        {/* Error Message */}
+        {/* Error Banner */}
         {showErrorMessage && (
           <View style={styles.errorBanner}>
-            <AlertCircle size={18} color="#C41E1E" />
+            <AlertCircle size={16} color={C.terracotta} />
             <Text style={styles.errorBannerText}>{showErrorMessage}</Text>
           </View>
         )}
@@ -336,72 +289,66 @@ export default function Categories() {
         {/* Empty State */}
         {categories?.length === 0 && (
           <View style={styles.emptyState}>
-            <Tags size={48} color="#E8D88A" />
-            <Text style={styles.emptyTitle}>No categories</Text>
+            <View style={styles.emptyIcon}>
+              <Tags size={32} color={C.brass} />
+            </View>
+            <Text style={styles.emptyTitle}>No categories yet</Text>
             <Text style={styles.emptySubtitle}>Start by creating your first category</Text>
             <TouchableOpacity style={styles.addButton} onPress={handleAddNew}>
+              <Plus size={14} color={C.cream} />
               <Text style={styles.addButtonText}>Create a category</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* Categories Grid */}
-        {categories?.map(category => {
-          const taxRate = currentConfig.tax_rates.find(r => r.id === category.tax_rate_id)
-          return (
-            <View key={category.id} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardTitleRow}>
-                  <View style={[styles.colorDot, { backgroundColor: category.color }]} />
-                  <Text style={styles.cardTitle}>{category.name}</Text>
-                </View>
-                <View style={styles.cardActions}>
-                  <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={() => handleEdit(category)}
-                  >
-                    <Edit size={16} color="#9E8E50" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.iconButton}
-                    onPress={() => handleDelete(category.id, category.name)}
-                  >
-                    <Trash2 size={16} color="#C41E1E" />
-                  </TouchableOpacity>
-                </View>
+        {/* Categories List */}
+        {categories?.map((category: Category) => (
+          <View key={category.category_id} style={styles.card}>
+
+            <View style={styles.cardHeader}>
+              <View style={styles.cardTitleRow}>
+                <Text style={styles.cardTitle}>{category.category_name}</Text>
               </View>
-
-              {category.description && (
-                <Text style={styles.cardDescription}>{category.description}</Text>
-              )}
-
-              <View style={styles.cardFooter}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardMeta}>
-                    Tax:{' '}
-                    <Text style={styles.cardMetaBold}>
-                      {taxRate ? `${taxRate.name} (${taxRate.rate}%)` : 'Not defined'}
-                    </Text>
-                  </Text>
-                  <Text style={styles.cardMeta}>
-                    Created {new Date(category.created_at).toLocaleDateString('en-US')}
-                  </Text>
-                </View>
-                <View style={[
-                  styles.statusBadge,
-                  category.is_active ? styles.statusActive : styles.statusInactive,
-                ]}>
-                  <Text style={[
-                    styles.statusText,
-                    category.is_active ? styles.statusActiveText : styles.statusInactiveText,
-                  ]}>
-                    {category.is_active ? 'Active' : 'Inactive'}
-                  </Text>
-                </View>
+              <View style={styles.cardActions}>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => handleEdit(category)}
+                >
+                  <Edit size={15} color={C.brass} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.iconButton, styles.iconButtonDelete]}
+                  onPress={() => handleDelete(category.category_id, category.category_name)}
+                >
+                  <Trash2 size={15} color={C.terracotta} />
+                </TouchableOpacity>
               </View>
             </View>
-          )
-        })}
+
+            {category.category_description && (
+              <Text style={styles.cardDescription}>{category.category_description}</Text>
+            )}
+
+            <View style={styles.cardFooter}>
+              <View style={[
+                styles.statusBadge,
+                category.is_active ? styles.statusActive : styles.statusInactive,
+              ]}>
+                <View style={[
+                  styles.statusDot,
+                  { backgroundColor: category.is_active ? C.sage : C.clay },
+                ]} />
+                <Text style={[
+                  styles.statusText,
+                  category.is_active ? styles.statusActiveText : styles.statusInactiveText,
+                ]}>
+                  {category.is_active ? 'Active' : 'Inactive'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        ))}
+
       </ScrollView>
 
       {/* Add Modal */}
@@ -444,7 +391,7 @@ export default function Categories() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FDFAF3',
+    backgroundColor: C.cream,
   },
   content: {
     padding: 16,
@@ -455,19 +402,27 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FEF1A8',
+    backgroundColor: C.cream,
     gap: 12,
   },
+  loadingIcon: {
+    width: 58, height: 58,
+    borderRadius: radius.md,
+    backgroundColor: C.brassLight,
+    borderWidth: 1.5, borderColor: C.brassBorder,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  loadingTitle: {
+    fontSize: 15, fontWeight: '700',
+    color: C.espresso, marginTop: 8,
+  },
   errorTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#C41E1E',
-    fontFamily: 'Inter',
+    fontSize: 16, fontWeight: '700',
+    color: C.terracotta,
   },
   errorSub: {
     fontSize: 13,
-    color: '#5C5436',
-    fontFamily: 'Inter',
+    color: C.clay,
   },
 
   // Header
@@ -478,310 +433,197 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    fontFamily: 'Inter',
+    fontSize: 22, fontWeight: '900',
+    color: C.espresso, letterSpacing: 0.3,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#5C5436',
-    fontFamily: 'Inter',
-    marginTop: 2,
+    fontSize: 13, color: C.clay,
+    marginTop: 3, fontWeight: '500',
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#C41E1E',
-    borderRadius: 25,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    backgroundColor: C.brass,
+    borderRadius: radius.pill,
+    paddingHorizontal: 14, paddingVertical: 9,
     gap: 6,
+    shadowColor: C.brass,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
   },
   addButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 14,
-    fontFamily: 'Inter',
+    color: C.cream, fontWeight: '700',
+    fontSize: 13, letterSpacing: 0.2,
   },
 
   // Banners
   successBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E8F5E9',
-    borderWidth: 1,
-    borderColor: '#A5D6A7',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-    gap: 8,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.sageLight,
+    borderWidth: 1, borderColor: C.sageBorder,
+    borderRadius: radius.md,
+    padding: 12, marginBottom: 16, gap: 8,
   },
   successText: {
-    color: '#2E7D32',
-    fontSize: 14,
-    fontFamily: 'Inter',
+    color: C.sage, fontSize: 13, fontWeight: '600',
   },
   errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFEBEE',
-    borderWidth: 1,
-    borderColor: '#FFCDD2',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-    gap: 8,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.tcLight,
+    borderWidth: 1, borderColor: C.tcBorder,
+    borderRadius: radius.md,
+    padding: 12, marginBottom: 16, gap: 8,
   },
   errorBannerText: {
-    color: '#C41E1E',
-    fontSize: 14,
-    fontFamily: 'Inter',
+    color: C.terracotta, fontSize: 13, fontWeight: '600',
   },
 
   // Empty State
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 48,
-    gap: 12,
+    paddingVertical: 56, gap: 12,
+  },
+  emptyIcon: {
+    width: 72, height: 72,
+    borderRadius: radius.lg,
+    backgroundColor: C.brassLight,
+    borderWidth: 1.5, borderColor: C.brassBorder,
+    alignItems: 'center', justifyContent: 'center',
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    fontFamily: 'Inter',
+    fontSize: 17, fontWeight: '800',
+    color: C.espresso,
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: '#5C5436',
-    fontFamily: 'Inter',
+    fontSize: 13, color: C.clay,
   },
 
   // Card
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E8D88A',
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    backgroundColor: C.parchment,
+    borderRadius: radius.md,
+    borderWidth: 1.5, borderColor: C.vellum,
+    padding: 14, marginBottom: 12,
+    shadowColor: C.espresso,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
     elevation: 2,
   },
   cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 8,
   },
   cardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  colorDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    flexDirection: 'row', alignItems: 'center',
+    gap: 8, flex: 1,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    fontFamily: 'Inter',
+    fontSize: 15, fontWeight: '700',
+    color: C.espresso,
   },
   cardActions: {
-    flexDirection: 'row',
-    gap: 4,
+    flexDirection: 'row', gap: 6,
   },
   iconButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#FEF1A8',
+    padding: 7, borderRadius: radius.xs,
+    backgroundColor: C.brassLight,
+    borderWidth: 1, borderColor: C.brassBorder,
+  },
+  iconButtonDelete: {
+    backgroundColor: C.tcLight,
+    borderColor: C.tcBorder,
   },
   cardDescription: {
-    fontSize: 13,
-    color: '#5C5436',
-    fontFamily: 'Inter',
-    marginBottom: 12,
+    fontSize: 12, color: C.clay, marginBottom: 10,
   },
   cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'row', alignItems: 'center',
     marginTop: 8,
   },
-  cardMeta: {
-    fontSize: 12,
-    color: '#5C5436',
-    fontFamily: 'Inter',
-  },
-  cardMetaBold: {
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
   statusBadge: {
-    borderRadius: 9999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    flexDirection: 'row', alignItems: 'center',
+    gap: 5, borderRadius: radius.pill,
+    paddingHorizontal: 10, paddingVertical: 4,
   },
-  statusActive: {
-    backgroundColor: '#E8F5E9',
+  statusDot: {
+    width: 5, height: 5, borderRadius: 3,
   },
-  statusInactive: {
-    backgroundColor: '#F5F5F5',
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '600',
-    fontFamily: 'Inter',
-  },
-  statusActiveText: {
-    color: '#2E7D32',
-  },
-  statusInactiveText: {
-    color: '#757575',
-  },
+  statusActive:   { backgroundColor: C.sageLight },
+  statusInactive: { backgroundColor: C.vellum },
+  statusText:     { fontSize: 10, fontWeight: '700' },
+  statusActiveText:   { color: C.sage },
+  statusInactiveText: { color: C.clay },
 
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(28,16,8,0.6)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    maxHeight: '90%',
+    backgroundColor: C.parchment,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    borderWidth: 1.5, borderColor: C.vellum,
+    padding: 24, maxHeight: '90%',
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    fontFamily: 'Inter',
+    fontSize: 16, fontWeight: '900',
+    color: C.espresso, letterSpacing: 0.3,
     marginBottom: 20,
   },
-  modalScroll: {
-    flexGrow: 0,
-  },
+  modalScroll: { flexGrow: 0 },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    fontFamily: 'Inter',
-    marginBottom: 6,
-    marginTop: 14,
+    fontSize: 11, fontWeight: '800',
+    color: C.clay, marginBottom: 6, marginTop: 14,
+    textTransform: 'uppercase', letterSpacing: 1.2,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#E8D88A',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#1A1A1A',
-    backgroundColor: '#FFFDF0',
-    fontFamily: 'Inter',
+    borderWidth: 1.5, borderColor: C.vellum,
+    borderRadius: radius.md,
+    paddingHorizontal: 14, paddingVertical: 10,
+    fontSize: 14, color: C.espresso,
+    backgroundColor: C.cream,
   },
-  inputError: {
-    borderColor: '#C41E1E',
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
+  inputError: { borderColor: C.tcBorder },
+  textArea:   { height: 80, textAlignVertical: 'top' },
   fieldError: {
-    fontSize: 12,
-    color: '#C41E1E',
-    fontFamily: 'Inter',
-    marginTop: 4,
-  },
-
-  // Color Swatches
-  colorRow: {
-    flexDirection: 'row',
-    gap: 10,
-    flexWrap: 'wrap',
-  },
-  colorSwatch: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  colorSwatchSelected: {
-    borderColor: '#1A1A1A',
-  },
-
-  // Tax Rate Pills
-  taxRateScroll: {
-    marginTop: 4,
-  },
-  taxPill: {
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: '#E8D88A',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginRight: 8,
-    backgroundColor: '#FEF1A8',
-  },
-  taxPillActive: {
-    backgroundColor: '#C41E1E',
-    borderColor: '#C41E1E',
-  },
-  taxPillText: {
-    fontSize: 13,
-    color: '#5C5436',
-    fontFamily: 'Inter',
-  },
-  taxPillTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    fontSize: 11, color: C.terracotta,
+    marginTop: 4, fontWeight: '600',
   },
 
   // Modal Buttons
   modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 24,
-    marginBottom: 8,
+    flexDirection: 'row', gap: 12,
+    marginTop: 24, marginBottom: 8,
   },
   cancelButton: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#E8D88A',
-    borderRadius: 25,
-    paddingVertical: 12,
-    alignItems: 'center',
+    borderWidth: 1.5, borderColor: C.vellum,
+    borderRadius: radius.pill,
+    paddingVertical: 12, alignItems: 'center',
+    backgroundColor: C.cream,
   },
   cancelButtonText: {
-    fontSize: 15,
-    color: '#5C5436',
-    fontWeight: '600',
-    fontFamily: 'Inter',
+    fontSize: 14, color: C.clay, fontWeight: '700',
   },
   submitButton: {
     flex: 1,
-    backgroundColor: '#C41E1E',
-    borderRadius: 25,
-    paddingVertical: 12,
-    alignItems: 'center',
+    backgroundColor: C.brass,
+    borderRadius: radius.pill,
+    paddingVertical: 12, alignItems: 'center',
+    shadowColor: C.brass,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  submitButtonDisabled: {
-    opacity: 0.5,
-  },
+  submitButtonDisabled: { opacity: 0.5 },
   submitButtonText: {
-    fontSize: 15,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontFamily: 'Inter',
+    fontSize: 14, color: C.cream,
+    fontWeight: '800', letterSpacing: 0.2,
   },
 })

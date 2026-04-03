@@ -29,6 +29,18 @@ export default function Dashboard() {
       icon: <Receipt size={24} color="#1A1A1A" />,
       route: '/modules/orders/Orders',
     },
+     {
+      id: 'categories',
+      label: 'Categories',
+      icon: <Receipt size={24} color="#1A1A1A" />,
+      route: '/modules/categories/Categories',
+    },
+     {
+      id: 'login',
+      label: 'Login',
+      icon: <Receipt size={24} color="#1A1A1A" />,
+      route: '/modules/auth/login',
+    },
   
      
     
