@@ -1,6 +1,5 @@
 import { useRouter } from 'expo-router'
 import {
-  MessageCircleQuestionIcon,
   Receipt
 } from 'lucide-react-native'
 import {
@@ -23,68 +22,14 @@ export default function Dashboard() {
 
   const menuItems: MenuItem[] = [
    
-     {
-      id: 'auditguard',
-      label: 'Auditguard',
-      icon: <Receipt size={24} color="#1A1A1A" />,
-      route: '/modules/auditguard/AuditGuard',
-    },
-     {
-      id: 'categories',
-      label: 'Categories',
-      icon: <Receipt size={24} color="#1A1A1A" />,
-      route: '/modules/categories/Categories',
-    },
-      
+     
     {
       id: 'orders',
       label: 'Orders',
       icon: <Receipt size={24} color="#1A1A1A" />,
       route: '/modules/orders/Orders',
     },
-      
-    {
-      id: 'menu-items',
-      label: 'Menu-Items',
-      icon: <Receipt size={24} color="#1A1A1A" />,
-      route: '/modules/menu-items/menu-items',
-    },
-
-      
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: <Receipt size={24} color="#1A1A1A" />,
-      route: '/modules/Dashboard',
-    },
-    
-    {
-      id: 'pos',
-      label: 'Point Of Sale',
-      icon: <Receipt size={24} color="#1A1A1A" />,
-      route: '/modules/pos/POS',
-    },
-     {
-      id: 'settings',
-      label: 'settings',
-      icon: < MessageCircleQuestionIcon size={24} color="#10B981" />,
-      route: '/modules/settings/settings',
-    },
-    {
-      id: 'login',
-      label: 'login',
-      icon: < MessageCircleQuestionIcon size={24} color="#10B981" />,
-      route: '/modules/auth/login',
-    },
-    
-
-   {
-      id: 'logs',
-      label: 'Logs',
-      icon: < MessageCircleQuestionIcon size={24} color="#10B981" />,
-      route: '/modules/logs/logs',
-    },
-
+  
      
     
     

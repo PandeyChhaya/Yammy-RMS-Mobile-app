@@ -1,15 +1,10 @@
+import { Order, OrderStatus } from "@/shared/types/orders";
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http://192.168.1.71:5000/api/order';
+const BASE_URL= 'http://192.168.1.71:5000/api/orders';
 
 
-export interface Order{
-    order_id: number,
-    menu_item_id: number,
-    quantity: number,
-    unit_price: number,
-    special_request?: string,
-};
+
 
 const auth_headers= async()=>{
     const token  = await authService.getToken();
@@ -19,7 +14,7 @@ const auth_headers= async()=>{
   } ;
 }
 
-const postOrder= async(order: Omit<Order,('order_id' ,'menu_item_id')>): Promise<Order> =>{
+const postOrder= async(order: Omit<Order, 'order_id' | 'order_status'> ): Promise<Order> =>{
       const response = await fetch(BASE_URL, {
         method: 'POST',
         headers: await auth_headers(),
@@ -50,6 +45,17 @@ const putOrder= async(order_id: string, updates: Partial<Omit<Order, 'order_id'>
     if(!response.ok) throw new Error(data.message);
     return data;
 };
+const updateOrderStatus = async (order_id: number, status: OrderStatus): Promise<Order> => {
+    const response = await fetch(`${BASE_URL}/${order_id}/status`, {
+        method: 'PATCH',
+        headers: await auth_headers(),
+        body: JSON.stringify({ order_status: status }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message);
+    return data;
+};
+
 const deleteOrder= async(order_id:number) : Promise<Order> =>{
     const response = await fetch(`${BASE_URL}/${order_id}`,{
       method:'DELETE',
@@ -63,5 +69,4 @@ const deleteOrder= async(order_id:number) : Promise<Order> =>{
 
 };
 
-const orderService = {postOrder, getOrder, putOrder, deleteOrder};
-export default orderService;
+export const ordersService = {postOrder, getOrder, putOrder, deleteOrder};
