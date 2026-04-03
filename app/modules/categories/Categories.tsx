@@ -74,14 +74,14 @@ export default function Categories() {
 
   const { data: categories, isLoading, error } = useQuery<Category[]>({
     queryKey: ['categories'],
-    queryFn: () => categoriesService.getCategories(),
+    queryFn: () => categoriesService.getCategory(),
     retry: 3,
   })
 
   // ── Mutations ────────────────────────────────────────────
 
   const createCategoryMutation = useMutation({
-    mutationFn: (data: CategoryFormData) => categoriesService.createCategory(data),
+    mutationFn: (data: CategoryFormData) => categoriesService.postCategory(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       setShowAddModal(false)
@@ -93,7 +93,7 @@ export default function Categories() {
 
   const updateCategoryMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: CategoryFormData }) =>
-      categoriesService.updateCategory(id, data),
+      categoriesService.putCategory(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       setShowEditModal(false)
@@ -148,8 +148,8 @@ export default function Categories() {
   const handleEdit = (category: Category) => {
     setEditingCategory(category)
     setEditForm({
-      name: category.name,
-      description: category.description || '',
+      name: category_name,
+      description: category_description|| '',
       color: category.color,
       tax_rate_id: category.tax_rate_id || defaultTaxRate,
     })
@@ -161,7 +161,7 @@ export default function Categories() {
     const errs = validateForm(editForm)
     if (Object.keys(errs).length > 0) { setEditErrors(errs); return }
     if (editingCategory) {
-      updateCategoryMutation.mutate({ id: editingCategory.id, data: editForm })
+      updateCategoryMutation.mutate({ id: editingCategory_id, data: editForm })
     }
   }
 

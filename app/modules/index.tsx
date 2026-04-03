@@ -49,12 +49,13 @@ export default function Dashboard() {
       icon: <Receipt size={24} color="#1A1A1A" />,
       route: '/modules/menu-items/menu-items',
     },
+
       
     {
-      id: 'reports',
-      label: 'Reports',
+      id: 'dashboard',
+      label: 'Dashboard',
       icon: <Receipt size={24} color="#1A1A1A" />,
-      route: '/modules/reports/Reports',
+      route: '/modules/Dashboard',
     },
     
     {

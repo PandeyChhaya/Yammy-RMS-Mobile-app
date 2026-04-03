@@ -74,7 +74,7 @@ export default function Login() {
       await AsyncStorage.setItem('@accessToken',  result.accessToken)
       await AsyncStorage.setItem('@refreshToken', result.refreshToken)
 
-      router.replace('./modules/Dashboard')
+      router.replace('/modules/Dashboard')
 
     } catch (err: any) {
       Alert.alert('Could not log in', err.message || 'Wrong email or password maybe?')
@@ -107,8 +107,8 @@ export default function Login() {
           <Utensils size={36} color={C.cream} />
         </View>
 
-        <Text style={styles.appTitle}>Yammy Fresh</Text>
-        <Text style={styles.appSub}>Point of Sale</Text>
+        <Text style={styles.appTitle}>Yammy</Text>
+        <Text style={styles.appSub}>POS</Text>
       </View>
 
       {/* Login Card */}

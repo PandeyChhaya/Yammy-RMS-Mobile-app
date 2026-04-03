@@ -28,7 +28,7 @@ const postCategory= async(category: Omit<Category, 'category_id'>): Promise<Cate
       return data;
 };
 
-const getCategory= async():  Promise<Category> =>{
+const getCategory= async():  Promise<Category[]> =>{
   const response = await fetch(BASE_URL, {
     method: 'GET',
     headers : await auth_headers(),
@@ -37,7 +37,7 @@ const getCategory= async():  Promise<Category> =>{
   if(!response.ok) throw new Error (data.message);
   return data;
 };
-const putCategory= async(category_id: number, updates: Partial<Omit<Category, 'category_id'>>) : Promise<Category> => {
+const putCategory= async(category_id: string, updates: Partial<Omit<Category, 'category_id'>>) : Promise<Category> => {
     const response = await fetch (`${BASE_URL}/${category_id}`,{
       method: 'PUT',
       headers: await auth_headers(),

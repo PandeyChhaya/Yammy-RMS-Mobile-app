@@ -37,13 +37,13 @@ const C = {
 
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
-const API_URL = 'http://10.23.1.14:3000/api'
+const API_URL = 'http://192.168.1.71:5000/api'
 
 const staffRoles = [
-  { id: 'admin',   label: 'Admin' },
-  { id: 'manager', label: 'Manager' },
-  { id: 'waiter',  label: 'Waiter' },
-  { id: 'kitchen', label: 'Kitchen Staff' },
+ { id: 'Admin', label: 'Admin' },
+{ id: 'Waiter', label: 'Waiter' },
+{ id: 'Cashier', label: 'Cashier' },
+{ id: 'Kitchen', label: 'Kitchen Staff' },
 ]
 
 export default function Signup() {
@@ -86,12 +86,10 @@ export default function Signup() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email:          emailAddress.trim(),
-          password:       passwordFirst.trim(),
-          name:           fullName.trim(),
-          restaurantName: `${fullName.trim()}'s Restaurant`,
-          phone:          `+977 ${phoneNum.trim()}`,
-          address:        'Kathmandu, Nepal',
+          user_email:          emailAddress.trim(),
+          user_password:       passwordFirst.trim(),
+          user_name:           fullName.trim(),
+          
         }),
       })
 
@@ -104,7 +102,7 @@ export default function Signup() {
       await AsyncStorage.setItem('@auth_token', result.token)
       await AsyncStorage.setItem('@user', JSON.stringify(result.user))
 
-      router.replace('/modules/pos/POS')
+      router.replace('/modules/Dashboard')
 
     } catch (err: any) {
       Alert.alert('Signup Failed', err.message || 'Something went wrong, try again?')
