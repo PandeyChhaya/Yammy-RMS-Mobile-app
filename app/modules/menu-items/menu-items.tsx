@@ -15,8 +15,7 @@ import {
 } from 'react-native'
 import { logsService } from '../../../shared/services/logsService'
 import { LogCategory } from '../../../shared/types/logs'
-import { categoriesService } from '../categories/services/categoriesService'
-import { productsService } from './services/menu-items'
+import categoriesService from '../categories/services/categoriesService'
 
 interface Product {
     id: string
