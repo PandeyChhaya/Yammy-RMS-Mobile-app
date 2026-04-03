@@ -30,10 +30,10 @@ export default function Dashboard() {
       route: '/modules/orders/Orders',
     },
      {
-      id: 'categories',
-      label: 'Categories',
+      id: 'dashboard',
+      label: 'Dashboard',
       icon: <Receipt size={24} color="#1A1A1A" />,
-      route: '/modules/categories/Categories',
+      route: '/modules/Dashboard',
     },
      {
       id: 'login',
