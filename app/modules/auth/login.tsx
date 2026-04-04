@@ -73,6 +73,8 @@ export default function Login() {
 
       await AsyncStorage.setItem('@accessToken',  result.accessToken)
       await AsyncStorage.setItem('@refreshToken', result.refreshToken)
+      await AsyncStorage.setItem('@userName', result.user_name)
+     await AsyncStorage.setItem('@userRole', result.user_role)
 
       router.replace('/modules/Dashboard')
 

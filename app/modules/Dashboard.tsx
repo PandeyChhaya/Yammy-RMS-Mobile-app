@@ -1,22 +1,31 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import {
   FileText,
   LayoutDashboard,
+  LogOut,
   Package,
   Receipt,
   Shield,
   ShoppingCart,
+  Users,
   Utensils,
   Video,
 } from 'lucide-react-native'
+import { useEffect, useState } from 'react'
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native'
+import { authService } from './auth/services/auth.service'
+import { ordersService } from './orders/services/orderService'
+import tablesService from './pos/services/tablesService'
 
+// ─── Colors ───────────────────────────────────────────────────────────────────
 const C = {
   espresso:    '#1C1008',
   roast:       '#3D2010',
@@ -36,257 +45,464 @@ const C = {
   tcBorder:    '#E8A898',
   onDark:      '#FDF6EC',
 }
-
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
-interface MenuItem {
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface Stats {
+  todayOrders: number
+  activeTables: number
+  totalRevenue: number
+  pendingOrders: number
+}
+
+interface ModuleItem {
   id: string
   label: string
+  sub: string
   icon: React.ReactNode
   route: string
   badge?: string
+  color: string
+  borderColor: string
+  roles: string[]
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const router = useRouter()
 
-  const menuItems: MenuItem[] = [
- 
+  const [userName, setUserName]   = useState('...')
+  const [userRole, setUserRole]   = useState('Admin')
+  const [stats, setStats]         = useState<Stats>({ todayOrders: 0, activeTables: 0, totalRevenue: 0, pendingOrders: 0 })
+  const [loadingStats, setLoadingStats] = useState(true)
 
+  useEffect(() => {
+    loadUser()
+    loadStats()
+  }, [])
 
+  const loadUser = async () => {
+    const name = await AsyncStorage.getItem('@userName')
+    const role = await AsyncStorage.getItem('@userRole')
+    if (name) setUserName(name)
+    if (role) setUserRole(role)
+  }
 
+  const loadStats = async () => {
+    try {
+      const [orders, tables] = await Promise.all([
+        ordersService.getOrder(),
+        tablesService.getTable(),
+      ])
+
+      const today = new Date().toISOString().split('T')[0]
+      const todayOrders = orders.filter((o: any) =>
+        o.created_at?.startsWith(today)
+      ).length
+
+      const pendingOrders = orders.filter((o: any) =>
+        o.order_status === 'pending'
+      ).length
+
+      const activeTables = tables.filter((t: any) =>
+        t.table_status !== 'available' && t.table_status !== 'free'
+      ).length
+
+      const totalRevenue = orders
+        .filter((o: any) => o.created_at?.startsWith(today))
+        .reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0)
+
+      setStats({ todayOrders, activeTables, totalRevenue, pendingOrders })
+    } catch {
+      // silently fail — stats just stay 0
+    } finally {
+      setLoadingStats(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    await authService.logout()
+    router.replace('/modules/auth/login')
+  }
+
+  // ── Module definitions ──
+  const allModules: ModuleItem[] = [
     {
       id: 'pos',
       label: 'Point of Sale',
-      icon: <ShoppingCart size={22} color={C.espresso} />,
+      sub: 'Take orders',
+      icon: <ShoppingCart size={24} color={C.brass} />,
       route: '/modules/pos/POS',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin', 'Waiter', 'Cashier'],
+    },
+     {
+      id: 'settings',
+      label: 'Settings',
+      sub: 'settings',
+      icon: <ShoppingCart size={24} color={C.brass} />,
+      route: '/modules/settings/settings',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin', 'Waiter', 'Cashier'],
+    },
+     {
+      id: 'tables',
+      label: 'Tables',
+      sub: 'Select Tables',
+      icon: <ShoppingCart size={24} color={C.brass} />,
+      route: '/modules/pos/components/TableCard',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin', 'Waiter', 'Cashier'],
     },
     {
       id: 'orders',
       label: 'Orders',
-      icon: <Receipt size={22} color={C.espresso} />,
+      sub: 'View & manage',
+      icon: <Receipt size={24} color={C.sage} />,
       route: '/modules/orders/Orders',
+      color: C.sageLight,
+      borderColor: C.sageBorder,
+      roles: ['Admin', 'Waiter', 'Cashier', 'Kitchen'],
     },
-
-    
     {
       id: 'products',
-      label: 'Products',
-      icon: <Package size={22} color={C.espresso} />,
-      route: '/modules/products/Products',
+      label: 'Menu Items',
+      sub: 'Edit menu',
+      icon: <Package size={24} color={C.clay} />,
+      route: '/modules/menu-items/menu-items',
+      color: C.parchment,
+      borderColor: C.vellum,
+      roles: ['Admin'],
     },
     {
       id: 'categories',
       label: 'Categories',
-      icon: <LayoutDashboard size={22} color={C.espresso} />,
+      sub: 'Manage groups',
+      icon: <LayoutDashboard size={24} color={C.clay} />,
       route: '/modules/categories/Categories',
+      color: C.parchment,
+      borderColor: C.vellum,
+      roles: ['Admin'],
     },
-
-  
+    {
+      id: 'users',
+      label: 'Staff',
+      sub: 'Manage users',
+      icon: <Users size={24} color={C.terracotta} />,
+      route: '/modules/users/Users',
+      color: C.tcLight,
+      borderColor: C.tcBorder,
+      roles: ['Admin'],
+    },
     {
       id: 'reports',
       label: 'Reports',
-      icon: <FileText size={22} color={C.espresso} />,
+      sub: 'Sales & stats',
+      icon: <FileText size={24} color={C.brass} />,
       route: '/modules/reports/Reports',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin'],
     },
     {
       id: 'auditguard',
       label: 'Audit Logs',
-      icon: <Shield size={22} color={C.espresso} />,
+      sub: 'Activity trail',
+      icon: <Shield size={24} color={C.sage} />,
       route: '/modules/auditguard/AuditGuard',
+      color: C.sageLight,
+      borderColor: C.sageBorder,
+      roles: ['Admin'],
     },
-
-
     {
       id: 'tiktok',
       label: 'Social Media',
-      icon: <Video size={22} color={C.espresso} />,
+      sub: 'Promotions',
+      icon: <Video size={24} color={C.terracotta} />,
       route: '/modules/tiktok/TikTok',
       badge: 'Beta',
+      color: C.tcLight,
+      borderColor: C.tcBorder,
+      roles: ['Admin'],
     },
   ]
 
-  const handleMenuPress = (route: string) => {
-    router.push(route as any)
-  }
+  const visibleModules = allModules.filter(m => m.roles.includes(userRole))
 
+  // ─── Stats cards ────────────────────────────────────────────────────────────
+  const statCards = [
+    {
+      label: "Today's Orders",
+      value: stats.todayOrders,
+      prefix: '',
+      color: C.brass,
+      bg: C.brassLight,
+      border: C.brassBorder,
+    },
+    {
+      label: 'Active Tables',
+      value: stats.activeTables,
+      prefix: '',
+      color: C.sage,
+      bg: C.sageLight,
+      border: C.sageBorder,
+    },
+    {
+      label: 'Revenue',
+      value: stats.totalRevenue,
+      prefix: 'NPR ',
+      color: C.brass,
+      bg: C.brassLight,
+      border: C.brassBorder,
+    },
+    {
+      label: 'Pending',
+      value: stats.pendingOrders,
+      prefix: '',
+      color: C.terracotta,
+      bg: C.tcLight,
+      border: C.tcBorder,
+    },
+  ]
+
+  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
-    <View style={styles.root}>
+    <View style={s.root}>
+      <ScrollView showsVerticalScrollIndicator={false}>
 
-   
-      <View style={styles.profileSection}>
-        <View style={styles.profileContent}>
-
-          
-          <View style={styles.profilePicture}>
-            <Utensils size={32} color={C.cream} />
+        {/* ── Header ── */}
+        <View style={s.header}>
+          <View style={s.headerTop}>
+            <View style={s.brand}>
+              <View style={s.logoBadge}>
+                <Utensils size={20} color={C.cream} />
+              </View>
+              <View>
+                <Text style={s.brandName}>Yammy Fresh</Text>
+                <Text style={s.brandSub}>Restaurant POS</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
+              <LogOut size={16} color={C.latte} />
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>Yammy Fresh</Text>
-            <Text style={styles.userEmail}>yammy@restaurant.com</Text>
-          </View>
-
-          <View style={styles.ownerBadge}>
-            <Text style={styles.ownerBadgeText}>Owner</Text>
+          {/* User info */}
+          <View style={s.userCard}>
+            <View style={s.avatarWrap}>
+              <Text style={s.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
+            </View>
+            <View style={s.userInfo}>
+              <Text style={s.userName}>{userName}</Text>
+              <View style={s.rolePill}>
+                <Text style={s.roleText}>{userRole}</Text>
+              </View>
+            </View>
+            <View style={s.onlinePill}>
+              <View style={s.onlineDot} />
+              <Text style={s.onlineText}>Online</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      
-      <ScrollView style={styles.menuScroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.menuList}>
-          {menuItems.map((item, index) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[
-                styles.menuItem,
-                index === menuItems.length - 1 && styles.menuItemLast,
-              ]}
-              onPress={() => handleMenuPress(item.route)}
-              activeOpacity={0.75}
-            >
-              <View style={styles.menuItemIcon}>{item.icon}</View>
-              <Text style={styles.menuItemText}>{item.label}</Text>
-              {item.badge && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{item.badge}</Text>
+        <View style={s.body}>
+
+          {/* ── Stats ── */}
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Today's Overview</Text>
+            <View style={s.statsGrid}>
+              {statCards.map((card) => (
+                <View key={card.label} style={[s.statCard, { backgroundColor: card.bg, borderColor: card.border }]}>
+                  {loadingStats
+                    ? <ActivityIndicator size="small" color={card.color} />
+                    : <Text style={[s.statValue, { color: card.color }]}>
+                        {card.prefix}{typeof card.value === 'number' && card.label === 'Revenue'
+                          ? card.value.toLocaleString()
+                          : card.value}
+                      </Text>
+                  }
+                  <Text style={s.statLabel}>{card.label}</Text>
                 </View>
-              )}
-              <Text style={styles.menuItemArrow}>›</Text>
-            </TouchableOpacity>
-          ))}
+              ))}
+            </View>
+          </View>
+
+          {/* ── Modules ── */}
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Modules</Text>
+            <View style={s.modulesGrid}>
+              {visibleModules.map((mod) => (
+                <TouchableOpacity
+                  key={mod.id}
+                  style={[s.moduleCard, { backgroundColor: mod.color, borderColor: mod.borderColor }]}
+                  onPress={() => router.push(mod.route as any)}
+                  activeOpacity={0.8}
+                >
+                  <View style={s.moduleIconWrap}>
+                    {mod.icon}
+                  </View>
+                  <Text style={s.moduleLabel}>{mod.label}</Text>
+                  <Text style={s.moduleSub}>{mod.sub}</Text>
+                  {mod.badge && (
+                    <View style={s.moduleBadge}>
+                      <Text style={s.moduleBadgeText}>{mod.badge}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
         </View>
       </ScrollView>
     </View>
   )
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: C.cream,
-  },
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.cream },
 
-  
-  profileSection: {
+  // Header
+  header: {
     backgroundColor: C.espresso,
-    paddingTop: 60,
-    paddingBottom: 28,
+    paddingTop: 56,
     paddingHorizontal: 20,
+    paddingBottom: 24,
+    gap: 20,
     shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowRadius: 12,
+    elevation: 10,
   },
-  profileContent: {
-    alignItems: 'center',
-    gap: 10,
-  },
-  profilePicture: {
-    width: 76,
-    height: 76,
-    borderRadius: radius.md,
-    backgroundColor: C.brass,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-    borderWidth: 1.5,
-    borderColor: C.brassBorder,
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  userInfo: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: C.cream,
-    letterSpacing: 0.4,
-  },
-  userEmail: {
-    fontSize: 13,
-    color: C.latte,
-    fontWeight: '500',
-  },
-  ownerBadge: {
-    backgroundColor: C.brassLight,
-    paddingHorizontal: 16,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-    marginTop: 6,
-    borderWidth: 1,
-    borderColor: C.brassBorder,
-  },
-  ownerBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: C.brass,
-    letterSpacing: 0.5,
-  },
-
- 
-  menuScroll: {
-    flex: 1,
-  },
-  menuList: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    gap: 2,
-  },
-  menuItem: {
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: C.vellum,
-    gap: 4,
+    justifyContent: 'space-between',
   },
-  menuItemLast: {
-    borderBottomWidth: 0,
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  logoBadge: {
+    width: 44, height: 44, borderRadius: radius.sm,
+    backgroundColor: C.brass,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: C.brass,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  menuItemIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.sm,
-    backgroundColor: C.brassLight,
-    borderWidth: 1,
-    borderColor: C.brassBorder,
+  brandName: { fontSize: 18, fontWeight: '900', color: C.cream, letterSpacing: 0.4 },
+  brandSub:  { fontSize: 10, color: C.latte, fontWeight: '500', letterSpacing: 1, marginTop: 1 },
+  logoutBtn: {
+    width: 38, height: 38, borderRadius: radius.sm,
+    backgroundColor: '#2A1A05',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: '#3D2010',
+  },
+
+  // User card
+  userCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  menuItemText: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: C.espresso,
-    letterSpacing: 0.1,
-  },
-  menuItemArrow: {
-    fontSize: 20,
-    color: C.latte,
-    fontWeight: '300',
-  },
-  badge: {
-    backgroundColor: C.brassLight,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
+    gap: 14,
+    backgroundColor: '#2A1A05',
+    borderRadius: radius.md,
+    padding: 14,
     borderWidth: 1,
-    borderColor: C.brassBorder,
-    marginRight: 6,
+    borderColor: '#3D2010',
   },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: C.brass,
+  avatarWrap: {
+    width: 46, height: 46, borderRadius: radius.sm,
+    backgroundColor: C.brass,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: C.brassBorder,
   },
+  avatarText: { fontSize: 20, fontWeight: '900', color: C.cream },
+  userInfo:   { flex: 1, gap: 5 },
+  userName:   { fontSize: 15, fontWeight: '800', color: C.cream, letterSpacing: 0.2 },
+  rolePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: C.brassLight,
+    paddingHorizontal: 10, paddingVertical: 3,
+    borderRadius: radius.pill,
+    borderWidth: 1, borderColor: C.brassBorder,
+  },
+  roleText: { fontSize: 10, fontWeight: '700', color: C.brass, letterSpacing: 0.5 },
+  onlinePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: '#0E2218',
+    borderRadius: radius.pill,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderWidth: 1, borderColor: C.sageBorder,
+  },
+  onlineDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: C.sage },
+  onlineText: { fontSize: 10, fontWeight: '700', color: C.sage },
+
+  // Body
+  body: { padding: 20, gap: 28 },
+
+  // Section
+  section:      { gap: 14 },
+  sectionTitle: {
+    fontSize: 11, fontWeight: '800', color: C.clay,
+    textTransform: 'uppercase', letterSpacing: 1.4,
+  },
+
+  // Stats
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  statCard: {
+    width: '47%',
+    borderRadius: radius.md,
+    padding: 16,
+    borderWidth: 1.5,
+    gap: 4,
+    shadowColor: C.espresso,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statValue: { fontSize: 26, fontWeight: '900', letterSpacing: -0.5 },
+  statLabel: { fontSize: 11, color: C.clay, fontWeight: '600', letterSpacing: 0.3 },
+
+  // Modules
+  modulesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  moduleCard: {
+    width: '47%',
+    borderRadius: radius.md,
+    padding: 16,
+    borderWidth: 1.5,
+    gap: 6,
+    shadowColor: C.espresso,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+    position: 'relative',
+  },
+  moduleIconWrap: {
+    width: 46, height: 46,
+    borderRadius: radius.sm,
+    backgroundColor: C.cream,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 4,
+    shadowColor: C.espresso,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  moduleLabel: { fontSize: 13, fontWeight: '800', color: C.espresso },
+  moduleSub:   { fontSize: 10, color: C.clay, fontWeight: '500', letterSpacing: 0.2 },
+  moduleBadge: {
+    position: 'absolute', top: 10, right: 10,
+    backgroundColor: C.brass,
+    borderRadius: radius.pill,
+    paddingHorizontal: 7, paddingVertical: 2,
+  },
+  moduleBadgeText: { fontSize: 9, fontWeight: '800', color: C.cream },
 })

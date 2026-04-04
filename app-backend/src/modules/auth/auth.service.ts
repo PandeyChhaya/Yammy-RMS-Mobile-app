@@ -59,7 +59,7 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
     },
   });
 
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, user_name: user.user_name, user_role:user.user_role };
 };
 
 export const logoutUser = async (body: any) => {

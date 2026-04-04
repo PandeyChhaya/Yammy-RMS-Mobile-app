@@ -41,7 +41,7 @@ const getPayment= async():  Promise<Payment[]> =>{
   if(!response.ok) throw new Error (data.message);
   return data;
 };
-const putPayment= async(payment_id: string, updates: Partial<Omit<Payment, 'payment_id'>>) : Promise<Payment> => {
+const putPayment= async(payment_id: number, updates: Partial<Omit<Payment, 'payment_id'>>) : Promise<Payment> => {
     const response = await fetch (`${BASE_URL}/${payment_id}`,{
       method: 'PUT',
       headers: await auth_headers(),
