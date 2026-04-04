@@ -1,14 +1,17 @@
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http://192.168.1.71:5000/api/table';
+const BASE_URL= 'http://192.168.1.71:5000/api/order-items';
 
 
-export interface Table{
-  table_id: number
-  table_number: string
-  floor: string
-  capacity: number
-  table_status: string
+export interface OrderItem{
+  order_item_id: number
+  order_id: number
+  menu_item_id: number
+  quantity: number
+  unit_price: number
+  subtotal: number
+  special_request: string
+  order_item_status: string
 };
 
 const auth_headers= async()=>{
@@ -19,18 +22,18 @@ const auth_headers= async()=>{
   } ;
 }
 
-const postTable= async(table: Omit<Table, 'table_id'>): Promise<Table> =>{
+const postOrderItem= async(orderItem: Omit<OrderItem, 'order_item_id'| 'menu_item_id'>): Promise<OrderItem> =>{
       const response = await fetch(BASE_URL, {
         method: 'POST',
         headers: await auth_headers(),
-        body: JSON.stringify(table),
+        body: JSON.stringify(orderItem),
       });
       const data = await response.json();
       if(!response.ok) throw new Error(data.message);
       return data;
 };
 
-const getTable= async():  Promise<Table[]> =>{
+const getOrderItem= async():  Promise<OrderItem[]> =>{
   const response = await fetch(BASE_URL, {
     method: 'GET',
     headers : await auth_headers(),
@@ -39,8 +42,8 @@ const getTable= async():  Promise<Table[]> =>{
   if(!response.ok) throw new Error (data.message);
   return data;
 };
-const putTable= async(table_id: number, updates: Partial<Omit<Table, 'table_id'>>) : Promise<Table> => {
-    const response = await fetch (`${BASE_URL}/${table_id}`,{
+const putOrderItem= async(order_item_id: number, updates: Partial<Omit<OrderItem, 'order_item_id'>>) : Promise<OrderItem> => {
+    const response = await fetch (`${BASE_URL}/${order_item_id}`,{
       method: 'PUT',
       headers: await auth_headers(),
       body: JSON.stringify(updates),
@@ -50,8 +53,8 @@ const putTable= async(table_id: number, updates: Partial<Omit<Table, 'table_id'>
     if(!response.ok) throw new Error(data.message);
     return data;
 };
-const deleteTable= async(table_id:number) : Promise<Table> =>{
-    const response = await fetch(`${BASE_URL}/${table_id}`,{
+const deleteOrderItem= async(order_item_id:number) : Promise<OrderItem> =>{
+    const response = await fetch(`${BASE_URL}/${order_item_id}`,{
       method:'DELETE',
       headers: await auth_headers(),
     
@@ -63,5 +66,5 @@ const deleteTable= async(table_id:number) : Promise<Table> =>{
 
 };
 
-const tableService = {postTable, getTable, putTable, deleteTable};
-export default tableService;
+const orderItemService = {postOrderItem, getOrderItem, putOrderItem, deleteOrderItem};
+export default orderItemService;

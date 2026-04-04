@@ -1,14 +1,16 @@
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http://192.168.1.71:5000/api/table';
+const BASE_URL= 'http://192.168.1.71:5000/api/payment';
 
 
-export interface Table{
-  table_id: number
-  table_number: string
-  floor: string
-  capacity: number
-  table_status: string
+export interface Payment{
+   payment_id: number
+  order_id: number
+  payment_method: string
+  amount_paid: number
+  change_given: number
+  payment_status: string
+  transaction_ref: string
 };
 
 const auth_headers= async()=>{
@@ -19,18 +21,18 @@ const auth_headers= async()=>{
   } ;
 }
 
-const postTable= async(table: Omit<Table, 'table_id'>): Promise<Table> =>{
+const postPayment= async(payment: Omit<Payment, 'payment_id'>): Promise<Payment> =>{
       const response = await fetch(BASE_URL, {
         method: 'POST',
         headers: await auth_headers(),
-        body: JSON.stringify(table),
+        body: JSON.stringify(payment),
       });
       const data = await response.json();
       if(!response.ok) throw new Error(data.message);
       return data;
 };
 
-const getTable= async():  Promise<Table[]> =>{
+const getPayment= async():  Promise<Payment[]> =>{
   const response = await fetch(BASE_URL, {
     method: 'GET',
     headers : await auth_headers(),
@@ -39,8 +41,8 @@ const getTable= async():  Promise<Table[]> =>{
   if(!response.ok) throw new Error (data.message);
   return data;
 };
-const putTable= async(table_id: number, updates: Partial<Omit<Table, 'table_id'>>) : Promise<Table> => {
-    const response = await fetch (`${BASE_URL}/${table_id}`,{
+const putPayment= async(payment_id: string, updates: Partial<Omit<Payment, 'payment_id'>>) : Promise<Payment> => {
+    const response = await fetch (`${BASE_URL}/${payment_id}`,{
       method: 'PUT',
       headers: await auth_headers(),
       body: JSON.stringify(updates),
@@ -50,8 +52,8 @@ const putTable= async(table_id: number, updates: Partial<Omit<Table, 'table_id'>
     if(!response.ok) throw new Error(data.message);
     return data;
 };
-const deleteTable= async(table_id:number) : Promise<Table> =>{
-    const response = await fetch(`${BASE_URL}/${table_id}`,{
+const deletePayment= async(payment_id:number) : Promise<Payment> =>{
+    const response = await fetch(`${BASE_URL}/${payment_id}`,{
       method:'DELETE',
       headers: await auth_headers(),
     
@@ -63,5 +65,5 @@ const deleteTable= async(table_id:number) : Promise<Table> =>{
 
 };
 
-const tableService = {postTable, getTable, putTable, deleteTable};
-export default tableService;
+const payementService = {postPayment, getPayment, putPayment, deletePayment};
+export default payementService;
