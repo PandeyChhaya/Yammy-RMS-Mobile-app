@@ -13,7 +13,7 @@ export type OrderStatus= 'pending'| 'in_kitchen' | 'ready' |'completed';
 
 export interface Order {
     order_id: number
-    table_id: number
+    table_id: number | null
     user_id: number
     order_type: string
     order_status: OrderStatus

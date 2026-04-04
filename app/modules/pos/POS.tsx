@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   Coffee,
   CreditCard,
@@ -17,49 +17,77 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native'
 
-import { useApp } from '../../../shared/contexts/AppContext'
-import { useUserSettings } from '../../../shared/contexts/UserSettingsContext'
-import { useActiveTabState } from '../../../shared/hooks/useTabState'
-import { useTaxSettings } from '../../../shared/hooks/useTaxSettings'
+import { OrderStatus } from '@/shared/types/orders'
+import { authService } from '../auth/services/auth.service'
+import categoriesService from '../categories/services/categoriesService'
+import menuItemsService from '../menu-items/services/menu-items-services'
 import { ordersService } from '../orders/services/orderService'
-import PaymentModal from './components/PaymentModal'
-import SplitTicketModal from './components/SplitTicketModal'
-import { Category, categoryService } from './services/categoriesService'
-import { productsService } from './services/productsService'
-import { TableCart, tablesService } from './services/tablesService'
-
-import { useCart, usePayment, useSplitTicket, useTables } from './hooks'
-import { ProductDisplay } from './types/products'
-import { TableData } from './types/tables'
+import tablesService from '../pos/services/tablesService'
 
 
-const C = {
-  
-  espresso:    '#1C1008',   
-  roast:       '#3D2010',   
-  clay:        '#7A4528',  
-  latte:       '#C8956A', 
-  cream:       '#FDF6EC',   
-  parchment:   '#F5E9D4',   
-  vellum:      '#EDD9BC',   
-  brass:       '#B5822A',   
-  brassLight:  '#F7EDD8',   
-  brassBorder: '#DEC07A', 
-  brassGlow:   '#B5822A40', 
-  sage:        '#3B6E52',   
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',   
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-  onDark:      '#FDF6EC',   
+
+
+interface Category {
+  category_id: number
+  category_name: string
+  category_description: string
+}
+
+interface MenuItem {
+  menu_items_id: number
+  menu_items_name: string
+  slug: string
+  price: number
+  menu_items_category_id: number
+  menu_items_description: string
+  image_url: string
+}
+
+interface Table {
+  table_id: number
+  table_number: string
+  floor: string
+  capacity: number
+  table_status: string
+}
+
+interface CartItem {
+  menu_item_id: number
+  name: string
+  price: number
+  quantity: number
+  subtotal: number
 }
 
 
+
+const C = {
+  espresso:    '#1C1008',
+  roast:       '#3D2010',
+  clay:        '#7A4528',
+  latte:       '#C8956A',
+  cream:       '#FDF6EC',
+  parchment:   '#F5E9D4',
+  vellum:      '#EDD9BC',
+  brass:       '#B5822A',
+  brassLight:  '#F7EDD8',
+  brassBorder: '#DEC07A',
+  brassGlow:   '#B5822A40',
+  sage:        '#3B6E52',
+  sageLight:   '#EBF4EE',
+  sageBorder:  '#9FCFB4',
+  terracotta:  '#A03020',
+  tcLight:     '#FAECEA',
+  tcBorder:    '#E8A898',
+  onDark:      '#FDF6EC',
+}
+
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
+
+
 
 function LiveClock() {
   const [time, setTime] = useState(new Date())
@@ -67,37 +95,30 @@ function LiveClock() {
     const t = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
-
   const pad = (n: number) => n.toString().padStart(2, '0')
-  const hh = pad(time.getHours())
-  const mm = pad(time.getMinutes())
-  const ss = pad(time.getSeconds())
+  const hh   = pad(time.getHours())
+  const mm   = pad(time.getMinutes())
+  const ss   = pad(time.getSeconds())
   const date = time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-
   return (
     <View style={clockStyles.wrap}>
-      <Text style={clockStyles.time}>
-        {hh}:{mm}<Text style={clockStyles.secs}>:{ss}</Text>
-      </Text>
+      <Text style={clockStyles.time}>{hh}:{mm}<Text style={clockStyles.secs}>:{ss}</Text></Text>
       <Text style={clockStyles.date}>{date}</Text>
     </View>
   )
 }
 
 const clockStyles = StyleSheet.create({
-  wrap:  { alignItems: 'flex-end' },
-  time:  { fontSize: 16, fontWeight: '800', color: C.cream, letterSpacing: 1.5 },
-  secs:  { fontSize: 11, fontWeight: '400', color: C.latte },
-  date:  { fontSize: 10, color: C.latte, fontWeight: '500', marginTop: 2, letterSpacing: 0.6 },
+  wrap: { alignItems: 'flex-end' },
+  time: { fontSize: 16, fontWeight: '800', color: C.cream, letterSpacing: 1.5 },
+  secs: { fontSize: 11, fontWeight: '400', color: C.latte },
+  date: { fontSize: 10, color: C.latte, fontWeight: '500', marginTop: 2, letterSpacing: 0.6 },
 })
 
 function StatusBanner({ message, type }: { message: string; type: 'success' | 'error' }) {
   const isSuccess = type === 'success'
   return (
-    <View style={[
-      bannerStyles.wrap,
-      isSuccess ? bannerStyles.success : bannerStyles.error,
-    ]}>
+    <View style={[bannerStyles.wrap, isSuccess ? bannerStyles.success : bannerStyles.error]}>
       <View style={[bannerStyles.dot, { backgroundColor: isSuccess ? C.sage : C.terracotta }]} />
       <Text style={bannerStyles.text}>{message}</Text>
     </View>
@@ -105,20 +126,12 @@ function StatusBanner({ message, type }: { message: string; type: 'success' | 'e
 }
 
 const bannerStyles = StyleSheet.create({
-  wrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-  },
-  success: { backgroundColor: C.sageLight,     borderBottomColor: C.sageBorder },
-  error:   { backgroundColor: C.tcLight,        borderBottomColor: C.tcBorder },
+  wrap:    { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 20, borderBottomWidth: 1 },
+  success: { backgroundColor: C.sageLight, borderBottomColor: C.sageBorder },
+  error:   { backgroundColor: C.tcLight,   borderBottomColor: C.tcBorder },
   dot:     { width: 7, height: 7, borderRadius: 4 },
   text:    { fontSize: 13, fontWeight: '600', color: C.espresso, flex: 1, textAlign: 'center' },
 })
-
 
 function Divider() {
   return (
@@ -129,6 +142,7 @@ function Divider() {
     </View>
   )
 }
+
 function SectionHeader({ icon, title, count }: { icon: string; title: string; count?: number }) {
   return (
     <View style={shStyles.wrap}>
@@ -146,114 +160,193 @@ function SectionHeader({ icon, title, count }: { icon: string; title: string; co
 }
 
 const shStyles = StyleSheet.create({
-  wrap: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 14 },
-  iconBadge: {
-    width: 28, height: 28, borderRadius: radius.sm,
-    backgroundColor: C.brassLight,
-    borderWidth: 1, borderColor: C.brassBorder,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  icon:  { fontSize: 13 },
-  title: {
-    fontSize: 11, fontWeight: '800', color: C.clay,
-    textTransform: 'uppercase', letterSpacing: 1.4, flex: 1,
-  },
-  countBadge: {
-    backgroundColor: C.brassLight,
-    borderRadius: radius.pill,
-    paddingHorizontal: 9, paddingVertical: 3,
-    borderWidth: 1, borderColor: C.brassBorder,
-  },
-  countText: { fontSize: 11, fontWeight: '700', color: C.brass },
+  wrap:       { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 14 },
+  iconBadge:  { width: 28, height: 28, borderRadius: radius.sm, backgroundColor: C.brassLight, borderWidth: 1, borderColor: C.brassBorder, alignItems: 'center', justifyContent: 'center' },
+  icon:       { fontSize: 13 },
+  title:      { fontSize: 11, fontWeight: '800', color: C.clay, textTransform: 'uppercase', letterSpacing: 1.4, flex: 1 },
+  countBadge: { backgroundColor: C.brassLight, borderRadius: radius.pill, paddingHorizontal: 9, paddingVertical: 3, borderWidth: 1, borderColor: C.brassBorder },
+  countText:  { fontSize: 11, fontWeight: '700', color: C.brass },
 })
+
+
 
 export default function POS() {
 
-  
-  const { tabs, activeTabId } = useApp()
-  const { settings } = useUserSettings()
-  const currentTab = tabs.find(tab => tab.id === activeTabId)
+  const [categories,  setCategories]  = useState<Category[]>([])
+  const [menuItems,   setMenuItems]   = useState<MenuItem[]>([])
+  const [tables,      setTables]      = useState<Table[]>([])
+  const [loading,     setLoading]     = useState(true)
 
-  const [selectedTable, setSelectedTable] = useActiveTabState<TableData | null>(
-    'selectedTable', currentTab?.params?.selectedTable || null, true
-  )
-  const [customerName, setCustomerName]       = useActiveTabState<string>('customerName', '', true)
-  const [paymentMethod, setPaymentMethod]     = useActiveTabState<string>('paymentMethod', 'cash', true)
-  const [searchTerm, setSearchTerm]           = useActiveTabState<string>('searchTerm', '', true)
-  const [selectedCategory, setSelectedCategory] = useActiveTabState<string>('selectedCategory', 'all', true)
-  const [showSuccessMessage, setShowSuccessMessage] = useState<string | null>(null)
-  const [showErrorMessage, setShowErrorMessage]     = useState<string | null>(null)
-  const [showPaymentModal, setShowPaymentModal]     = useState(false)
-  const [showSplitTicketModal, setShowSplitTicketModal] = useState(false)
-  const [shouldGenerateTicket, setShouldGenerateTicket] = useState(false)
-  const [activeTab, setActiveTab] = useState<'tables' | 'products' | 'cart'>('products')
+ 
+  const [selectedTable,    setSelectedTable]    = useState<Table | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [searchTerm,       setSearchTerm]       = useState('')
+  const [activeTab,        setActiveTab]        = useState<'tables' | 'products' | 'cart'>('products')
+  const [cart,             setCart]             = useState<CartItem[]>([])
+  const [isPlacingOrder,   setIsPlacingOrder]   = useState(false)
+  const [successMessage,   setSuccessMessage]   = useState<string | null>(null)
+  const [errorMessage,     setErrorMessage]     = useState<string | null>(null)
 
-  const { data: products = [],   isLoading: loadingProducts }   = useQuery({ queryKey: ['products'],   queryFn: productsService.getProducts })
-  const { data: categories = [], isLoading: loadingCategories } = useQuery<Category[]>({ queryKey: ['categories'], queryFn: categoryService.getCategories })
-  const { data: tables = [],     isLoading: loadingTables }     = useQuery<TableData[]>({
-    queryKey: ['tables'],
-    queryFn: async (): Promise<TableData[]> => {
-      const result = await tablesService.getAllTables()
-      return result as TableData[]
-    },
-    refetchInterval: 2000,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
-  })
-
-  const { data: tableCart } = useQuery<TableCart | null>({
-    queryKey: ['table-cart', selectedTable?.id],
-    queryFn: () => selectedTable ? tablesService.getTableCart(selectedTable.id) : null,
-    enabled: !!selectedTable,
-    retry: 1,
-  })
-
-  const cartHook     = useCart(selectedTable, products as any, categories)
-  const tablesHook   = useTables()
-  const { calculateTax, getTaxName } = useTaxSettings()
-
-  const cartItems = selectedTable
-    ? (tableCart?.items || [])
-    : cartHook.enrichCartItems(cartHook.localCart?.items || [])
-
-  const cartTotal = selectedTable
-    ? (tableCart?.total_amount || 0)
-    : (cartHook.localCart?.total_amount || 0)
-
-  const paymentHook = usePayment(selectedTable, cartItems, products as any)
-
-  const getCartTaxBreakdown = () => {
-    if (!cartItems || cartItems.length === 0) return []
-    const taxGroups = new Map<string, { rate: number; name: string; amount: number }>()
-    cartItems.forEach(item => {
-      const rate = 0
-      const key = `${rate}`
-      if (taxGroups.has(key)) taxGroups.get(key)!.amount += item.total_price
-      else taxGroups.set(key, { rate, name: `${getTaxName()} ${rate}%`, amount: item.total_price })
-    })
-    return Array.from(taxGroups.values()).map(group => ({
-      tax_rate_id: `rate-${group.rate}`,
-      tax_rate_name: group.name,
-      rate: group.rate,
-      taxable_amount: group.amount,
-      tax_amount: calculateTax(group.amount, undefined, categories),
-    }))
-  }
-
-  const getCartTax          = () => getCartTaxBreakdown().reduce((sum, b) => sum + b.tax_amount, 0)
-  const getCartTotalWithTax = () => (cartTotal || 0) + getCartTax()
-
-  const splitTicketHook = useSplitTicket(cartItems, cartTotal, getCartTax)
 
   useEffect(() => {
-    if (shouldGenerateTicket) {
-      const timer = setTimeout(() => setShouldGenerateTicket(false), 1000)
-      return () => clearTimeout(timer)
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      const [cats, items, tbls] = await Promise.all([
+        categoriesService.getCategory(),
+        menuItemsService.getMenuItem(),
+        tablesService.getTable(),
+      ])
+      setCategories(cats)
+      setMenuItems(items)
+      setTables(tbls)
+    } catch (err) {
+      showError('Failed to load data. Check your connection.')
+    } finally {
+      setLoading(false)
     }
-  }, [shouldGenerateTicket])
+  }
+
+ 
+  const showSuccess = (msg: string) => {
+    setSuccessMessage(msg)
+    setTimeout(() => setSuccessMessage(null), 2500)
+  }
+
+  const showError = (msg: string) => {
+    setErrorMessage(msg)
+    setTimeout(() => setErrorMessage(null), 3500)
+  }
 
   
-  if (loadingProducts || loadingCategories || loadingTables) {
+  const addToCart = (item: MenuItem) => {
+    setCart(prev => {
+      const existing = prev.find(c => c.menu_item_id === item.menu_items_id)
+      if (existing) {
+        return prev.map(c =>
+          c.menu_item_id === item.menu_items_id
+            ? { ...c, quantity: c.quantity + 1, subtotal: (c.quantity + 1) * c.price }
+            : c
+        )
+      }
+      return [...prev, {
+        menu_item_id: item.menu_items_id,
+        name:         item.menu_items_name,
+        price:        item.price,
+        quantity:     1,
+        subtotal:     item.price,
+      }]
+    })
+    showSuccess(`${item.menu_items_name} added to cart`)
+  }
+
+  const removeFromCart = (menu_item_id: number) => {
+    setCart(prev => prev.filter(c => c.menu_item_id !== menu_item_id))
+  }
+
+  const updateQuantity = (menu_item_id: number, qty: number) => {
+    if (qty < 1) return
+    setCart(prev =>
+      prev.map(c =>
+        c.menu_item_id === menu_item_id
+          ? { ...c, quantity: qty, subtotal: qty * c.price }
+          : c
+      )
+    )
+  }
+
+  const clearCart = () => {
+    setCart([])
+    showSuccess('Cart cleared')
+  }
+
+  const cartTotal = cart.reduce((sum, item) => sum + item.subtotal, 0)
+
+  
+  const handlePlaceOrder = async () => {
+    if (cart.length === 0) {
+      showError('Cart is empty')
+      return
+    }
+
+    try {
+      setIsPlacingOrder(true)
+
+      const userId = await AsyncStorage.getItem('@userId')
+
+     
+      const orderPayload = {
+        table_id:      selectedTable ? selectedTable.table_id : null,
+        user_id:       userId ? parseInt(userId) : 1,
+        order_type:    selectedTable ? 'dine-in' : 'direct',
+        order_status:  'pending' as OrderStatus,
+        special_notes: '',
+        total_amount:  cartTotal,
+      }
+
+      const newOrder = await ordersService.postOrder(orderPayload)
+
+      
+      const BASE_URL  = 'http://192.168.1.71:5000/api/order-items'
+      const token     = await authService.getToken()
+      const headers   = {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${token}`,
+      }
+
+      await Promise.all(
+        cart.map(item =>
+          fetch(BASE_URL, {
+            method:  'POST',
+            headers,
+            body: JSON.stringify({
+              order_id:          newOrder.order_id,
+              menu_item_id:      item.menu_item_id,
+              quantity:          item.quantity,
+              unit_price:        item.price,
+              subtotal:          item.subtotal,
+              special_request:   '',
+              order_item_status: 'pending',
+            }),
+          })
+        )
+      )
+
+      setCart([])
+      setSelectedTable(null)
+      setActiveTab('products')
+      showSuccess(`Order #${newOrder.order_id} placed successfully!`)
+
+    } catch (err: any) {
+      showError(err?.message || 'Failed to place order. Try again.')
+    } finally {
+      setIsPlacingOrder(false)
+    }
+  }
+
+  
+  const filteredItems = menuItems.filter(item => {
+    const matchCat    = selectedCategory === 'all' || item.menu_items_category_id === parseInt(selectedCategory)
+    const matchSearch = item.menu_items_name.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchCat && matchSearch
+  })
+
+  
+  const freeTables     = tables.filter(t => t.table_status === 'available' || t.table_status === 'free').length
+  const occupiedTables = tables.filter(t => t.table_status !== 'available' && t.table_status !== 'free').length
+
+  
+  const tabOptions = [
+    { id: 'tables',   name: 'Tables',  icon: Grid3x3 },
+    { id: 'products', name: 'Menu',    icon: Coffee },
+    { id: 'cart',     name: 'Cart',    icon: ShoppingCart },
+  ]
+
+ 
+  if (loading) {
     return (
       <View style={s.loading}>
         <View style={s.loadingCard}>
@@ -268,87 +361,13 @@ export default function POS() {
     )
   }
 
-  
-  const enrichedProducts: ProductDisplay[] = (products || []).map((product: any) => {
-    const category  = categories.find(c => c.id === product.category_id)
-    const taxAmount = calculateTax(product.price || 0, product.category_id, categories)
-    return {
-      ...product,
-      category_name:  category?.name,
-      tax_rate:       0,
-      tax_amount:     taxAmount,
-      total_with_tax: (product.price || 0) + taxAmount,
-    }
-  })
-
-  const getCategoryColor = (categoryId: string) => {
-    const category = categories.find(c => c.id === categoryId)
-    return category?.color || C.brass
-  }
-
-  const addToCart = (product: ProductDisplay) => {
-    cartHook.addToCart(product)
-    setShowSuccessMessage(`${product.name} added`)
-    setTimeout(() => setShowSuccessMessage(null), 2000)
-  }
-
-  const removeFromCart  = (productId: string) => cartHook.removeFromCart(productId)
-  const updateQuantity  = (productId: string, quantity: number) => cartHook.updateQuantity(productId, quantity)
-
-  const clearCart = async () => {
-    await cartHook.clearCart()
-    setShowSuccessMessage('Cart cleared')
-    setTimeout(() => setShowSuccessMessage(null), 2000)
-  }
-
-  const handlePayment = async () => {
-    if (!cartItems || cartItems.length === 0) {
-      setShowErrorMessage('Cart is empty')
-      setTimeout(() => setShowErrorMessage(null), 3000)
-      return
-    }
-    try {
-      const order = await ordersService.createOrderFromCart(
-        selectedTable?.id || 'direct-sale',
-        selectedTable?.name || 'Direct Sale',
-        cartItems
-      )
-      await clearCart()
-      if (selectedTable) tablesHook.setTableCleaning(selectedTable.id)
-      setShowSuccessMessage(`Order ${order.order_number} created!`)
-      setTimeout(() => setShowSuccessMessage(null), 3000)
-      setShowPaymentModal(false)
-      setActiveTab('products')
-    } catch {
-      setShowErrorMessage('Payment failed. Please try again.')
-      setTimeout(() => setShowErrorMessage(null), 5000)
-    }
-  }
-
-  const filteredProducts = enrichedProducts?.filter(product => {
-    const matchesCategory = selectedCategory === 'all' || (product as any).category_id === selectedCategory
-    const matchesSearch   = (product as any).name?.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
-
-  const tabOptions = [
-    { id: 'tables',   name: 'Tables',  icon: Grid3x3 },
-    { id: 'products', name: 'Menu',    icon: Coffee },
-    { id: 'cart',     name: 'Cart',    icon: ShoppingCart },
-  ]
-
-  const freeTablesCount     = tables.filter(t => t.status === 'free').length
-  const occupiedTablesCount = tables.filter(t => t.status !== 'free').length
-
-  
+ 
   return (
     <View style={s.root}>
 
-      
+  
       <View style={s.header}>
         <View style={s.headerTop}>
-
-          
           <View style={s.brand}>
             <View style={s.logoBadge}>
               <Utensils size={18} color={C.cream} />
@@ -358,11 +377,9 @@ export default function POS() {
               <Text style={s.brandSub}>Point of Sale</Text>
             </View>
           </View>
-
-          
           <View style={s.headerRight}>
             <LiveClock />
-            {cartItems.length > 0 && (
+            {cart.length > 0 && (
               <TouchableOpacity style={s.clearBtn} onPress={clearCart} activeOpacity={0.8}>
                 <Trash2 size={12} color={C.cream} />
                 <Text style={s.clearBtnText}>Clear</Text>
@@ -377,7 +394,7 @@ export default function POS() {
             <Text style={s.contextEmoji}>{selectedTable ? '🪑' : '🛒'}</Text>
             <Text style={s.contextText}>
               {selectedTable
-                ? `Table ${selectedTable.number ?? selectedTable.id} — ${selectedTable.name}`
+                ? `Table ${selectedTable.table_number} — Floor ${selectedTable.floor}`
                 : 'Direct Sale'}
             </Text>
           </View>
@@ -387,7 +404,7 @@ export default function POS() {
           </View>
         </View>
 
-      
+        
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.tabsScroll}>
           <View style={s.tabsRow}>
             {tabOptions.map((tab) => {
@@ -402,9 +419,9 @@ export default function POS() {
                 >
                   <Icon size={14} color={isActive ? C.brass : C.latte} />
                   <Text style={[s.tabText, isActive && s.tabTextActive]}>{tab.name}</Text>
-                  {tab.id === 'cart' && cartItems.length > 0 && (
+                  {tab.id === 'cart' && cart.length > 0 && (
                     <View style={s.badge}>
-                      <Text style={s.badgeText}>{cartItems.length}</Text>
+                      <Text style={s.badgeText}>{cart.length}</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -415,22 +432,22 @@ export default function POS() {
       </View>
 
       
-      {showSuccessMessage && <StatusBanner message={showSuccessMessage} type="success" />}
-      {showErrorMessage   && <StatusBanner message={showErrorMessage}   type="error"   />}
+      {successMessage && <StatusBanner message={successMessage} type="success" />}
+      {errorMessage   && <StatusBanner message={errorMessage}   type="error"   />}
 
-      
+     
       <ScrollView style={s.content} contentContainerStyle={s.contentInner} showsVerticalScrollIndicator={false}>
 
         
         {activeTab === 'tables' && (
           <View style={s.tabContent}>
 
-           
+            
             <View style={s.statsRow}>
               {[
-                { num: freeTablesCount,     label: 'Free',     color: C.sage,       border: C.sageBorder },
-                { num: occupiedTablesCount, label: 'Occupied', color: C.terracotta, border: C.tcBorder },
-                { num: tables.length,       label: 'Total',    color: C.brass,      border: C.brassBorder },
+                { num: freeTables,     label: 'Free',     color: C.sage,       border: C.sageBorder },
+                { num: occupiedTables, label: 'Occupied', color: C.terracotta, border: C.tcBorder },
+                { num: tables.length,  label: 'Total',    color: C.brass,      border: C.brassBorder },
               ].map(({ num, label, color, border }) => (
                 <View key={label} style={[s.statCard, { borderColor: border }]}>
                   <Text style={[s.statNumber, { color }]}>{num}</Text>
@@ -453,29 +470,22 @@ export default function POS() {
 
             <View style={s.tablesGrid}>
               {tables.map((table) => {
-                const isFree     = table.status === 'free'
-                const isSelected = selectedTable?.id === table.id
+                const isFree     = table.table_status === 'available' || table.table_status === 'free'
+                const isSelected = selectedTable?.table_id === table.table_id
                 return (
                   <TouchableOpacity
-                    key={table.id}
-                    style={[
-                      s.tableCard,
-                      isSelected        && s.tableCardActive,
-                      !isFree           && s.tableCardOccupied,
-                    ]}
+                    key={table.table_id}
+                    style={[s.tableCard, isSelected && s.tableCardActive, !isFree && s.tableCardOccupied]}
                     onPress={() => { setSelectedTable(table); setActiveTab('products') }}
                     activeOpacity={0.8}
                   >
                     <Text style={[s.tableNumber, isSelected && { color: C.cream }]}>
-                      {table.number}
+                      {table.table_number}
                     </Text>
                     <Text style={[s.tableName, isSelected && { color: C.onDark }]}>
-                      {table.name}
+                      Floor {table.floor}
                     </Text>
-                    <View style={[
-                      s.tableStatusBadge,
-                      { backgroundColor: isFree ? C.sageLight : C.tcLight },
-                    ]}>
+                    <View style={[s.tableStatusBadge, { backgroundColor: isFree ? C.sageLight : C.tcLight }]}>
                       <View style={[s.tableStatusDot, { backgroundColor: isFree ? C.sage : C.terracotta }]} />
                       <Text style={[s.tableStatusText, { color: isFree ? C.sage : C.terracotta }]}>
                         {isFree ? 'Free' : 'Occupied'}
@@ -512,7 +522,7 @@ export default function POS() {
               )}
             </View>
 
-            
+         
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={s.categoriesRow}>
                 <TouchableOpacity
@@ -525,54 +535,39 @@ export default function POS() {
                 </TouchableOpacity>
                 {categories.map((cat) => (
                   <TouchableOpacity
-                    key={cat.id}
-                    style={[s.categoryBtn, selectedCategory === cat.id && s.categoryBtnActive]}
-                    onPress={() => setSelectedCategory(cat.id)}
+                    key={cat.category_id}
+                    style={[s.categoryBtn, selectedCategory === String(cat.category_id) && s.categoryBtnActive]}
+                    onPress={() => setSelectedCategory(String(cat.category_id))}
                   >
-                    <Text style={[s.categoryBtnText, selectedCategory === cat.id && s.categoryBtnTextActive]}>
-                      {cat.name}
+                    <Text style={[s.categoryBtnText, selectedCategory === String(cat.category_id) && s.categoryBtnTextActive]}>
+                      {cat.category_name}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </ScrollView>
 
-            <Text style={s.resultCount}>{filteredProducts.length} items</Text>
+            <Text style={s.resultCount}>{filteredItems.length} items</Text>
 
-            
             <View style={s.productsGrid}>
-              {filteredProducts.map((product) => (
+              {filteredItems.map((item) => (
                 <TouchableOpacity
-                  key={product.id}
+                  key={item.menu_items_id}
                   style={s.productCard}
-                  onPress={() => addToCart(product)}
+                  onPress={() => addToCart(item)}
                   activeOpacity={0.82}
                 >
-                  
-                  <View style={[s.productStripe, { backgroundColor: getCategoryColor(product.category_id) }]} />
-
-                  <View style={[s.productIconWrap, { borderColor: getCategoryColor(product.category_id) + '50' }]}>
-                    <Coffee size={20} color={getCategoryColor(product.category_id)} />
+                  <View style={[s.productStripe, { backgroundColor: C.brass }]} />
+                  <View style={s.productIconWrap}>
+                    <Coffee size={20} color={C.brass} />
                   </View>
-                  <Text style={s.productName} numberOfLines={2}>{product.name}</Text>
-                  <Text style={s.productCategory}>{product.category_name}</Text>
-
+                  <Text style={s.productName} numberOfLines={2}>{item.menu_items_name}</Text>
+                  <Text style={s.productCategory}>
+                    {categories.find(c => c.category_id === item.menu_items_category_id)?.category_name || '—'}
+                  </Text>
                   <View style={s.productFooter}>
-                    <Text style={s.productPrice}>NPR {product.price}</Text>
-                    <View style={[
-                      s.productStockBadge,
-                      { backgroundColor: (product.stock_quantity || 0) > 5 ? C.sageLight : C.tcLight },
-                    ]}>
-                      <Text style={[
-                        s.productStockText,
-                        { color: (product.stock_quantity || 0) > 5 ? C.sage : C.terracotta },
-                      ]}>
-                        {product.stock_quantity || 0}
-                      </Text>
-                    </View>
+                    <Text style={s.productPrice}>NPR {item.price}</Text>
                   </View>
-
-                  
                   <View style={s.productAddBtn}>
                     <Text style={s.productAddText}>+</Text>
                   </View>
@@ -585,7 +580,7 @@ export default function POS() {
         
         {activeTab === 'cart' && (
           <View style={s.tabContent}>
-            {cartItems.length === 0 ? (
+            {cart.length === 0 ? (
               <View style={s.emptyCart}>
                 <View style={s.emptyCartIcon}>
                   <ShoppingCart size={32} color={C.latte} />
@@ -598,194 +593,131 @@ export default function POS() {
               </View>
             ) : (
               <>
-                <SectionHeader icon="🛒" title="Order Items" count={cartItems.length} />
+                <SectionHeader icon="🛒" title="Order Items" count={cart.length} />
 
-                {cartItems.map((item) => (
-                  <View key={item.product_id} style={s.cartItemCard}>
+                {cart.map((item) => (
+                  <View key={item.menu_item_id} style={s.cartItemCard}>
                     <View style={s.cartItemHeader}>
                       <View style={s.cartItemIconWrap}>
                         <Coffee size={13} color={C.brass} />
                       </View>
-                      <Text style={s.cartItemName} numberOfLines={1}>{item.product_name}</Text>
-                      <TouchableOpacity style={s.removeBtn} onPress={() => removeFromCart(item.product_id)}>
+                      <Text style={s.cartItemName} numberOfLines={1}>{item.name}</Text>
+                      <TouchableOpacity style={s.removeBtn} onPress={() => removeFromCart(item.menu_item_id)}>
                         <Trash2 size={13} color={C.terracotta} />
                       </TouchableOpacity>
                     </View>
 
-                    <Text style={s.cartItemMeta}>{item.quantity}× @ NPR {item.unit_price}</Text>
+                    <Text style={s.cartItemMeta}>{item.quantity}× @ NPR {item.price}</Text>
 
                     <View style={s.cartItemFooter}>
                       <View style={s.qtyControls}>
                         <TouchableOpacity
                           style={s.qtyBtn}
-                          onPress={() => updateQuantity(item.product_id, Math.max(1, item.quantity - 1))}
+                          onPress={() => updateQuantity(item.menu_item_id, item.quantity - 1)}
                         >
                           <Minus size={12} color={C.roast} />
                         </TouchableOpacity>
                         <Text style={s.qtyText}>{item.quantity}</Text>
                         <TouchableOpacity
                           style={s.qtyBtn}
-                          onPress={() => updateQuantity(item.product_id, item.quantity + 1)}
+                          onPress={() => updateQuantity(item.menu_item_id, item.quantity + 1)}
                         >
                           <Plus size={12} color={C.roast} />
                         </TouchableOpacity>
                       </View>
-                      <Text style={s.cartItemPrice}>NPR {item.total_price}</Text>
+                      <Text style={s.cartItemPrice}>NPR {item.subtotal}</Text>
                     </View>
                   </View>
                 ))}
 
-               
+                
                 <View style={s.summaryCard}>
                   <Text style={s.summaryTitle}>Order Summary</Text>
                   <Divider />
                   <View style={s.summaryRow}>
-                    <Text style={s.summaryLabel}>Subtotal</Text>
-                    <Text style={s.summaryValue}>NPR {cartTotal.toFixed(2)}</Text>
-                  </View>
-                  <View style={s.summaryRow}>
-                    <Text style={s.summaryLabel}>Tax</Text>
-                    <Text style={s.summaryValue}>NPR {getCartTax().toFixed(2)}</Text>
+                    <Text style={s.summaryLabel}>Items</Text>
+                    <Text style={s.summaryValue}>{cart.length}</Text>
                   </View>
                   <Divider />
                   <View style={s.summaryRowTotal}>
                     <Text style={s.summaryLabelTotal}>Total</Text>
-                    <Text style={s.summaryValueTotal}>NPR {getCartTotalWithTax().toFixed(2)}</Text>
+                    <Text style={s.summaryValueTotal}>NPR {cartTotal.toFixed(2)}</Text>
                   </View>
                 </View>
 
                 
-                <View style={s.actionsRow}>
-                  <TouchableOpacity style={s.payBtn} onPress={() => setShowPaymentModal(true)} activeOpacity={0.85}>
-                    <CreditCard size={17} color={C.cream} />
-                    <Text style={s.payBtnText}>Pay Now</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={s.splitBtn} onPress={() => setShowSplitTicketModal(true)} activeOpacity={0.85}>
-                    <Text style={s.splitBtnText}>✂️  Split</Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  style={[s.payBtn, isPlacingOrder && { opacity: 0.7 }]}
+                  onPress={handlePlaceOrder}
+                  activeOpacity={0.85}
+                  disabled={isPlacingOrder}
+                >
+                  {isPlacingOrder
+                    ? <ActivityIndicator size="small" color={C.cream} />
+                    : <CreditCard size={17} color={C.cream} />
+                  }
+                  <Text style={s.payBtnText}>
+                    {isPlacingOrder ? 'Placing Order…' : 'Place Order'}
+                  </Text>
+                </TouchableOpacity>
               </>
             )}
           </View>
         )}
       </ScrollView>
-
-      
-      <PaymentModal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        onConfirm={handlePayment}
-        totalAmount={getCartTotalWithTax()}
-        paymentMethod={paymentMethod}
-        customerName={customerName}
-        isProcessing={false}
-      />
-      <SplitTicketModal
-        isOpen={showSplitTicketModal}
-        onClose={() => setShowSplitTicketModal(false)}
-        cartTotal={cartTotal}
-        onSplit={(amounts) => console.log('Split:', amounts)}
-      />
     </View>
   )
 }
 
 
-const s = StyleSheet.create({
 
-  
+const s = StyleSheet.create({
   root:    { flex: 1, backgroundColor: C.cream },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.cream, padding: 24 },
   loadingCard: {
-    backgroundColor: C.parchment,
-    borderRadius: radius.lg,
-    padding: 36,
-    alignItems: 'center',
-    width: '78%',
-    borderWidth: 1.5,
-    borderColor: C.vellum,
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 8,
+    backgroundColor: C.parchment, borderRadius: radius.lg, padding: 36,
+    alignItems: 'center', width: '78%', borderWidth: 1.5, borderColor: C.vellum,
+    shadowColor: C.espresso, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.12, shadowRadius: 24, elevation: 8,
   },
   loadingIcon: {
-    width: 58, height: 58, borderRadius: radius.md,
-    backgroundColor: C.brassLight,
-    borderWidth: 1.5, borderColor: C.brassBorder,
-    alignItems: 'center', justifyContent: 'center',
+    width: 58, height: 58, borderRadius: radius.md, backgroundColor: C.brassLight,
+    borderWidth: 1.5, borderColor: C.brassBorder, alignItems: 'center', justifyContent: 'center',
   },
   loadingTitle: { fontSize: 20, fontWeight: '800', color: C.espresso, marginTop: 14, letterSpacing: 0.4 },
   loadingText:  { fontSize: 13, color: C.clay, marginTop: 4, letterSpacing: 0.2 },
 
-
-  
-
   header: {
-    backgroundColor: C.espresso,
-    paddingTop: 52,
-    paddingHorizontal: 16,
-    paddingBottom: 0,
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
+    backgroundColor: C.espresso, paddingTop: 52, paddingHorizontal: 16, paddingBottom: 0,
+    shadowColor: C.espresso, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 8,
   },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  brand:     { flexDirection: 'row', alignItems: 'center', gap: 11 },
   logoBadge: {
-    width: 40, height: 40, borderRadius: radius.sm,
-    backgroundColor: C.brass,
+    width: 40, height: 40, borderRadius: radius.sm, backgroundColor: C.brass,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowColor: C.brass, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.4, shadowRadius: 6, elevation: 3,
   },
   brandName: { fontSize: 17, fontWeight: '900', color: C.cream, letterSpacing: 0.6 },
-  brandSub:  { fontSize: 10, color: C.latte,  fontWeight: '500', letterSpacing: 0.8, marginTop: 1 },
-
+  brandSub:  { fontSize: 10, color: C.latte, fontWeight: '500', letterSpacing: 0.8, marginTop: 1 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   clearBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: C.terracotta,
-    paddingHorizontal: 11, paddingVertical: 7,
-    borderRadius: radius.pill,
+    backgroundColor: C.terracotta, paddingHorizontal: 11, paddingVertical: 7, borderRadius: radius.pill,
   },
   clearBtnText: { color: C.cream, fontSize: 11, fontWeight: '700', letterSpacing: 0.2 },
 
-  
-  contextStrip: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  contextBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 10, paddingVertical: 5,
-    borderRadius: radius.sm, borderWidth: 1,
-  },
-  ctxTable:  { backgroundColor: '#2A1A05', borderColor: C.brassBorder },
-  ctxDirect: { backgroundColor: '#200D08', borderColor: C.tcBorder },
+  contextStrip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  contextBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.sm, borderWidth: 1 },
+  ctxTable:     { backgroundColor: '#2A1A05', borderColor: C.brassBorder },
+  ctxDirect:    { backgroundColor: '#200D08', borderColor: C.tcBorder },
   contextEmoji: { fontSize: 12 },
   contextText:  { fontSize: 12, fontWeight: '600', color: C.cream, letterSpacing: 0.1 },
   onlinePill: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: '#0E2218',
-    borderRadius: radius.pill,
-    paddingHorizontal: 9, paddingVertical: 4,
-    borderWidth: 1, borderColor: C.sageBorder,
+    flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#0E2218',
+    borderRadius: radius.pill, paddingHorizontal: 9, paddingVertical: 4, borderWidth: 1, borderColor: C.sageBorder,
   },
   onlineDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: C.sage },
   onlineText: { fontSize: 10, fontWeight: '700', color: C.sage },
-
 
   tabsScroll: { marginTop: 2 },
   tabsRow:    { flexDirection: 'row', gap: 0, paddingBottom: 0 },
@@ -794,239 +726,119 @@ const s = StyleSheet.create({
     paddingHorizontal: 18, paddingVertical: 12,
     borderBottomWidth: 2.5, borderBottomColor: 'transparent',
   },
-  tabActive:      { borderBottomColor: C.brass },
-  tabText:        { fontSize: 13, fontWeight: '500', color: C.latte },
-  tabTextActive:  { color: C.cream, fontWeight: '800' },
-  badge: {
-    backgroundColor: C.brass,
-    borderRadius: radius.pill,
-    paddingHorizontal: 6, paddingVertical: 1,
-  },
-  badgeText: { color: C.cream, fontSize: 9, fontWeight: '900' },
+  tabActive:     { borderBottomColor: C.brass },
+  tabText:       { fontSize: 13, fontWeight: '500', color: C.latte },
+  tabTextActive: { color: C.cream, fontWeight: '800' },
+  badge:         { backgroundColor: C.brass, borderRadius: radius.pill, paddingHorizontal: 6, paddingVertical: 1 },
+  badgeText:     { color: C.cream, fontSize: 9, fontWeight: '900' },
 
-  
   content:      { flex: 1 },
   contentInner: { padding: 16, paddingBottom: 48 },
   tabContent:   { gap: 14 },
 
-
   statsRow: { flexDirection: 'row', gap: 10 },
   statCard: {
-    flex: 1,
-    backgroundColor: C.parchment,
-    borderRadius: radius.md,
-    padding: 14,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    flex: 1, backgroundColor: C.parchment, borderRadius: radius.md, padding: 14,
+    alignItems: 'center', borderWidth: 1.5,
+    shadowColor: C.espresso, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
   statNumber: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
   statLabel:  { fontSize: 10, color: C.clay, fontWeight: '600', marginTop: 3, letterSpacing: 0.5 },
 
-  
   directSaleBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9,
-    backgroundColor: C.roast,
-    paddingVertical: 15, borderRadius: radius.md,
+    backgroundColor: C.roast, paddingVertical: 15, borderRadius: radius.md,
     borderWidth: 1, borderColor: C.clay,
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowColor: C.espresso, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 3,
   },
   directSaleText: { color: C.cream, fontSize: 14, fontWeight: '700', letterSpacing: 0.3 },
 
-  
   tablesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   tableCard: {
-    backgroundColor: C.parchment,
-    borderRadius: radius.md,
-    padding: 14,
-    width: '47%',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: C.vellum,
-    gap: 5,
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: C.parchment, borderRadius: radius.md, padding: 14,
+    width: '47%', alignItems: 'center', borderWidth: 1.5, borderColor: C.vellum, gap: 5,
+    shadowColor: C.espresso, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
   tableCardActive: {
-    backgroundColor: C.roast,
-    borderColor: C.brass,
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: C.roast, borderColor: C.brass,
+    shadowColor: C.brass, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 4,
   },
   tableCardOccupied: { borderColor: C.tcBorder },
-  tableNumber: { fontSize: 28, fontWeight: '900', color: C.brass, letterSpacing: -1 },
-  tableName:   { fontSize: 12, fontWeight: '600', color: C.roast },
-  tableStatusBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: radius.pill, marginTop: 2,
-  },
-  tableStatusDot:  { width: 5, height: 5, borderRadius: 3 },
-  tableStatusText: { fontSize: 10, fontWeight: '700' },
-  tableCapacity:   { fontSize: 10, color: C.clay, marginTop: 2 },
+  tableNumber:       { fontSize: 28, fontWeight: '900', color: C.brass, letterSpacing: -1 },
+  tableName:         { fontSize: 12, fontWeight: '600', color: C.roast },
+  tableStatusBadge:  { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, marginTop: 2 },
+  tableStatusDot:    { width: 5, height: 5, borderRadius: 3 },
+  tableStatusText:   { fontSize: 10, fontWeight: '700' },
+  tableCapacity:     { fontSize: 10, color: C.clay, marginTop: 2 },
 
-  
   searchCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: C.parchment,
-    borderRadius: radius.md,
-    paddingHorizontal: 13,
-    borderWidth: 1.5, borderColor: C.vellum,
-    gap: 8,
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: C.parchment,
+    borderRadius: radius.md, paddingHorizontal: 13, borderWidth: 1.5, borderColor: C.vellum, gap: 8,
+    shadowColor: C.espresso, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: C.espresso,
-    paddingVertical: 12,
-  },
+  searchInput: { flex: 1, fontSize: 14, color: C.espresso, paddingVertical: 12 },
 
-  
-  categoriesRow: { flexDirection: 'row', gap: 8, paddingVertical: 2 },
-  categoryBtn: {
-    backgroundColor: C.parchment,
-    paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: radius.pill,
-    borderWidth: 1.5, borderColor: C.vellum,
-  },
+  categoriesRow:         { flexDirection: 'row', gap: 8, paddingVertical: 2 },
+  categoryBtn:           { backgroundColor: C.parchment, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 1.5, borderColor: C.vellum },
   categoryBtnActive:     { backgroundColor: C.roast, borderColor: C.roast },
   categoryBtnText:       { fontSize: 12, fontWeight: '600', color: C.clay },
   categoryBtnTextActive: { color: C.cream },
 
-  
   resultCount: { fontSize: 11, color: C.clay, fontWeight: '500', letterSpacing: 0.3 },
 
-  
   productsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   productCard: {
-    backgroundColor: C.parchment,
-    borderRadius: radius.md,
-    padding: 12,
-    width: '47%',
-    borderWidth: 1,
-    borderColor: C.vellum,
-    position: 'relative',
-    overflow: 'hidden',
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: C.parchment, borderRadius: radius.md, padding: 12,
+    width: '47%', borderWidth: 1, borderColor: C.vellum, position: 'relative', overflow: 'hidden',
+    shadowColor: C.espresso, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  
-  productStripe: {
-    position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-  },
+  productStripe:   { position: 'absolute', top: 0, left: 0, right: 0, height: 3 },
   productIconWrap: {
-    width: 44, height: 44, borderRadius: radius.sm,
-    backgroundColor: C.brassLight,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 8, marginTop: 4,
-    borderWidth: 1.5,
+    width: 44, height: 44, borderRadius: radius.sm, backgroundColor: C.brassLight,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 8, marginTop: 4,
+    borderWidth: 1.5, borderColor: C.brassBorder,
   },
-  productName:     { fontSize: 13, fontWeight: '700', color: C.espresso, marginBottom: 2, lineHeight: 17 },
-  productCategory: { fontSize: 10, color: C.clay, marginBottom: 8, letterSpacing: 0.2 },
-  productFooter:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  productPrice:    { fontSize: 14, fontWeight: '900', color: C.brass },
-  productStockBadge: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: radius.xs },
-  productStockText:  { fontSize: 10, fontWeight: '700' },
-  productAddBtn: {
-    position: 'absolute', top: 8, right: 8,
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: C.brass,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  productAddText: { color: C.cream, fontSize: 16, fontWeight: '700', lineHeight: 20 },
+  productName:      { fontSize: 13, fontWeight: '700', color: C.espresso, marginBottom: 2, lineHeight: 17 },
+  productCategory:  { fontSize: 10, color: C.clay, marginBottom: 8, letterSpacing: 0.2 },
+  productFooter:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  productPrice:     { fontSize: 14, fontWeight: '900', color: C.brass },
+  productAddBtn:    { position: 'absolute', top: 8, right: 8, width: 22, height: 22, borderRadius: 11, backgroundColor: C.brass, alignItems: 'center', justifyContent: 'center' },
+  productAddText:   { color: C.cream, fontSize: 16, fontWeight: '700', lineHeight: 20 },
 
-  
   emptyCart:     { alignItems: 'center', paddingVertical: 56, gap: 10 },
   emptyCartIcon: {
-    width: 72, height: 72, borderRadius: radius.lg,
-    backgroundColor: C.brassLight,
-    borderWidth: 1.5, borderColor: C.brassBorder,
-    alignItems: 'center', justifyContent: 'center',
+    width: 72, height: 72, borderRadius: radius.lg, backgroundColor: C.brassLight,
+    borderWidth: 1.5, borderColor: C.brassBorder, alignItems: 'center', justifyContent: 'center',
   },
   emptyCartText: { fontSize: 17, fontWeight: '800', color: C.espresso },
   emptyCartSub:  { fontSize: 13, color: C.clay },
   browseBtn: {
-    marginTop: 8,
-    backgroundColor: C.roast,
-    paddingHorizontal: 24, paddingVertical: 12,
-    borderRadius: radius.pill,
-    borderWidth: 1, borderColor: C.latte,
+    marginTop: 8, backgroundColor: C.roast, paddingHorizontal: 24, paddingVertical: 12,
+    borderRadius: radius.pill, borderWidth: 1, borderColor: C.latte,
   },
   browseBtnText: { color: C.cream, fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
 
-  
   cartItemCard: {
-    backgroundColor: C.parchment,
-    borderRadius: radius.md,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: C.vellum,
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    backgroundColor: C.parchment, borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: C.vellum,
+    shadowColor: C.espresso, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1,
   },
-  cartItemHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 },
+  cartItemHeader:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 5 },
   cartItemIconWrap: {
-    width: 26, height: 26, borderRadius: radius.xs,
-    backgroundColor: C.brassLight,
-    borderWidth: 1, borderColor: C.brassBorder,
-    alignItems: 'center', justifyContent: 'center',
+    width: 26, height: 26, borderRadius: radius.xs, backgroundColor: C.brassLight,
+    borderWidth: 1, borderColor: C.brassBorder, alignItems: 'center', justifyContent: 'center',
   },
-  cartItemName: { fontSize: 14, fontWeight: '700', color: C.espresso, flex: 1 },
-  removeBtn: {
-    width: 28, height: 28, borderRadius: radius.xs,
-    backgroundColor: C.tcLight,
-    borderWidth: 1, borderColor: C.tcBorder,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  cartItemName:   { fontSize: 14, fontWeight: '700', color: C.espresso, flex: 1 },
+  removeBtn:      { width: 28, height: 28, borderRadius: radius.xs, backgroundColor: C.tcLight, borderWidth: 1, borderColor: C.tcBorder, alignItems: 'center', justifyContent: 'center' },
   cartItemMeta:   { fontSize: 11, color: C.clay, marginBottom: 10, marginLeft: 34, letterSpacing: 0.1 },
   cartItemFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   qtyControls:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  qtyBtn: {
-    backgroundColor: C.cream,
-    width: 30, height: 30, borderRadius: radius.xs,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: C.vellum,
-  },
-  qtyText:       { fontSize: 15, fontWeight: '800', color: C.espresso, minWidth: 22, textAlign: 'center' },
-  cartItemPrice: { fontSize: 15, fontWeight: '900', color: C.brass },
+  qtyBtn:         { backgroundColor: C.cream, width: 30, height: 30, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: C.vellum },
+  qtyText:        { fontSize: 15, fontWeight: '800', color: C.espresso, minWidth: 22, textAlign: 'center' },
+  cartItemPrice:  { fontSize: 15, fontWeight: '900', color: C.brass },
 
-  
   summaryCard: {
-    backgroundColor: C.parchment,
-    borderRadius: radius.md,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: C.brassBorder,
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
+    backgroundColor: C.parchment, borderRadius: radius.md, padding: 16, borderWidth: 1.5, borderColor: C.brassBorder,
+    shadowColor: C.brass, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
   },
   summaryTitle:      { fontSize: 10, fontWeight: '800', color: C.clay, textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 10 },
   summaryRow:        { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
@@ -1036,26 +848,10 @@ const s = StyleSheet.create({
   summaryLabelTotal: { fontSize: 16, fontWeight: '800', color: C.espresso },
   summaryValueTotal: { fontSize: 19, fontWeight: '900', color: C.brass },
 
-  
-  actionsRow: { flexDirection: 'row', gap: 12 },
   payBtn: {
-    flex: 2,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: C.brass,
-    paddingVertical: 15, borderRadius: radius.md,
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 4,
+    backgroundColor: C.brass, paddingVertical: 15, borderRadius: radius.md,
+    shadowColor: C.brass, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 4,
   },
   payBtnText: { color: C.cream, fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
-  splitBtn: {
-    flex: 1,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: C.sageLight,
-    paddingVertical: 15, borderRadius: radius.md,
-    borderWidth: 1.5, borderColor: C.sageBorder,
-  },
-  splitBtnText: { color: C.sage, fontSize: 13, fontWeight: '700' },
 })

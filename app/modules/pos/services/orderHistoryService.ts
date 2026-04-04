@@ -1,15 +1,13 @@
 import { ReservationEvent, TimelineEvent, TimelineFilters, TimelineGroup, TimelineStats } from '../types/orderHistory'
 import { Reservation } from '../types/reservation'
 import { reservationService } from './reservationService'
-import { smsTicketService } from './smsTicketService'
 
 export const timelineService = {
     async getTimelineEvents(limit: number = 50): Promise<TimelineEvent[]> {
         try {
-            const [smsMessages, todayReservations] = await Promise.all([
-                smsTicketService.getSMSMessages(limit * 2),
-                reservationService.getReservationsWithTableInfo(new Date().toISOString().split('T')[0])
-            ])
+            const todayReservations = await reservationService.getReservationsWithTableInfo(
+                new Date().toISOString().split('T')[0]
+            )
 
             const reservationEvents = todayReservations
                 .filter(reservation => reservation.status !== 'cancelled')
@@ -21,37 +19,17 @@ export const timelineService = {
                     priority: timelineService.calculateReservationPriority(reservation)
                 }))
 
-            const smsEvents = smsMessages.map(sms => ({
-                id: `sms-${sms.id}`,
-                type: 'sms' as const,
-                timestamp: sms.created_at,
-                data: sms,
-                priority: 'low' as const
-            }))
-
             const now = new Date()
-            const allEvents = [...smsEvents, ...reservationEvents]
 
-            return allEvents.sort((a, b) => {
+            return reservationEvents.sort((a, b) => {
                 const timeA = new Date(a.timestamp).getTime()
                 const timeB = new Date(b.timestamp).getTime()
                 const nowTime = now.getTime()
 
-                if (timeA <= nowTime && timeB <= nowTime) {
-                    return timeA - timeB
-                }
-
-                if (timeA > nowTime && timeB > nowTime) {
-                    return timeA - timeB
-                }
-
-                if (timeA <= nowTime && timeB > nowTime) {
-                    return -1
-                }
-                if (timeA > nowTime && timeB <= nowTime) {
-                    return 1
-                }
-
+                if (timeA <= nowTime && timeB <= nowTime) return timeA - timeB
+                if (timeA > nowTime && timeB > nowTime) return timeA - timeB
+                if (timeA <= nowTime && timeB > nowTime) return -1
+                if (timeA > nowTime && timeB <= nowTime) return 1
                 return 0
             })
         } catch (error) {
@@ -73,7 +51,6 @@ export const timelineService = {
 
     async getFilteredTimelineEvents(filters: TimelineFilters): Promise<TimelineEvent[]> {
         const allEvents = await timelineService.getTimelineEvents(100)
-
         let filteredEvents = allEvents
 
         if (filters.timeFilter !== 'all') {
@@ -82,7 +59,6 @@ export const timelineService = {
 
             filteredEvents = filteredEvents.filter(event => {
                 const eventTime = new Date(event.timestamp)
-
                 switch (filters.timeFilter) {
                     case 'today':
                         return eventTime >= today
@@ -114,22 +90,17 @@ export const timelineService = {
     async getTimelineStats(): Promise<TimelineStats> {
         const events = await timelineService.getTimelineEvents(100)
 
-        const smsCount = events.filter(e => e.type === 'sms').length
         const reservationCount = events.filter(e => e.type === 'reservation').length
-
         const upcomingReservations = events.filter(e =>
-            e.type === 'reservation' &&
-            (e.priority === 'high' || e.priority === 'urgent')
+            e.type === 'reservation' && (e.priority === 'high' || e.priority === 'urgent')
         ).length
-
         const urgentReservations = events.filter(e =>
-            e.type === 'reservation' &&
-            e.priority === 'urgent'
+            e.type === 'reservation' && e.priority === 'urgent'
         ).length
 
         return {
             totalEvents: events.length,
-            smsCount,
+            smsCount: 0,
             reservationCount,
             upcomingReservations,
             urgentReservations
@@ -141,14 +112,8 @@ export const timelineService = {
 
         events.forEach(event => {
             const eventTime = new Date(event.timestamp)
-            const timeKey = eventTime.toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit'
-            })
-
-            if (!groups[timeKey]) {
-                groups[timeKey] = []
-            }
+            const timeKey = eventTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+            if (!groups[timeKey]) groups[timeKey] = []
             groups[timeKey].push(event)
         })
 
@@ -169,7 +134,6 @@ export const timelineService = {
         const now = new Date()
         const reservationTime = new Date(`${reservation.reservation_date}T${reservation.reservation_time}`)
         const minutesUntil = Math.floor((reservationTime.getTime() - now.getTime()) / (1000 * 60))
-
         return {
             ...reservation,
             minutesUntil,
@@ -179,66 +143,30 @@ export const timelineService = {
     },
 
     getReservationStatusText(reservation: ReservationEvent): string {
-        if (reservation.isOverdue) {
-            return 'LATE'
-        }
-
-        if (reservation.minutesUntil < 15) {
-            return `ARRIVES IN ${reservation.minutesUntil}minutes`
-        }
-
-        if (reservation.minutesUntil < 60) {
-            return `ARRIVES IN ${reservation.minutesUntil}minutes`
-        }
-
+        if (reservation.isOverdue) return 'LATE'
+        if (reservation.minutesUntil < 15) return `ARRIVES IN ${reservation.minutesUntil}min`
+        if (reservation.minutesUntil < 60) return `ARRIVES IN ${reservation.minutesUntil}min`
         return `RESERVED FOR ${reservation.reservation_time}`
     },
 
     getReservationStatusColor(reservation: ReservationEvent): string {
-        if (reservation.isOverdue) {
-            return '#EF4444'
-        }
-
-        if (reservation.minutesUntil < 15) {
-            return '#F97316'
-        }
-
-        if (reservation.minutesUntil < 60) {
-            return '#3B82F6'
-        }
-
+        if (reservation.isOverdue) return '#EF4444'
+        if (reservation.minutesUntil < 15) return '#F97316'
+        if (reservation.minutesUntil < 60) return '#3B82F6'
         return '#6B7280'
     },
 
     getReservationStatusBackgroundColor(reservation: ReservationEvent): string {
-        if (reservation.isOverdue) {
-            return '#FEE2E2'
-        }
-
-        if (reservation.minutesUntil < 15) {
-            return '#FFEDD5'
-        }
-
-        if (reservation.minutesUntil < 60) {
-            return '#DBEAFE'
-        }
-
+        if (reservation.isOverdue) return '#FEE2E2'
+        if (reservation.minutesUntil < 15) return '#FFEDD5'
+        if (reservation.minutesUntil < 60) return '#DBEAFE'
         return '#F3F4F6'
     },
 
     getReservationStatusBorderColor(reservation: ReservationEvent): string {
-        if (reservation.isOverdue) {
-            return '#FCA5A5'
-        }
-
-        if (reservation.minutesUntil < 15) {
-            return '#FDBA74'
-        }
-
-        if (reservation.minutesUntil < 60) {
-            return '#93C5FD'
-        }
-
+        if (reservation.isOverdue) return '#FCA5A5'
+        if (reservation.minutesUntil < 15) return '#FDBA74'
+        if (reservation.minutesUntil < 60) return '#93C5FD'
         return '#D1D5DB'
     },
 
@@ -248,30 +176,16 @@ export const timelineService = {
         const diffMs = now.getTime() - date.getTime()
         const diffMins = Math.floor(diffMs / (1000 * 60))
 
-        if (diffMins < 1) {
-            return 'Just\'now'
-        }
-
-        if (diffMins < 60) {
-            return `Minutes ${diffMins}ago`
-        }
-
-        if (diffMins < 1440) {
-            const hours = Math.floor(diffMins / 60)
-            return `Hours ${hours}ago`
-        }
-
-        return date.toLocaleTimeString('np-NPR', {
-            hour: '2-digit',
-            minute: '2-digit'
-        })
+        if (diffMins < 1) return 'Just now'
+        if (diffMins < 60) return `${diffMins}min ago`
+        if (diffMins < 1440) return `${Math.floor(diffMins / 60)}hr ago`
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     },
 
     shouldShowReservation(reservation: Reservation): boolean {
         const now = new Date()
         const reservationTime = new Date(`${reservation.reservation_date}T${reservation.reservation_time}`)
         const hoursUntil = (reservationTime.getTime() - now.getTime()) / (1000 * 60 * 60)
-
         return hoursUntil >= -1 && hoursUntil <= 4
     },
 

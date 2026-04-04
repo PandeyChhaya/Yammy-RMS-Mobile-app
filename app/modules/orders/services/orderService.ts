@@ -14,7 +14,7 @@ const auth_headers= async()=>{
   } ;
 }
 
-const postOrder= async(order: Omit<Order, 'order_id' | 'order_status'> ): Promise<Order> =>{
+const postOrder= async(order: Omit<Order, 'order_id' | 'created_at'> ): Promise<Order> =>{
       const response = await fetch(BASE_URL, {
         method: 'POST',
         headers: await auth_headers(),
@@ -69,4 +69,4 @@ const deleteOrder= async(order_id:number) : Promise<Order> =>{
 
 };
 
-export const ordersService = {postOrder, getOrder, putOrder, deleteOrder};
+export const ordersService = {postOrder, getOrder, putOrder, deleteOrder, updateOrderStatus};

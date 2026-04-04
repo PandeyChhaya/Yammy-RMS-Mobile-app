@@ -41,6 +41,18 @@ export default function Dashboard() {
       icon: <Receipt size={24} color="#1A1A1A" />,
       route: '/modules/auth/login',
     },
+      {
+      id: 'signup',
+      label: 'Signup',
+      icon: <Receipt size={24} color="#1A1A1A" />,
+      route: '/modules/auth/signup',
+    },
+    {
+      id: 'pos',
+      label: 'POS',
+      icon: <Receipt size={24} color="#1A1A1A" />,
+      route: '/modules/pos/POS',
+    },
   
      
     
