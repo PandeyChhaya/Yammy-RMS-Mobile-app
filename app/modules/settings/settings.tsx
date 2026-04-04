@@ -1,32 +1,56 @@
-import { Bell, Building2, ChevronRight, LogOut, Palette, User } from 'lucide-react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useRouter } from 'expo-router'
+import {
+  Bell,
+  Building2,
+  ChevronRight,
+  LogOut,
+  Palette,
+  User,
+  Utensils,
+} from 'lucide-react-native'
 import { useState } from 'react'
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
+import { authService } from '../auth/services/auth.service'
 
-const Colors = {
-  bg: '#FEF1A8',
-  card: '#FFFFFF',
-  brand: '#C41E1E',
-  text: '#1A1A1A',
-  textSub: '#5C5436',
-  border: '#E8D88A',
+const C = {
+  espresso:    '#1C1008',
+  roast:       '#3D2010',
+  clay:        '#7A4528',
+  latte:       '#C8956A',
+  cream:       '#FDF6EC',
+  parchment:   '#F5E9D4',
+  vellum:      '#EDD9BC',
+  brass:       '#B5822A',
+  brassLight:  '#F7EDD8',
+  brassBorder: '#DEC07A',
+  sage:        '#3B6E52',
+  sageLight:   '#EBF4EE',
+  sageBorder:  '#9FCFB4',
+  terracotta:  '#A03020',
+  tcLight:     '#FAECEA',
+  tcBorder:    '#E8A898',
 }
+const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
 export default function Settings() {
+  const router = useRouter()
+
   const [restaurantName, setRestaurantName] = useState('Yammy Fresh')
-  const [phone, setPhone] = useState('+977 98...')
-  const [address, setAddress] = useState('Kathmandu, Nepal')
-  const [notifications, setNotifications] = useState(true)
-  const [soundEffects, setSoundEffects] = useState(true)
-  const [darkMode, setDarkMode] = useState(false)
+  const [phone, setPhone]                   = useState('+977 98...')
+  const [address, setAddress]               = useState('Kathmandu, Nepal')
+  const [notifications, setNotifications]   = useState(true)
+  const [soundEffects, setSoundEffects]     = useState(true)
+  const [darkMode, setDarkMode]             = useState(false)
 
   const handleSave = () => {
     Alert.alert('Success', 'Settings saved successfully!')
@@ -35,198 +59,293 @@ export default function Settings() {
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: () => {
-        Alert.alert('Logged out', 'You have been logged out')
-      }}
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          await authService.logout()
+          await AsyncStorage.removeItem('@userName')
+          await AsyncStorage.removeItem('@userRole')
+          await AsyncStorage.removeItem('@userId')
+          router.replace('/modules/auth/login')
+        },
+      },
     ])
   }
 
   return (
-    <View style={styles.container}>
+    <View style={s.root}>
+
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Settings</Text>
-        <Text style={styles.headerSubtitle}>Manage your restaurant</Text>
+      <View style={s.header}>
+        <View style={s.headerTop}>
+          <View style={s.brand}>
+            <View style={s.logoBadge}>
+              <Utensils size={18} color={C.cream} />
+            </View>
+            <View>
+              <Text style={s.brandName}>Yammy Fresh</Text>
+              <Text style={s.brandSub}>Settings</Text>
+            </View>
+          </View>
+        </View>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        
+      <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
+
         {/* Restaurant Info */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Building2 size={20} color={Colors.brand} />
-            <Text style={styles.sectionTitle}>Restaurant Information</Text>
+        <View style={s.section}>
+          <View style={s.sectionHeader}>
+            <View style={s.sectionIconWrap}>
+              <Building2 size={16} color={C.brass} />
+            </View>
+            <Text style={s.sectionTitle}>Restaurant Information</Text>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Restaurant Name</Text>
-            <TextInput
-              style={styles.input}
-              value={restaurantName}
-              onChangeText={setRestaurantName}
-            />
-          </View>
+          <Text style={s.label}>Restaurant Name</Text>
+          <TextInput
+            style={s.input}
+            value={restaurantName}
+            onChangeText={setRestaurantName}
+            placeholderTextColor={C.latte}
+          />
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number</Text>
-            <TextInput
-              style={styles.input}
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-          </View>
+          <Text style={s.label}>Phone Number</Text>
+          <TextInput
+            style={s.input}
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            placeholderTextColor={C.latte}
+          />
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address</Text>
-            <TextInput
-              style={styles.input}
-              value={address}
-              onChangeText={setAddress}
-              multiline
-              numberOfLines={2}
-            />
-          </View>
+          <Text style={s.label}>Address</Text>
+          <TextInput
+            style={[s.input, s.textArea]}
+            value={address}
+            onChangeText={setAddress}
+            multiline
+            numberOfLines={2}
+            placeholderTextColor={C.latte}
+          />
         </View>
 
         {/* User Profile */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <User size={20} color={Colors.brand} />
-            <Text style={styles.sectionTitle}>User Profile</Text>
+        <View style={s.section}>
+          <View style={s.sectionHeader}>
+            <View style={s.sectionIconWrap}>
+              <User size={16} color={C.brass} />
+            </View>
+            <Text style={s.sectionTitle}>User Profile</Text>
           </View>
 
-          <TouchableOpacity style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Edit Profile</Text>
-            <ChevronRight size={20} color="#999" />
+          <TouchableOpacity style={s.settingRow}>
+            <Text style={s.settingLabel}>Edit Profile</Text>
+            <ChevronRight size={18} color={C.latte} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Change Password</Text>
-            <ChevronRight size={20} color="#999" />
+          <TouchableOpacity style={[s.settingRow, s.settingRowLast]}>
+            <Text style={s.settingLabel}>Change Password</Text>
+            <ChevronRight size={18} color={C.latte} />
           </TouchableOpacity>
         </View>
 
         {/* Preferences */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Bell size={20} color={Colors.brand} />
-            <Text style={styles.sectionTitle}>Preferences</Text>
+        <View style={s.section}>
+          <View style={s.sectionHeader}>
+            <View style={s.sectionIconWrap}>
+              <Bell size={16} color={C.brass} />
+            </View>
+            <Text style={s.sectionTitle}>Preferences</Text>
           </View>
 
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Notifications</Text>
+          <View style={s.settingRow}>
+            <Text style={s.settingLabel}>Notifications</Text>
             <Switch
               value={notifications}
               onValueChange={setNotifications}
-              trackColor={{ false: '#E8D88A', true: Colors.brand }}
-              thumbColor="#FFF"
+              trackColor={{ false: C.vellum, true: C.brass }}
+              thumbColor={C.cream}
             />
           </View>
 
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Sound Effects</Text>
+          <View style={s.settingRow}>
+            <Text style={s.settingLabel}>Sound Effects</Text>
             <Switch
               value={soundEffects}
               onValueChange={setSoundEffects}
-              trackColor={{ false: '#E8D88A', true: Colors.brand }}
-              thumbColor="#FFF"
+              trackColor={{ false: C.vellum, true: C.brass }}
+              thumbColor={C.cream}
             />
           </View>
 
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Dark Mode</Text>
+          <View style={[s.settingRow, s.settingRowLast]}>
+            <Text style={s.settingLabel}>Dark Mode</Text>
             <Switch
               value={darkMode}
               onValueChange={setDarkMode}
-              trackColor={{ false: '#E8D88A', true: Colors.brand }}
-              thumbColor="#FFF"
+              trackColor={{ false: C.vellum, true: C.brass }}
+              thumbColor={C.cream}
             />
           </View>
         </View>
 
         {/* Appearance */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Palette size={20} color={Colors.brand} />
-            <Text style={styles.sectionTitle}>Appearance</Text>
+        <View style={s.section}>
+          <View style={s.sectionHeader}>
+            <View style={s.sectionIconWrap}>
+              <Palette size={16} color={C.brass} />
+            </View>
+            <Text style={s.sectionTitle}>Appearance</Text>
           </View>
 
-          <TouchableOpacity style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Theme Color</Text>
-            <View style={[styles.colorDot, { backgroundColor: Colors.brand }]} />
+          <TouchableOpacity style={s.settingRow}>
+            <Text style={s.settingLabel}>Theme Color</Text>
+            <View style={[s.colorDot, { backgroundColor: C.brass }]} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Language</Text>
-            <Text style={styles.settingValue}>English</Text>
+          <TouchableOpacity style={[s.settingRow, s.settingRowLast]}>
+            <Text style={s.settingLabel}>Language</Text>
+            <Text style={s.settingValue}>English</Text>
           </TouchableOpacity>
         </View>
 
         {/* App Info */}
-        <View style={styles.section}>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Version</Text>
-            <Text style={styles.infoValue}>1.0.0</Text>
+        <View style={s.section}>
+          <View style={s.infoRow}>
+            <Text style={s.infoLabel}>Version</Text>
+            <Text style={s.infoValue}>1.0.0</Text>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Build</Text>
-            <Text style={styles.infoValue}>2025.03.20</Text>
+          <View style={s.infoRow}>
+            <Text style={s.infoLabel}>Build</Text>
+            <Text style={s.infoValue}>2025.03.20</Text>
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Save Changes</Text>
+        {/* Save Button */}
+        <TouchableOpacity style={s.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+          <Text style={s.saveBtnText}>Save Changes</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <LogOut size={18} color={Colors.brand} />
-          <Text style={styles.logoutBtnText}>Logout</Text>
+        {/* Logout Button */}
+        <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.85}>
+          <LogOut size={18} color={C.terracotta} />
+          <Text style={s.logoutBtnText}>Logout</Text>
         </TouchableOpacity>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Yammy Fresh POS</Text>
-          <Text style={styles.footerSubtext}>Restaurant Management System</Text>
+        {/* Footer */}
+        <View style={s.footer}>
+          <Text style={s.footerText}>Yammy Fresh POS</Text>
+          <Text style={s.footerSub}>Restaurant Management System</Text>
         </View>
+
       </ScrollView>
     </View>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.bg },
-  header: { backgroundColor: Colors.brand, paddingTop: 52, paddingHorizontal: 20, paddingBottom: 20 },
-  headerTitle: { fontSize: 24, fontWeight: '700', color: '#FFF' },
-  headerSubtitle: { fontSize: 13, color: '#FFF', opacity: 0.9, marginTop: 4 },
-  scroll: { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 40 },
-  
-  section: { backgroundColor: Colors.card, borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: Colors.border },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: Colors.text },
-  
-  inputGroup: { marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '600', color: Colors.text, marginBottom: 6 },
-  input: { borderWidth: 1, borderColor: Colors.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, backgroundColor: '#FFFDF0' },
-  
-  settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
-  settingLabel: { fontSize: 14, color: Colors.text },
-  settingValue: { fontSize: 14, color: '#999' },
-  
-  colorDot: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#E0E0E0' },
-  
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 },
-  infoLabel: { fontSize: 13, color: Colors.textSub },
-  infoValue: { fontSize: 13, fontWeight: '600', color: Colors.text },
-  
-  saveBtn: { backgroundColor: Colors.brand, padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 12 },
-  saveBtnText: { fontSize: 15, fontWeight: '600', color: '#FFF' },
-  
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#FFF', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: Colors.border },
-  logoutBtnText: { fontSize: 15, fontWeight: '600', color: Colors.brand },
-  
-  footer: { alignItems: 'center', marginTop: 32, paddingTop: 24, borderTopWidth: 1, borderTopColor: Colors.border },
-  footerText: { fontSize: 16, fontWeight: '600', color: Colors.text },
-  footerSubtext: { fontSize: 12, color: Colors.textSub, marginTop: 4 },
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: C.cream },
+
+  header: {
+    backgroundColor: C.espresso,
+    paddingTop: 56,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    shadowColor: C.espresso,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  brand:     { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  logoBadge: {
+    width: 44, height: 44, borderRadius: radius.sm,
+    backgroundColor: C.brass,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: C.brass,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  brandName: { fontSize: 18, fontWeight: '900', color: C.cream, letterSpacing: 0.4 },
+  brandSub:  { fontSize: 10, color: C.latte, fontWeight: '500', letterSpacing: 1, marginTop: 1 },
+
+  scroll:        { flex: 1 },
+  scrollContent: { padding: 20, paddingBottom: 48, gap: 16 },
+
+  section: {
+    backgroundColor: C.parchment,
+    borderRadius: radius.md,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: C.vellum,
+    shadowColor: C.espresso,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    gap: 4,
+  },
+  sectionHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12,
+  },
+  sectionIconWrap: {
+    width: 30, height: 30, borderRadius: radius.xs,
+    backgroundColor: C.brassLight,
+    borderWidth: 1, borderColor: C.brassBorder,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  sectionTitle: { fontSize: 13, fontWeight: '800', color: C.espresso, letterSpacing: 0.2 },
+
+  label: { fontSize: 12, fontWeight: '600', color: C.clay, marginBottom: 6, marginTop: 8 },
+  input: {
+    borderWidth: 1.5, borderColor: C.brassBorder,
+    borderRadius: radius.sm,
+    paddingHorizontal: 14, paddingVertical: 11,
+    fontSize: 14, color: C.espresso,
+    backgroundColor: C.brassLight,
+  },
+  textArea: { height: 72, textAlignVertical: 'top' },
+
+  settingRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingVertical: 13,
+    borderBottomWidth: 1, borderBottomColor: C.vellum,
+  },
+  settingRowLast: { borderBottomWidth: 0 },
+  settingLabel:   { fontSize: 14, color: C.espresso, fontWeight: '500' },
+  settingValue:   { fontSize: 13, color: C.latte },
+
+  colorDot: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: C.brassBorder },
+
+  infoRow:   { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 },
+  infoLabel: { fontSize: 13, color: C.clay },
+  infoValue: { fontSize: 13, fontWeight: '700', color: C.espresso },
+
+  saveBtn: {
+    backgroundColor: C.brass,
+    padding: 16, borderRadius: radius.md,
+    alignItems: 'center',
+    shadowColor: C.brass,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  saveBtnText: { fontSize: 15, fontWeight: '800', color: C.cream, letterSpacing: 0.3 },
+
+  logoutBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: C.tcLight,
+    padding: 16, borderRadius: radius.md,
+    borderWidth: 1.5, borderColor: C.tcBorder,
+  },
+  logoutBtnText: { fontSize: 15, fontWeight: '700', color: C.terracotta },
+
+  footer:    { alignItems: 'center', paddingTop: 16, gap: 4 },
+  footerText: { fontSize: 14, fontWeight: '700', color: C.clay },
+  footerSub:  { fontSize: 11, color: C.latte },
 })
