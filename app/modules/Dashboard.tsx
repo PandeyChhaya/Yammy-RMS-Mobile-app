@@ -25,7 +25,6 @@ import { authService } from './auth/services/auth.service'
 import { ordersService } from './orders/services/orderService'
 import tablesService from './pos/services/tablesService'
 
-// ─── Colors ───────────────────────────────────────────────────────────────────
 const C = {
   espresso:    '#1C1008',
   roast:       '#3D2010',
@@ -47,7 +46,6 @@ const C = {
 }
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface Stats {
   todayOrders: number
   activeTables: number
@@ -67,13 +65,12 @@ interface ModuleItem {
   roles: string[]
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const router = useRouter()
 
-  const [userName, setUserName]   = useState('...')
-  const [userRole, setUserRole]   = useState('Admin')
-  const [stats, setStats]         = useState<Stats>({ todayOrders: 0, activeTables: 0, totalRevenue: 0, pendingOrders: 0 })
+  const [userName, setUserName]         = useState('...')
+  const [userRole, setUserRole]         = useState('')
+  const [stats, setStats]               = useState<Stats>({ todayOrders: 0, activeTables: 0, totalRevenue: 0, pendingOrders: 0 })
   const [loadingStats, setLoadingStats] = useState(true)
 
   useEffect(() => {
@@ -85,7 +82,7 @@ export default function Dashboard() {
     const name = await AsyncStorage.getItem('@userName')
     const role = await AsyncStorage.getItem('@userRole')
     if (name) setUserName(name)
-    if (role) setUserRole(role)
+    setUserRole(role ?? 'Admin')
   }
 
   const loadStats = async () => {
@@ -96,6 +93,7 @@ export default function Dashboard() {
       ])
 
       const today = new Date().toISOString().split('T')[0]
+
       const todayOrders = orders.filter((o: any) =>
         o.created_at?.startsWith(today)
       ).length
@@ -110,11 +108,11 @@ export default function Dashboard() {
 
       const totalRevenue = orders
         .filter((o: any) => o.created_at?.startsWith(today))
-        .reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0)
+        .reduce((sum: number, o: any) => sum + (Number(o.total_amount) || 0), 0)
 
       setStats({ todayOrders, activeTables, totalRevenue, pendingOrders })
     } catch {
-      // silently fail — stats just stay 0
+
     } finally {
       setLoadingStats(false)
     }
@@ -125,7 +123,6 @@ export default function Dashboard() {
     router.replace('/modules/auth/login')
   }
 
-  // ── Module definitions ──
   const allModules: ModuleItem[] = [
     {
       id: 'pos',
@@ -133,26 +130,6 @@ export default function Dashboard() {
       sub: 'Take orders',
       icon: <ShoppingCart size={24} color={C.brass} />,
       route: '/modules/pos/POS',
-      color: C.brassLight,
-      borderColor: C.brassBorder,
-      roles: ['Admin', 'Waiter', 'Cashier'],
-    },
-     {
-      id: 'settings',
-      label: 'Settings',
-      sub: 'settings',
-      icon: <ShoppingCart size={24} color={C.brass} />,
-      route: '/modules/settings/settings',
-      color: C.brassLight,
-      borderColor: C.brassBorder,
-      roles: ['Admin', 'Waiter', 'Cashier'],
-    },
-     {
-      id: 'tables',
-      label: 'Tables',
-      sub: 'Select Tables',
-      icon: <ShoppingCart size={24} color={C.brass} />,
-      route: '/modules/pos/components/TableCard',
       color: C.brassLight,
       borderColor: C.brassBorder,
       roles: ['Admin', 'Waiter', 'Cashier'],
@@ -230,9 +207,10 @@ export default function Dashboard() {
     },
   ]
 
-  const visibleModules = allModules.filter(m => m.roles.includes(userRole))
+  const visibleModules = allModules.filter(m =>
+    m.roles.includes(userRole || 'Admin')
+  )
 
-  // ─── Stats cards ────────────────────────────────────────────────────────────
   const statCards = [
     {
       label: "Today's Orders",
@@ -268,12 +246,11 @@ export default function Dashboard() {
     },
   ]
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <View style={s.root}>
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* ── Header ── */}
+       
         <View style={s.header}>
           <View style={s.headerTop}>
             <View style={s.brand}>
@@ -290,7 +267,6 @@ export default function Dashboard() {
             </TouchableOpacity>
           </View>
 
-          {/* User info */}
           <View style={s.userCard}>
             <View style={s.avatarWrap}>
               <Text style={s.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
@@ -298,7 +274,7 @@ export default function Dashboard() {
             <View style={s.userInfo}>
               <Text style={s.userName}>{userName}</Text>
               <View style={s.rolePill}>
-                <Text style={s.roleText}>{userRole}</Text>
+                <Text style={s.roleText}>{userRole || 'Admin'}</Text>
               </View>
             </View>
             <View style={s.onlinePill}>
@@ -310,7 +286,7 @@ export default function Dashboard() {
 
         <View style={s.body}>
 
-          {/* ── Stats ── */}
+          
           <View style={s.section}>
             <Text style={s.sectionTitle}>Today's Overview</Text>
             <View style={s.statsGrid}>
@@ -319,8 +295,8 @@ export default function Dashboard() {
                   {loadingStats
                     ? <ActivityIndicator size="small" color={card.color} />
                     : <Text style={[s.statValue, { color: card.color }]}>
-                        {card.prefix}{typeof card.value === 'number' && card.label === 'Revenue'
-                          ? card.value.toLocaleString()
+                        {card.prefix}{card.label === 'Revenue'
+                          ? Number(card.value).toLocaleString()
                           : card.value}
                       </Text>
                   }
@@ -330,7 +306,6 @@ export default function Dashboard() {
             </View>
           </View>
 
-          {/* ── Modules ── */}
           <View style={s.section}>
             <Text style={s.sectionTitle}>Modules</Text>
             <View style={s.modulesGrid}>
@@ -362,11 +337,9 @@ export default function Dashboard() {
   )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.cream },
 
-  // Header
   header: {
     backgroundColor: C.espresso,
     paddingTop: 56,
@@ -384,7 +357,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  brand:    { flexDirection: 'row', alignItems: 'center', gap: 12 },
   logoBadge: {
     width: 44, height: 44, borderRadius: radius.sm,
     backgroundColor: C.brass,
@@ -404,7 +377,6 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: '#3D2010',
   },
 
-  // User card
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -442,17 +414,14 @@ const s = StyleSheet.create({
   onlineDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: C.sage },
   onlineText: { fontSize: 10, fontWeight: '700', color: C.sage },
 
-  // Body
   body: { padding: 20, gap: 28 },
 
-  // Section
   section:      { gap: 14 },
   sectionTitle: {
     fontSize: 11, fontWeight: '800', color: C.clay,
     textTransform: 'uppercase', letterSpacing: 1.4,
   },
 
-  // Stats
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   statCard: {
     width: '47%',
@@ -469,7 +438,6 @@ const s = StyleSheet.create({
   statValue: { fontSize: 26, fontWeight: '900', letterSpacing: -0.5 },
   statLabel: { fontSize: 11, color: C.clay, fontWeight: '600', letterSpacing: 0.3 },
 
-  // Modules
   modulesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   moduleCard: {
     width: '47%',
@@ -496,8 +464,8 @@ const s = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  moduleLabel: { fontSize: 13, fontWeight: '800', color: C.espresso },
-  moduleSub:   { fontSize: 10, color: C.clay, fontWeight: '500', letterSpacing: 0.2 },
+  moduleLabel:     { fontSize: 13, fontWeight: '800', color: C.espresso },
+  moduleSub:       { fontSize: 10, color: C.clay, fontWeight: '500', letterSpacing: 0.2 },
   moduleBadge: {
     position: 'absolute', top: 10, right: 10,
     backgroundColor: C.brass,
