@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native'
+import { authService } from './services/auth.service'
 
 const { height } = Dimensions.get('window')
 
@@ -45,6 +46,7 @@ const staffRoles = [
 { id: 'Waiter', label: 'Waiter' },
 { id: 'Cashier', label: 'Cashier' },
 { id: 'Kitchen', label: 'Kitchen Staff' },
+{ id: 'Customer', label: 'Customer' },
 ]
 
 export default function Signup() {
@@ -83,37 +85,34 @@ export default function Signup() {
     setIsCreatingAccount(true)
 
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_name: fullName.trim(),
-          user_email: emailAddress.trim(),
-          user_password: passwordFirst.trim(),
-          user_role: pickedRole,
-          
-        }),
-      })
+  const result = await authService.register(
+    fullName.trim(),
+    emailAddress.trim(),
+    passwordFirst.trim(),
+    pickedRole,
+  )
+  
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Could not create account')
-      }
-
-   await AsyncStorage.setItem('@accessToken', result.accessToken)
-await AsyncStorage.setItem('@refreshToken', result.refreshToken)
-await AsyncStorage.setItem('@userName', result.user_name)
-await AsyncStorage.setItem('@userRole', result.user_role)
-
-      router.replace('/modules/Dashboard')
-
-    } catch (err: any) {
-      Alert.alert('Signup Failed', err.message || 'Something went wrong, try again?')
-    } finally {
-      setIsCreatingAccount(false)
-    }
+  if (result.message === 'Email already exists') {
+    throw new Error('This email is already registered')
   }
+
+  await authService.login(
+    emailAddress.trim(),
+    passwordFirst.trim(),
+  )
+
+  await AsyncStorage.setItem('@userName', result.user_name)
+  await AsyncStorage.setItem('@userRole', result.user_role)
+  await AsyncStorage.setItem('@userId', String(result.user_id))
+
+  router.replace('/modules/auth/login')
+
+} catch (err: any) {
+  Alert.alert('Signup Failed', err.message || 'Something went wrong, try again?')
+} finally {
+  setIsCreatingAccount(false)
+}}
 
   return (
     <View style={styles.container}>
@@ -140,7 +139,7 @@ await AsyncStorage.setItem('@userRole', result.user_role)
         </View>
 
         
-        <Text style={styles.appSub}>Register as a user</Text>
+        <Text style={styles.appSub}>Register as a user or a customer</Text>
       </View>
 
       {/* Signup Card */}
@@ -201,7 +200,7 @@ await AsyncStorage.setItem('@userRole', result.user_role)
               </View>
               <TextInput
                 style={[styles.input, { flex: 1 }]}
-                placeholder="98 1234 5678"
+                placeholder="981234567"
                 placeholderTextColor={C.latte}
                 value={phoneNum}
                 onChangeText={setPhoneNum}

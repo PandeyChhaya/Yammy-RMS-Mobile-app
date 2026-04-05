@@ -20,12 +20,11 @@ import {
   View
 } from 'react-native'
 
-import { OrderStatus } from '@/shared/types/orders'
 import { authService } from '../auth/services/auth.service'
-import categoriesService from '../categories/services/categoriesService'
-import menuItemsService from '../menu-items/services/menu-items-services'
 import { ordersService } from '../orders/services/orderService'
-import tablesService from '../pos/services/tablesService'
+import categoriesService from './services/categoriesService'
+import menuItemsService from './services/menuItemService'
+import tableService from './services/tablesService'
 
 
 
@@ -198,7 +197,7 @@ export default function POS() {
       const [cats, items, tbls] = await Promise.all([
         categoriesService.getCategory(),
         menuItemsService.getMenuItem(),
-        tablesService.getTable(),
+        tableService.getTable(),
       ])
       setCategories(cats)
       setMenuItems(items)
@@ -282,7 +281,7 @@ export default function POS() {
         table_id:      selectedTable ? selectedTable.table_id : null,
         user_id:       userId ? parseInt(userId) : 1,
         order_type:    selectedTable ? 'dine-in' : 'direct',
-        order_status:  'pending' as OrderStatus,
+        order_status:  'pending',
         special_notes: '',
         total_amount:  cartTotal,
       }

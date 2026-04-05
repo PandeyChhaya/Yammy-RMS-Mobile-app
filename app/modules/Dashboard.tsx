@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import {
   FileText,
+  Image,
   LayoutDashboard,
   LogOut,
   Package,
@@ -9,8 +10,7 @@ import {
   Shield,
   ShoppingCart,
   Users,
-  Utensils,
-  Video,
+  Video
 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
@@ -81,42 +81,57 @@ export default function Dashboard() {
   const loadUser = async () => {
     const name = await AsyncStorage.getItem('@userName')
     const role = await AsyncStorage.getItem('@userRole')
+    console.log('USER NAME:', name)   // ← add
+  console.log('USER ROLE:', role)
     if (name) setUserName(name)
     setUserRole(role ?? 'Admin')
   }
 
   const loadStats = async () => {
-    try {
-      const [orders, tables] = await Promise.all([
-        ordersService.getOrder(),
-        tablesService.getTable(),
-      ])
+  try {
+    const token = await AsyncStorage.getItem('@accessToken')
 
-      const today = new Date().toISOString().split('T')[0]
-
-      const todayOrders = orders.filter((o: any) =>
-        o.created_at?.startsWith(today)
-      ).length
-
-      const pendingOrders = orders.filter((o: any) =>
-        o.order_status === 'pending'
-      ).length
-
-      const activeTables = tables.filter((t: any) =>
-        t.table_status !== 'available' && t.table_status !== 'free'
-      ).length
-
-      const totalRevenue = orders
-        .filter((o: any) => o.created_at?.startsWith(today))
-        .reduce((sum: number, o: any) => sum + (Number(o.total_amount) || 0), 0)
-
-      setStats({ todayOrders, activeTables, totalRevenue, pendingOrders })
-    } catch {
-
-    } finally {
-      setLoadingStats(false)
+    // If no token yet, skip fetching — don't crash
+    if (!token) {
+      console.log('No token yet, skipping stats')
+      return
     }
+
+    const [orders, tables] = await Promise.all([
+      ordersService.getOrder(),
+      tablesService.getTable(),
+    ])
+
+    console.log('ORDERS:', orders)
+    console.log('TABLES:', tables)
+
+    const today = new Date().toISOString().split('T')[0]
+
+    const todayOrders = orders.filter((o: any) =>
+      o.created_at?.startsWith(today)
+    ).length
+
+    const pendingOrders = orders.filter((o: any) =>
+      o.order_status === 'pending'
+    ).length
+
+    const activeTables = tables.filter((t: any) =>
+      t.table_status !== 'available' && t.table_status !== 'free'
+    ).length
+
+    const totalRevenue = orders
+      .filter((o: any) => o.created_at?.startsWith(today))
+      .reduce((sum: number, o: any) => sum + (Number(o.total_amount) || 0), 0)
+
+    setStats({ todayOrders, activeTables, totalRevenue, pendingOrders })
+
+  } catch (error) {
+    console.log('DASHBOARD ERROR:', error)
+    // Don't crash — just show zeros
+  } finally {
+    setLoadingStats(false)
   }
+}
 
   const handleLogout = async () => {
     await authService.logout()
@@ -253,15 +268,10 @@ export default function Dashboard() {
        
         <View style={s.header}>
           <View style={s.headerTop}>
-            <View style={s.brand}>
-              <View style={s.logoBadge}>
-                <Utensils size={20} color={C.cream} />
-              </View>
-              <View>
-                <Text style={s.brandName}>Yammy Fresh</Text>
-                <Text style={s.brandSub}>Restaurant POS</Text>
-              </View>
-            </View>
+            <View>
+                  <Image source={require('../../assets/images/yammy.png')}
+                   style={{ width: 200, height: 70 }} />
+          </View>
             <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
               <LogOut size={16} color={C.latte} />
             </TouchableOpacity>

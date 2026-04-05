@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native'
+import { authService } from './services/auth.service'
 
 const { height } = Dimensions.get('window')
 
@@ -49,42 +50,35 @@ export default function Login() {
   const [isProcessing, setIsProcessing]     = useState(false)
 
   const doLogin = async () => {
-    if (!emailText.trim() || !passwordText.trim()) {
-      Alert.alert('Oops', 'Fill in your email and password first')
-      return
-    }
-
-    setIsProcessing(true)
-
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_email:    emailText.trim(),
-          user_password: passwordText.trim(),
-        }),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Login didnt work')
-      }
-
-      await AsyncStorage.setItem('@accessToken',  result.accessToken)
-      await AsyncStorage.setItem('@refreshToken', result.refreshToken)
-      await AsyncStorage.setItem('@userName', result.user_name)
-     await AsyncStorage.setItem('@userRole', result.user_role)
-
-      router.replace('/modules/Dashboard')
-
-    } catch (err: any) {
-      Alert.alert('Could not log in', err.message || 'Wrong email or password maybe?')
-    } finally {
-      setIsProcessing(false)
-    }
+  if (!emailText.trim() || !passwordText.trim()) {
+    Alert.alert('Oops', 'Fill in your email and password first')
+    return
   }
+
+  setIsProcessing(true)
+
+  try {
+    const result = await authService.login(
+      emailText.trim(),
+      passwordText.trim(),
+    )
+    // authService.login already saves @accessToken and @refreshToken for you
+
+    await AsyncStorage.setItem('@userName', result.user_name)
+    await AsyncStorage.setItem('@userRole', result.user_role)
+
+if (result.user_role === 'Customer') {
+  router.replace('/modules/customer/customer_Dashboard')
+} else {
+  router.replace('/modules/Dashboard')
+}
+
+  } catch (err: any) {
+    Alert.alert('Could not log in', err.message || 'Wrong email or password maybe?')
+  } finally {
+    setIsProcessing(false)
+  }
+}
 
   return (
     <View style={styles.container}>

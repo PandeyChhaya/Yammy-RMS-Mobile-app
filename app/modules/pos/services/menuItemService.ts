@@ -1,14 +1,16 @@
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http://192.168.1.71:5000/api/tables';
+const BASE_URL= 'http://192.168.1.71:5000/api/menuItems';
 
 
-export interface Table{
-  table_id: number
-  table_number: string
-  floor: string
-  capacity: number
-  table_status: string
+export interface MenuItem{
+  menu_items_id: number,
+  menu_items_name: string,
+  slug: string,
+  price: number,
+  menu_items_category_id: number,
+  menu_items_description: string,
+  image_url: string
 };
 
 const auth_headers= async()=>{
@@ -19,18 +21,18 @@ const auth_headers= async()=>{
   } ;
 }
 
-const postTable= async(table: Omit<Table, 'table_id'>): Promise<Table> =>{
+const postMenuItem= async(menuItem: Omit<MenuItem, 'menu_items_id'| 'menu_items_category_id'>): Promise<MenuItem> =>{
       const response = await fetch(BASE_URL, {
         method: 'POST',
         headers: await auth_headers(),
-        body: JSON.stringify(table),
+        body: JSON.stringify(menuItem),
       });
       const data = await response.json();
       if(!response.ok) throw new Error(data.message);
       return data;
 };
 
-const getTable= async():  Promise<Table[]> =>{
+const getMenuItem= async():  Promise<MenuItem[]> =>{
   const response = await fetch(BASE_URL, {
     method: 'GET',
     headers : await auth_headers(),
@@ -39,8 +41,8 @@ const getTable= async():  Promise<Table[]> =>{
   if(!response.ok) throw new Error (data.message);
   return data;
 };
-const putTable= async(table_id: number, updates: Partial<Omit<Table, 'table_id'>>) : Promise<Table> => {
-    const response = await fetch (`${BASE_URL}/${table_id}`,{
+const putMenuItem= async(menu_items_id: string, updates: Partial<Omit<MenuItem, 'menu_items_id'|'menu_items_category_id'>>) : Promise<MenuItem> => {
+    const response = await fetch (`${BASE_URL}/${menu_items_id}`,{
       method: 'PUT',
       headers: await auth_headers(),
       body: JSON.stringify(updates),
@@ -50,8 +52,8 @@ const putTable= async(table_id: number, updates: Partial<Omit<Table, 'table_id'>
     if(!response.ok) throw new Error(data.message);
     return data;
 };
-const deleteTable= async(table_id:number) : Promise<Table> =>{
-    const response = await fetch(`${BASE_URL}/${table_id}`,{
+const deleteMenuItem= async(menu_items_id:number) : Promise<MenuItem> =>{
+    const response = await fetch(`${BASE_URL}/${menu_items_id}`,{
       method:'DELETE',
       headers: await auth_headers(),
     
@@ -63,5 +65,5 @@ const deleteTable= async(table_id:number) : Promise<Table> =>{
 
 };
 
-const tableService = {postTable, getTable, putTable, deleteTable};
-export default tableService;
+const menuItemsService = {postMenuItem, getMenuItem, putMenuItem, deleteMenuItem};
+export default menuItemsService;
