@@ -39,7 +39,6 @@ const C = {
 
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
-const API_URL = 'http://192.168.1.71:5000/api'
 
 export default function Login() {
   const router = useRouter()

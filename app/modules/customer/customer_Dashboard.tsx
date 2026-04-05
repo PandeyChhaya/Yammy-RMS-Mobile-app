@@ -1,28 +1,28 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import {
-    Calendar,
-    ChevronRight,
-    Clock,
-    Coffee,
-    Gift,
-    LogOut,
-    MapPin,
-    Phone,
-    ShoppingBag,
-    Star,
-    Utensils,
-    Video,
+  Calendar,
+  ChevronRight,
+  Clock,
+  Coffee,
+  Gift,
+  LogOut,
+  MapPin,
+  Phone,
+  ShoppingBag,
+  Star,
+  Utensils,
+  Video,
 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
-    ActivityIndicator,
-    Linking,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native'
 import { authService } from '../auth/services/auth.service'
 
@@ -106,7 +106,7 @@ export default function CustomerDashboard() {
         const headers = await getHeaders()
 
         const [loyaltyRes, reservationsRes, menuRes, ordersRes] = await Promise.all([
-          fetch(`${BASE_URL}/loyalty/balance/${customerId}`, { headers }),
+          fetch(`${BASE_URL}/loyalty/${customerId}`, { headers }),
           fetch(`${BASE_URL}/reservation/customer/${customerId}`, { headers }),
           fetch(`${BASE_URL}/menuItems`, { headers }),
           fetch(`${BASE_URL}/orders`, { headers }),

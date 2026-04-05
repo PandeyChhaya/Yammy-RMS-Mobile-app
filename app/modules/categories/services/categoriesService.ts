@@ -7,7 +7,7 @@ export interface Category{
   category_id: number,
   category_name: string,
   category_description: string,
-  slug: string,
+  slug?: string,
   is_active: boolean,
 };
 
@@ -16,19 +16,24 @@ const auth_headers= async()=>{
   return {
     'Content-Type':'application/json',
     'Authorization':`Bearer ${token}`,
-  } ;
+  } 
 }
 
-const postCategory= async(category: Omit<Category, 'category_id'>): Promise<Category> =>{
-      const response = await fetch(BASE_URL, {
+const postCategory = async (category: Omit<Category, 'category_id' | 'is_active'>) => {
+    const slug = category.category_name
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+    
+    const response = await fetch(BASE_URL, {
         method: 'POST',
         headers: await auth_headers(),
-        body: JSON.stringify(category),
-      });
-      const data = await response.json();
-      if(!response.ok) throw new Error(data.message);
-      return data;
-};
+        body: JSON.stringify({ ...category, slug }),
+    })
+    const data = await response.json()
+    if (!response.ok) throw new Error(data.message)
+    return data
+}
 
 const getCategory= async():  Promise<Category[]> =>{
   const response = await fetch(BASE_URL, {

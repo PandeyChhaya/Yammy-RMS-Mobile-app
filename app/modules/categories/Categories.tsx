@@ -69,7 +69,6 @@ export default function Categories() {
 
   const queryClient = useQueryClient()
 
-  // ── Queries ──────────────────────────────────────────────
 
   const { data: categories, isLoading, error } = useQuery<Category[]>({
     queryKey: ['categories'],
@@ -77,7 +76,6 @@ export default function Categories() {
     retry: 3,
   })
 
-  // ── Mutations ────────────────────────────────────────────
 
   const createCategoryMutation = useMutation({
     mutationFn: (data: CategoryFormData) => categoriesService.postCategory(data),
@@ -111,7 +109,6 @@ export default function Categories() {
     onError: (err) => showError('Error deleting category: ' + err),
   })
 
-  // ── Helpers ──────────────────────────────────────────────
 
   const showSuccess = (msg: string) => {
     setShowSuccessMessage(msg)
@@ -129,7 +126,6 @@ export default function Categories() {
     return errs
   }
 
-  // ── Handlers ─────────────────────────────────────────────
 
   const handleAddNew = () => {
     setAddForm(DEFAULT_FORM)
@@ -173,7 +169,6 @@ export default function Categories() {
     )
   }
 
-  // ── Loading / Error States ───────────────────────────────
 
   if (isLoading) {
     return (
@@ -197,7 +192,6 @@ export default function Categories() {
     )
   }
 
-  // ── Form Component ───────────────────────────────────────
 
   const renderForm = (
     form: CategoryFormData,
@@ -211,7 +205,6 @@ export default function Categories() {
   ) => (
     <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
 
-      {/* Name */}
       <Text style={styles.label}>Name *</Text>
       <TextInput
         style={[styles.input, errors.category_name ? styles.inputError : null]}
@@ -222,7 +215,6 @@ export default function Categories() {
       />
       {errors.category_name && <Text style={styles.fieldError}>{errors.category_name}</Text>}
 
-      {/* Description */}
       <Text style={styles.label}>Description</Text>
       <TextInput
         style={[styles.input, styles.textArea]}
@@ -234,7 +226,6 @@ export default function Categories() {
         numberOfLines={3}
       />
 
-      {/* Buttons */}
       <View style={styles.modalButtons}>
         <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -252,13 +243,11 @@ export default function Categories() {
     </ScrollView>
   )
 
-  // ── Main Render ──────────────────────────────────────────
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* Header */}
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>Categories</Text>
@@ -270,7 +259,6 @@ export default function Categories() {
           </TouchableOpacity>
         </View>
 
-        {/* Success Banner */}
         {showSuccessMessage && (
           <View style={styles.successBanner}>
             <CheckCircle size={16} color={C.sage} />
@@ -278,7 +266,6 @@ export default function Categories() {
           </View>
         )}
 
-        {/* Error Banner */}
         {showErrorMessage && (
           <View style={styles.errorBanner}>
             <AlertCircle size={16} color={C.terracotta} />
@@ -286,7 +273,6 @@ export default function Categories() {
           </View>
         )}
 
-        {/* Empty State */}
         {categories?.length === 0 && (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
@@ -301,7 +287,6 @@ export default function Categories() {
           </View>
         )}
 
-        {/* Categories List */}
         {categories?.map((category: Category) => (
           <View key={category.category_id} style={styles.card}>
 
@@ -351,7 +336,6 @@ export default function Categories() {
 
       </ScrollView>
 
-      {/* Add Modal */}
       <Modal visible={showAddModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -367,7 +351,6 @@ export default function Categories() {
         </View>
       </Modal>
 
-      {/* Edit Modal */}
       <Modal visible={showEditModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -386,7 +369,6 @@ export default function Categories() {
   )
 }
 
-// ── Styles ───────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
@@ -425,7 +407,6 @@ const styles = StyleSheet.create({
     color: C.clay,
   },
 
-  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -458,7 +439,6 @@ const styles = StyleSheet.create({
     fontSize: 13, letterSpacing: 0.2,
   },
 
-  // Banners
   successBanner: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: C.sageLight,
@@ -480,7 +460,6 @@ const styles = StyleSheet.create({
     color: C.terracotta, fontSize: 13, fontWeight: '600',
   },
 
-  // Empty State
   emptyState: {
     alignItems: 'center',
     paddingVertical: 56, gap: 12,
@@ -500,7 +479,6 @@ const styles = StyleSheet.create({
     fontSize: 13, color: C.clay,
   },
 
-  // Card
   card: {
     backgroundColor: C.parchment,
     borderRadius: radius.md,
@@ -557,7 +535,6 @@ const styles = StyleSheet.create({
   statusActiveText:   { color: C.sage },
   statusInactiveText: { color: C.clay },
 
-  // Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(28,16,8,0.6)',
@@ -595,7 +572,6 @@ const styles = StyleSheet.create({
     marginTop: 4, fontWeight: '600',
   },
 
-  // Modal Buttons
   modalButtons: {
     flexDirection: 'row', gap: 12,
     marginTop: 24, marginBottom: 8,
