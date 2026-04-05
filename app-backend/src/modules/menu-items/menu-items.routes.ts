@@ -5,7 +5,7 @@ import { deleteMenuItemsController, getAllMenuItemsController, getMenuItemsContr
 const router = Router();
 
 router.post('/',protect,postMenuItemsController);
-router.get('/:id',protect, getMenuItemsController);
+router.get('/:id', getMenuItemsController);
 router.get('/', protect, getAllMenuItemsController);
 router.put('/:id',protect, putMenuItemsController);
 router.delete('/:id', protect, deleteMenuItemsController);
