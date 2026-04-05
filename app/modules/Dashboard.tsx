@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import {
   FileText,
-  Image,
   LayoutDashboard,
   LogOut,
   Package,
@@ -15,6 +14,7 @@ import {
 import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -200,22 +200,21 @@ export default function Dashboard() {
       roles: ['Admin'],
     },
     {
-      id: 'auditguard',
-      label: 'Audit Logs',
-      sub: 'Activity trail',
+      id: 'reservations',
+      label: 'Reservaions',
+      sub: 'View reservation',
       icon: <Shield size={24} color={C.sage} />,
-      route: '/modules/auditguard/AuditGuard',
+      route: '/modules/reservation/reservations',
       color: C.sageLight,
       borderColor: C.sageBorder,
       roles: ['Admin'],
     },
     {
-      id: 'tiktok',
-      label: 'Social Media',
-      sub: 'Promotions',
+      id: 'minis',
+      label: 'Minis',
+      sub: 'Your video log',
       icon: <Video size={24} color={C.terracotta} />,
-      route: '/modules/tiktok/TikTok',
-      badge: 'Beta',
+      route: '/modules/minis/minis',
       color: C.tcLight,
       borderColor: C.tcBorder,
       roles: ['Admin'],
@@ -270,7 +269,7 @@ export default function Dashboard() {
           <View style={s.headerTop}>
             <View>
                   <Image source={require('../../assets/images/yammy.png')}
-                   style={{ width: 200, height: 70 }} />
+                   style={{ width: 140, height: 30 }} />
           </View>
             <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
               <LogOut size={16} color={C.latte} />
