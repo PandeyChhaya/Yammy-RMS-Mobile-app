@@ -20,6 +20,7 @@ import {
   View
 } from 'react-native'
 
+import { OrderStatus } from '@/shared/types/orders'
 import { authService } from '../auth/services/auth.service'
 import { ordersService } from '../orders/services/orderService'
 import categoriesService from './services/categoriesService'
@@ -281,13 +282,12 @@ export default function POS() {
         table_id:      selectedTable ? selectedTable.table_id : null,
         user_id:       userId ? parseInt(userId) : 1,
         order_type:    selectedTable ? 'dine-in' : 'direct',
-        order_status:  'pending',
+        order_status:  'pending'as OrderStatus ,
         special_notes: '',
         total_amount:  cartTotal,
       }
 
-      const newOrder = await ordersService.postOrder(orderPayload)
-
+const newOrder = await ordersService.postOrder(orderPayload) as any
       
       const BASE_URL  = 'http://192.168.1.71:5000/api/order-items'
       const token     = await authService.getToken()
