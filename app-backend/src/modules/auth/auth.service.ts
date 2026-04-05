@@ -22,7 +22,7 @@ export const registerUser = async (body: any) => {
     },
   });
 
-  return { message: "User registered successfully", user_id: user.user_id };
+  return { message: "User registered successfully", user_id: user.user_id , user_name:user.user_name, user_role:user.user_role};
 };
 
 export const loginUser = async (body: any) => {

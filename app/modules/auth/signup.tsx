@@ -1,16 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
-import { CheckCircle2, Eye, EyeOff, Lock, Mail, Phone, User, Utensils } from 'lucide-react-native'
+import { CheckCircle2, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react-native'
 import { useState } from 'react'
 import {
   Alert,
   Dimensions,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native'
 
 const { height } = Dimensions.get('window')
@@ -86,9 +87,10 @@ export default function Signup() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_email:          emailAddress.trim(),
-          user_password:       passwordFirst.trim(),
-          user_name:           fullName.trim(),
+          user_name: fullName.trim(),
+          user_email: emailAddress.trim(),
+          user_password: passwordFirst.trim(),
+          user_role: pickedRole,
           
         }),
       })
@@ -99,8 +101,10 @@ export default function Signup() {
         throw new Error(result.error || 'Could not create account')
       }
 
-      await AsyncStorage.setItem('@auth_token', result.token)
-      await AsyncStorage.setItem('@user', JSON.stringify(result.user))
+   await AsyncStorage.setItem('@accessToken', result.accessToken)
+await AsyncStorage.setItem('@refreshToken', result.refreshToken)
+await AsyncStorage.setItem('@userName', result.user_name)
+await AsyncStorage.setItem('@userRole', result.user_role)
 
       router.replace('/modules/Dashboard')
 
@@ -131,12 +135,12 @@ export default function Signup() {
           ))}
         </View>
 
-        <View style={styles.logoBadge}>
-          <Utensils size={36} color={C.cream} />
+        <View>
+        <Image source={require('../../../assets/images/yammy.png')} style={{ width: 200, height: 70 }} />
         </View>
 
-        <Text style={styles.appTitle}>Yammy Fresh</Text>
-        <Text style={styles.appSub}>Point of Sale</Text>
+        
+        <Text style={styles.appSub}>Register as a user</Text>
       </View>
 
       {/* Signup Card */}
@@ -161,7 +165,7 @@ export default function Signup() {
               <User size={18} color={C.latte} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="John Doe"
+                placeholder="User Name"
                 placeholderTextColor={C.latte}
                 value={fullName}
                 onChangeText={setFullName}
@@ -176,7 +180,7 @@ export default function Signup() {
               <Mail size={18} color={C.latte} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="you@restaurant.com"
+                placeholder="user@restaurant.com"
                 placeholderTextColor={C.latte}
                 value={emailAddress}
                 onChangeText={setEmailAddress}

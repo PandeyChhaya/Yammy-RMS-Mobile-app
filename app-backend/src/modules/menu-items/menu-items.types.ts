@@ -9,6 +9,7 @@ export interface PostMenuItemsTypes {
     prep_time?: number;
     calories?: number;
     display_order?: number;
+    is_active?:boolean
 }
 
 export interface GetMenuItemsTypes {

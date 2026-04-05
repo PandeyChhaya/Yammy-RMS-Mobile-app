@@ -1,16 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
-import { Eye, EyeOff, Lock, Mail, Utensils } from 'lucide-react-native'
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native'
 import { useState } from 'react'
 import {
   Alert,
   Dimensions,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native'
 
 const { height } = Dimensions.get('window')
@@ -105,12 +106,12 @@ export default function Login() {
           ))}
         </View>
 
-        <View style={styles.logoBadge}>
-          <Utensils size={36} color={C.cream} />
+        <View>
+        <Image source={require('../../../assets/images/yammy.png')} style={{ width: 200, height: 70 }} />
         </View>
 
-        <Text style={styles.appTitle}>Yammy</Text>
-        <Text style={styles.appSub}>POS</Text>
+   
+        <Text style={styles.appSub}>Login using your credentials</Text>
       </View>
 
       {/* Login Card */}
@@ -123,7 +124,7 @@ export default function Login() {
         >
 
           <View style={styles.headingArea}>
-            <Text style={styles.welcomeText}>Welcome Back</Text>
+            <Text style={styles.welcomeText}>Welcome Back!!</Text>
             <Text style={styles.welcomeSub}>Sign in to your account</Text>
           </View>
 
@@ -134,7 +135,7 @@ export default function Login() {
               <Mail size={18} color={C.latte} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="you@restaurant.com"
+                placeholder="user@restaurant.com"
                 placeholderTextColor={C.latte}
                 value={emailText}
                 onChangeText={setEmailText}
