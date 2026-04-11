@@ -1,6 +1,6 @@
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http://192.168.1.71:5000/api/payment';
+const BASE_URL= 'http://192.168.18.73:5000/api/payment';
 
 
 export interface Payment{

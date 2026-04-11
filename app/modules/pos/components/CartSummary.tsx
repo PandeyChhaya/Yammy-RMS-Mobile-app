@@ -2,7 +2,6 @@ import { ChefHat, Users, Zap } from 'lucide-react-native'
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { useTaxSettings } from '../../../../shared/hooks/useTaxSettings'
 import { TableData } from '../types/tables'
-import TaxBreakdown from './TaxBreakDown'
 
 interface CartSummaryProps {
   cartTotal: number
@@ -53,11 +52,7 @@ export default function CartSummary({
           <Text style={styles.summaryValue}>{cartTotal.toFixed(2)} €</Text>
         </View>
 
-        <TaxBreakdown
-          breakdowns={getCartTaxBreakdown()}
-          showDetails={getCartTaxBreakdown().length > 1}
-          className="text-xs text-gray-600"
-        />
+        
 
         <View style={[styles.summaryRow, styles.totalRow]}>
           <Text style={styles.totalLabel}>Total:</Text>

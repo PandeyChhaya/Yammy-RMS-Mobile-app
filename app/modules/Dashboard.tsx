@@ -149,6 +149,7 @@ export default function Dashboard() {
       borderColor: C.brassBorder,
       roles: ['Admin', 'Waiter', 'Cashier'],
     },
+    
     {
       id: 'orders',
       label: 'Orders',
