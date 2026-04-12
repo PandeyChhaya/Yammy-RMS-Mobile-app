@@ -1,6 +1,6 @@
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http://192.168.18.73:5000/api/categories';
+const BASE_URL= 'http://192.168.1.71:5000/api/categories';
 
 
 export interface Category{
@@ -35,15 +35,23 @@ const postCategory = async (category: Omit<Category, 'category_id' | 'is_active'
     return data
 }
 
-const getCategory= async():  Promise<Category[]> =>{
+
+const getCategory = async (): Promise<Category[]> => {
   const response = await fetch(BASE_URL, {
     method: 'GET',
-    headers : await auth_headers(),
+    headers: await auth_headers(),
   });
+
   const data = await response.json();
-  if(!response.ok) throw new Error (data.message);
+
+  if (!response.ok) throw new Error(data.message || 'Failed to load categories');
+  
+  // Safety check — make sure it's actually an array
+  if (!Array.isArray(data)) throw new Error('Unexpected response format');
+  
   return data;
 };
+
 const putCategory= async(category_id: string, updates: Partial<Omit<Category, 'category_id'>>) : Promise<Category> => {
     const response = await fetch (`${BASE_URL}/${category_id}`,{
       method: 'PUT',

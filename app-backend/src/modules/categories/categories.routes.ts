@@ -6,7 +6,7 @@ import { deleteCategoryController, getAllCategoryController, getCategoryControll
 const router = Router();
 
 router.post("/",protect, postCategoryController);
-router.get("/", getAllCategoryController);
+router.get("/", protect,getAllCategoryController);
 router.get("/:id", protect, getCategoryController);
 router.put("/:id", protect, putCategoryController);
 router.delete("/:id", protect , deleteCategoryController);

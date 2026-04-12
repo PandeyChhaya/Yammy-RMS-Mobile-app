@@ -23,7 +23,7 @@ export const getCategoryController= async(req:Request, res:Response)=>{
 export const getAllCategoryController = async(req:Request, res:Response)=>{
     try{
         const response= await getAllCategory();
-        res.status(400).json(response);
+        res.status(200).json(response);
     }
     catch(error){
         res.status(400).json({message:error});

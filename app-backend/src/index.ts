@@ -10,7 +10,6 @@ import menuItemsRouter from "./modules/menu-items/menu-items.routes.js";
 import orderItemRouter from "./modules/order_items/order_items.routes.js";
 import orderRouter from "./modules/orders/orders.routes.js";
 import paymentRouter from "./modules/payments/payments.routes.js";
-import reservationRouter from './modules/reservations/reservations.routes.js';
 import tableRouter from "./modules/tables/tables.routes.js";
 
 const app = express();
@@ -26,7 +25,6 @@ app.use("/api/order",orderRouter);
 app.use("/api/orderItem", orderItemRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/loyalty", loyaltyRouter);
-app.use("/api/reservation", reservationRouter);
 
 
 app.get("/", (req, res) => {
