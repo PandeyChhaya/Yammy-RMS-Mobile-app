@@ -1,37 +1,23 @@
-export interface Table {
-    id: string
-    name: string
-    number: number
-    capacity: number
-    status: string
-    created_at: string    
-    updated_at: string    
-    
+export interface TableData {
+  table_id:     number
+  table_number: string
+  floor:        string
+  capacity:     number
+  table_status: 'Available' | 'Occupied' | 'Reserved' | 'Maintenance'
+  is_active:    boolean
+  created_at:   string
+  updated_at:   string
 }
 
-export interface TableData extends Table{
-  id: string
-  number: number
-  name: string
-  capacity: number
-  status: 'free' | 'occupied' | 'reserved' | 'cleaning'
-  position_x: number
-  position_y: number
-  current_order_id?: string
-  created_at: string
-  updated_at: string
+export interface CreateTableRequest {
+  table_number: string
+  floor:        string
+  capacity:     number
 }
 
-export interface TableStatus {
-  status: 'free' | 'occupied' | 'reserved' | 'cleaning'
-  label: string
-  bgColor: string
-  textColor:string
-  icon: any
-  iconColor: string
-}
-
-export interface TableSelection {
-  selectedTable: TableData | null
-  onTableSelect: (table: TableData | null) => void
+export interface UpdateTableRequest {
+  table_number?: string
+  floor?:        string
+  capacity?:     number
+  table_status?: TableData['table_status']
 }

@@ -1,72 +1,80 @@
 import prisma from '../../db.js';
 
+export const postTable = async (body: any) => {
+    const { table_number, floor, capacity } = body;
 
-export const postTable = async(body:any)=>{
-
-    const{table_number, floor, capacity}= body;
-
-    const checkTableExists = await prisma.tables.findUnique({
-        where:{table_number},
+    const tableExists = await prisma.tables.findUnique({
+        where: { table_number },
     });
 
-    if(checkTableExists) throw new Error ("Table already exists!!");
+    if (tableExists) throw new Error('Table already exists');
 
-    const createTable = await prisma.tables.create({
-        data:{
+    const newTable = await prisma.tables.create({
+        data: {
             table_number,
             floor,
-            capacity
-        }
+            capacity,
+        },
     });
-    return {message:"Table created successfully!!", table_id:createTable.table_id}
+
+    return { message: 'Table created successfully!', table_id: newTable.table_id };
 };
 
-export const getAllTable = async()=>{
-    const tables = await prisma.tables.findMany();
+export const getTable = async (body: any) => {
+    const { table_id } = body;
+
+    const table = await prisma.tables.findUnique({
+        where: { table_id },
+    });
+
+    if (!table) throw new Error('Table does not exist');
+    return table;
+};
+
+export const getAllTables = async () => {
+    const tables = await prisma.tables.findMany({
+        where: { is_active: true },
+        orderBy: { table_number: 'asc' },
+    });
     return tables;
 };
-export const getTable= async(body:any)=>{
-    const {table_id}= body;
 
-    const checkTableExists= await prisma.tables.findUnique({
-        where:{table_id},
-    })
-    if(!checkTableExists) throw new Error ("Table doesnt exist!!");
+export const putTable = async (body: any) => {
+    const { table_id, table_number, floor, capacity, table_status } = body;
 
-    return checkTableExists;
-};
-export const putTable= async(body:any)=>{
-    const{table_id, floor, capacity, table_number}= body;
+    const tableExists = await prisma.tables.findUnique({
+        where: { table_id },
+    });
 
-    const checkTableExists = await prisma.tables.findUnique({
-        where:{table_id},
-    })
-    if(!checkTableExists) throw new Error ("Table doesnt exist!!");
+    if (!tableExists) throw new Error('Table does not exist');
 
-    const updatedTable= await prisma.tables.update({
-        where:{
-            table_id,
+    const updatedTable = await prisma.tables.update({
+        where: { table_id },
+        data: {
+            ...(table_number  && { table_number }),
+            ...(floor         && { floor }),
+            ...(capacity      && { capacity }),
+            ...(table_status  && { table_status }),
+            updated_at: new Date(),
         },
-        data:{
-            table_number,
-            floor,
-            capacity    
-        }
     });
-    return {message:("Table Updated Successfully!!"), table_id: updatedTable.table_id};
 
-}
-export const deleteTable = async(body:any)=>{
-    const {table_id}= body;
+    return { message: 'Table updated successfully!', table_id: updatedTable.table_id };
+};
 
-    const checkTableExists = await prisma.tables.findUnique({
-        where:{table_id},
+export const deleteTable = async (body: any) => {
+    const { table_id } = body;
+
+    const tableExists = await prisma.tables.findUnique({
+        where: { table_id },
     });
-    if(!checkTableExists) throw new Error ("Table doesnt exist!!");
 
-     await prisma.tables.delete ({
-        where:{table_id}
-    })
+    if (!tableExists) throw new Error('Table does not exist');
 
-    return{message:("Table deleted successfully!!"), table_id};
-}
+    await prisma.tables.update({
+        where: { table_id },
+        data: { is_active: false },
+    });
+
+    return { message: 'Table deleted successfully!', table_id };
+};

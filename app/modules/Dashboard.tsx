@@ -170,6 +170,16 @@ export default function Dashboard() {
       borderColor: C.vellum,
       roles: ['Admin'],
     },
+     {
+      id: 'tables',
+      label: 'Tables',
+      sub: 'Edit menu',
+      icon: <Package size={24} color={C.clay} />,
+      route: '/modules/tables/tables',
+      color: C.parchment,
+      borderColor: C.vellum,
+      roles: ['Admin', 'Waiter','Kitchen'],
+    },
     {
       id: 'categories',
       label: 'Categories',

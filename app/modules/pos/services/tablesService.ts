@@ -1,6 +1,6 @@
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http://192.168.1.71:5000/api/tables';
+const BASE_URL= 'http://10.24.5.92:5000/api/tables';
 
 
 export interface Table{
