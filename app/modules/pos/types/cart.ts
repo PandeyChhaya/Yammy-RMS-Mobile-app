@@ -1,7 +1,6 @@
-//CartItem interface for the local shopping cart.
 export interface CartItem {
-    product_id: string
-    product_name: string
+    menu_item_id: string
+    menu_item_name: string
     quantity: number
     unit_price: number
     total_price: number
@@ -20,7 +19,7 @@ export interface CartSummary {
 }
 
 export interface CartItemDisplay extends CartItem {
-    product?: {
+    menu_item?: {
         id: string
         name: string
         category_id: string
