@@ -1,7 +1,7 @@
 import { authService } from '../../auth/services/auth.service'
 import { ReservationStatus, ReservationWithTable } from '../../pos/types/reservation'
 
-const BASE_URL = 'http://10.24.5.92:5000/api/reservations'
+const BASE_URL = 'http:// 192.168.1.71:5000/api/reservations'
 
 export interface PostReservationPayload {
   table_id:          number
