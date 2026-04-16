@@ -1,25 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-    AlertCircle,
-    Calendar,
-    CheckCircle,
-    CreditCard,
-    Edit,
-    Plus,
-    Settings,
-    Trash2,
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  CreditCard,
+  Edit,
+  Plus,
+  Settings,
+  Trash2,
 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import { ReservationStatus, ReservationWithTable } from '../pos/types/reservation'
 import { CreateTableRequest, TableData } from '../pos/types/tables'
@@ -48,6 +48,8 @@ const C = {
   onDark:      '#FDF6EC',
 }
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
+
+
 
 const DEFAULT_FORM: CreateTableRequest = {
   table_number: '',
@@ -175,7 +177,7 @@ export default function Tables() {
     try {
       const dateString = date.toISOString().split('T')[0]
       const data = await reservationService.getReservationsWithTableInfo(dateString)
-      setReservations(data.filter((r: ReservationWithTable) => r.reservation_status !== 'cancelled'))
+      setReservations(data.filter((r: ReservationWithTable) => r.status !== 'cancelled'))
     } catch {
       showError('Error loading reservations')
     } finally {
@@ -201,7 +203,7 @@ export default function Tables() {
       if (reservation) {
         const tableStatus: TableData['table_status'] =
           status === 'cancelled' || status === 'no_show' ? 'Available' :
-          status === 'seated'    ? 'Occupied' : 'Reserved'
+          status === 'arrived'    ? 'Occupied' : 'Reserved'
         updateStatusMutation.mutate({ id: Number(reservation.table_id), status: tableStatus })
       }
       showSuccess('Reservation status updated!')
@@ -531,3 +533,5 @@ const styles = StyleSheet.create({
   submitButtonDisabled: { opacity: 0.5 },
   submitButtonText:     { fontSize: 14, color: C.cream, fontWeight: '800' },
 })
+
+

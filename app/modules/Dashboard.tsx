@@ -180,6 +180,16 @@ export default function Dashboard() {
       borderColor: C.vellum,
       roles: ['Admin', 'Waiter','Kitchen'],
     },
+     {
+      id: 'inventory',
+      label: 'Inventory',
+      sub: 'Management tool',
+      icon: <Package size={24} color={C.clay} />,
+      route: '/modules/inventory/inventory',
+      color: C.parchment,
+      borderColor: C.vellum,
+      roles: ['Admin', 'Waiter','Kitchen'],
+    },
     {
       id: 'categories',
       label: 'Categories',

@@ -5,6 +5,7 @@ import cors from "cors";
 import express from "express";
 import authRouter from "./modules/auth/auth.routes.js";
 import categoriesRouter from "./modules/categories/categories.routes.js";
+import inventoryRouter from "./modules/inventory/inventory.routes.js";
 import loyaltyRouter from "./modules/loyalty/loyalty.routes.js";
 import menuItemsRouter from "./modules/menu-items/menu-items.routes.js";
 import orderItemRouter from "./modules/order_items/order_items.routes.js";
@@ -27,7 +28,7 @@ app.use("/api/orderItem", orderItemRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/loyalty", loyaltyRouter);
 app.use("/api/reservations",reservationsRouter )
-
+app.use("/api/inventory",inventoryRouter)
 
 app.get("/", (req, res) => {
   res.json({ message: "Yammy API is running" });
