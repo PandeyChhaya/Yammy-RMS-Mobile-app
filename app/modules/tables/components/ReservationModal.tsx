@@ -12,6 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { TableData} from '../../pos/types'
+import { CreateReservationRequest , Reservation, ReservationModalProps} from '../../pos/types/reservation'
 import reservationService from '../services/reservationService'
 
 const C = {
@@ -35,35 +37,6 @@ const C = {
 }
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
-interface TableData {
-  table_id: number
-  table_number: string
-  floor: string
-  capacity: number
-  table_status: string
-}
-
-interface CreateReservationRequest {
-  table_id: number
-  customer_name: string
-  customer_phone: string
-  reservation_date: string
-  reservation_time: string
-  duration_minutes: number
-  party_size: number
-  special_requests: string
-}
-
-interface Reservation {
-  [key: string]: any
-}
-
-interface ReservationModalProps {
-  table: TableData
-  isOpen: boolean
-  onClose: () => void
-  onReservationCreated: (reservation: Reservation) => void
-}
 
 const DURATION_OPTIONS = [
   { label: '1h',   value: 60  },

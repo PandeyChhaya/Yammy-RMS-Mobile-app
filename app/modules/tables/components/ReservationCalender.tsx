@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { ReservationStatus , ReservationWithTable, ReservationsCalendarProps} from '../../pos/types/reservation'
 
 const C = {
   espresso:    '#1C1008',
@@ -29,25 +30,7 @@ const C = {
 }
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
-type ReservationStatus = 'confirmed' | 'cancelled' | 'completed' | 'no_show' | 'arrived'
 
-interface ReservationWithTable {
-  id: string
-  status: ReservationStatus
-  reservation_time: string
-  customer_name: string
-  customer_phone?: string
-  party_size: number
-  table_number: string | number
-}
-
-interface ReservationsCalendarProps {
-  selectedDate: Date
-  onDateChange: (date: Date) => void
-  reservations: ReservationWithTable[]
-  onReservationClick: (reservation: ReservationWithTable) => void
-  onReservationStatusChange: (reservationId: string, status: ReservationStatus) => void
-}
 
 const STATUS_CONFIG: Record<ReservationStatus, {
   label: string

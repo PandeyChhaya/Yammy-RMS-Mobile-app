@@ -9,6 +9,8 @@ export interface TableData {
   updated_at:   string
 }
 
+
+
 export interface CreateTableRequest {
   table_number: string
   floor:        string

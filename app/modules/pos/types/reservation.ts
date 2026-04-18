@@ -2,8 +2,10 @@ import { TableData } from "./tables"
 
 export type ReservationStatus = 'confirmed' | 'cancelled' | 'completed' | 'no_show' | 'arrived'
 
-export interface ReservationWithTable {
-  id: number
+export interface ReservationWithTable{
+  table_id:     number
+  reservation_id: number
+  id: string
   status: ReservationStatus
   reservation_time: string
   customer_name: string
