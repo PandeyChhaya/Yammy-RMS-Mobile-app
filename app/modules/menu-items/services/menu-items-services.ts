@@ -12,6 +12,12 @@ export interface MenuItem{
   menu_items_description: string,
   image_url: string
 };
+export interface MenuItemFilters {
+  searchTerm: string
+  selectedCategory: string
+  onSearchChange: (term: string) => void
+  onCategoryChange: (categoryId: string) => void
+}
 
 const auth_headers= async()=>{
     const token  = await authService.getToken();

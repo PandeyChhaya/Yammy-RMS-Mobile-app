@@ -225,7 +225,7 @@ export default function Dashboard() {
       label: 'Reservaions',
       sub: 'View reservation',
       icon: <Shield size={24} color={C.sage} />,
-      route: '/modules/reservation/reservations',
+      route: '/modules/reservation/reservation',
       color: C.sageLight,
       borderColor: C.sageBorder,
       roles: ['Admin'],

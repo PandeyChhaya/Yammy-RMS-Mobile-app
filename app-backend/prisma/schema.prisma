@@ -49,6 +49,8 @@ model customers {
   updated_at     DateTime?      @default(now()) @db.Timestamp(6)
   orders         orders[]
   reservations   reservations[]
+   user_password  String?   @db.VarChar(200)
+   refresh_token  String? 
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
