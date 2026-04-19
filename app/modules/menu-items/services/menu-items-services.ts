@@ -9,7 +9,7 @@ export interface MenuItem{
   slug: string,
   price: number,
   menu_items_category_id: number,
-  menu_items_description: string,
+  menu_items_description?: string,
   image_url: string
 };
 export interface MenuItemFilters {

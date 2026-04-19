@@ -35,21 +35,31 @@ const postCategory = async (category: Omit<Category, 'category_id' | 'is_active'
     return data
 }
 
+const getAllCategory = async (): Promise<Category[]> => {
+    const response = await fetch(BASE_URL, {
+        method: 'GET',
+        headers: await auth_headers(),
+    });
 
-const getCategory = async (): Promise<Category[]> => {
-  const response = await fetch(BASE_URL, {
-    method: 'GET',
-    headers: await auth_headers(),
-  });
+    const data = await response.json();
 
-  const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to load categories');
+    if (!Array.isArray(data)) throw new Error('Unexpected response format');
 
-  if (!response.ok) throw new Error(data.message || 'Failed to load categories');
-  
-  // Safety check — make sure it's actually an array
-  if (!Array.isArray(data)) throw new Error('Unexpected response format');
-  
-  return data;
+    return data;
+};
+
+const getCategory = async (id: string): Promise<Category> => {
+    const response = await fetch(`${BASE_URL}/${id}`, {
+        method: 'GET',
+        headers: await auth_headers(),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.message || 'Failed to load category');
+
+    return data;
 };
 
 const putCategory= async(category_id: string, updates: Partial<Omit<Category, 'category_id'>>) : Promise<Category> => {
@@ -76,5 +86,5 @@ const deleteCategory= async(category_id:number) : Promise<Category> =>{
 
 };
 
-const categoriesService = {postCategory, getCategory, putCategory, deleteCategory};
+const categoriesService = {postCategory, getCategory,getAllCategory, putCategory, deleteCategory};
 export default categoriesService;

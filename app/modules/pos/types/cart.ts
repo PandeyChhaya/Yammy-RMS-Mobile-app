@@ -22,7 +22,7 @@ export interface CartItemDisplay extends CartItem {
     menu_item?: {
         id: string
         name: string
-        category_id: string
+        category_id: number
         category_name: string
         price: number
     }

@@ -1,35 +1,34 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-    AlertCircle,
-    Calendar,
-    CheckCircle,
-    Clock,
-    Phone,
-    Plus,
-    Search,
-    Trash2,
-    Users,
-    XCircle,
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Phone,
+  Plus,
+  Search,
+  Trash2,
+  Users,
+  XCircle,
 } from 'lucide-react-native'
 import { useState } from 'react'
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import { ReservationStatus, ReservationWithTable } from '../pos/types/reservation'
 import ReservationModal from '../tables/components/ReservationModal'
 import reservationService from '../tables/services/reservationService'
 import tableService from '../tables/services/tableService'
 
-// ─── Theme ───────────────────────────────────────────────────────────────────
 const C = {
   espresso:    '#1C1008',
   roast:       '#3D2010',
@@ -95,7 +94,6 @@ export default function Reservations() {
     queryFn:  tableService.getTable,
   })
 
-  // ── Mutations ─────────────────────────────────────────────────────────────
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: ReservationStatus }) =>
       reservationService.updateReservationStatus(id, status),
@@ -117,7 +115,6 @@ export default function Reservations() {
     onError: (err) => showError('Failed to delete: ' + err),
   })
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
   const showSuccess = (msg: string) => {
     setSuccessMessage(msg)
     setTimeout(() => setSuccessMessage(null), 3000)
@@ -151,7 +148,6 @@ export default function Reservations() {
     showSuccess('Reservation created!')
   }
 
-  // ── Filter + Search ───────────────────────────────────────────────────────
   const filtered = reservations.filter(r => {
     const matchesStatus = filterStatus === 'all' || r.status === filterStatus
     const q = search.toLowerCase()
@@ -163,16 +159,13 @@ export default function Reservations() {
     return matchesStatus && matchesSearch
   })
 
-  // ── Stats ─────────────────────────────────────────────────────────────────
   const todayStr = new Date().toISOString().split('T')[0]
   const todayCount     = reservations.filter(r => r.reservation_date === todayStr).length
   const confirmedCount = reservations.filter(r => r.status === 'confirmed').length
   const arrivedCount   = reservations.filter(r => r.status === 'arrived').length
 
-  // ── Selected table for modal ──────────────────────────────────────────────
   const selectedTable = tables.find(t => t.table_id === selectedTableId) ?? null
 
-  // ─── Render ────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -196,7 +189,6 @@ export default function Reservations() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* ── Header ─────────────────────────────────────────────────────── */}
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>Reservations</Text>
@@ -211,7 +203,6 @@ export default function Reservations() {
           </TouchableOpacity>
         </View>
 
-        {/* ── Banners ─────────────────────────────────────────────────────── */}
         {successMessage && (
           <View style={styles.successBanner}>
             <CheckCircle size={16} color={C.sage} />
@@ -225,7 +216,6 @@ export default function Reservations() {
           </View>
         )}
 
-        {/* ── Stats row ───────────────────────────────────────────────────── */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Calendar size={16} color={C.brass} />
@@ -244,7 +234,6 @@ export default function Reservations() {
           </View>
         </View>
 
-        {/* ── Search ──────────────────────────────────────────────────────── */}
         <View style={styles.searchRow}>
           <Search size={16} color={C.latte} style={{ marginRight: 8 }} />
           <TextInput
@@ -256,7 +245,6 @@ export default function Reservations() {
           />
         </View>
 
-        {/* ── Filter tabs ─────────────────────────────────────────────────── */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
           <View style={styles.filterRow}>
             {FILTER_TABS.map(tab => (
@@ -274,7 +262,6 @@ export default function Reservations() {
           </View>
         </ScrollView>
 
-        {/* ── List ────────────────────────────────────────────────────────── */}
         {filtered.length === 0 ? (
           <View style={styles.emptyState}>
             <Calendar size={48} color={C.vellum} />
@@ -289,7 +276,6 @@ export default function Reservations() {
             return (
               <View key={reservation.reservation_id} style={[styles.card, { borderColor: cfg.border }]}>
 
-                {/* Card header */}
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
                     <View style={[styles.statusDot, { backgroundColor: cfg.dot }]} />
@@ -308,7 +294,6 @@ export default function Reservations() {
                   </TouchableOpacity>
                 </View>
 
-                {/* Date / time / phone */}
                 <View style={styles.infoRow}>
                   <View style={styles.infoChip}>
                     <Calendar size={11} color={C.clay} />
@@ -326,12 +311,10 @@ export default function Reservations() {
                   ) : null}
                 </View>
 
-                {/* Status badge */}
                 <View style={[styles.statusBadge, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
                   <Text style={[styles.statusText, { color: cfg.text }]}>{cfg.label}</Text>
                 </View>
 
-                {/* Action buttons based on status */}
                 {reservation.status === 'confirmed' && (
                   <View style={styles.actionsRow}>
                     <TouchableOpacity
@@ -381,7 +364,6 @@ export default function Reservations() {
 
       </ScrollView>
 
-      {/* ── Table Picker Modal ─────────────────────────────────────────────── */}
       <Modal visible={showTablePicker} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -415,7 +397,6 @@ export default function Reservations() {
         </View>
       </Modal>
 
-      {/* ── Create Reservation Modal ───────────────────────────────────────── */}
       {selectedTable && (
         <ReservationModal
           table={selectedTable}
@@ -428,7 +409,6 @@ export default function Reservations() {
   )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container:   { flex: 1, backgroundColor: C.cream },
   content:     { padding: 16, paddingTop: 52, paddingBottom: 32 },

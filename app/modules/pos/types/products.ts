@@ -26,7 +26,7 @@ export interface ProductGridProps {
 export interface Product {
   id: string
   name: string
-  description?: string
+  description: string
   price: number
   cost: number
   category_id: string
