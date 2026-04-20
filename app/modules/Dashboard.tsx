@@ -127,7 +127,6 @@ export default function Dashboard() {
 
   } catch (error) {
     console.log('DASHBOARD ERROR:', error)
-    // Don't crash — just show zeros
   } finally {
     setLoadingStats(false)
   }
