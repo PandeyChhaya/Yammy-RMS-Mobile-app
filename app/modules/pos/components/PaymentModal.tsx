@@ -1,15 +1,15 @@
-// ─── 1. IMPORTS ─────────────────────────────────────────────
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { AlertCircle, CheckCircle, X, Zap } from 'lucide-react-native'
 import { useState } from 'react'
 import {
-  View, Text, TextInput, TouchableOpacity,
-  Modal, ScrollView, StyleSheet, ActivityIndicator, Alert,
+  ActivityIndicator, Alert,
+  Modal, ScrollView, StyleSheet,
+  Text, TextInput, TouchableOpacity,
+  View,
 } from 'react-native'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle, AlertCircle, X, Zap } from 'lucide-react-native'
 import { CartItemDisplay } from '../types/cart'
 import { TableData } from '../types/tables'
 
-// ─── 2. COLOR PALETTE ────────────────────────────────────────
 const C = {
   espresso:    '#1C1008',
   clay:        '#7A4528',
@@ -28,12 +28,11 @@ const C = {
 }
 const radius = { xs: 6, sm: 10, md: 14, lg: 20, pill: 100 }
 
-// ─── 3. INTERFACES ───────────────────────────────────────────
 interface CreateOrderPayload {
   table_id?:     number
   user_id?:      number
   customer_id?:  number
-  order_type:    string              // 'dine_in' | 'takeaway' | 'direct'
+  order_type:    string              
   special_notes?: string
   subtotal:      number
   discount:      number
@@ -61,7 +60,7 @@ interface PaymentModalProps {
   onSuccess: () => void
 
   cartItems:    CartItemDisplay[]
-  cartTotal:    number              // subtotal before tax
+  cartTotal:    number              
   taxAmount:    number
   totalWithTax: number
   selectedTable: TableData | null
@@ -70,7 +69,6 @@ interface PaymentModalProps {
   symbol?:       string
 }
 
-// ─── 4. SERVICES (inline — move to paymentService.ts when ready) ──
 const BASE = 'http://192.168.1.71:5000/api'
 
 const createOrder = async (payload: CreateOrderPayload): Promise<{ order_id: number }> => {
@@ -94,7 +92,6 @@ const createPayment = async (payload: CreatePaymentPayload): Promise<void> => {
   if (!res.ok) throw new Error(data.message ?? 'Failed to process payment')
 }
 
-// ─── 5. HELPERS ──────────────────────────────────────────────
 const fmt = (amount: number, symbol = 'NPR') =>
   `${symbol} ${Number(amount).toFixed(2)}`
 
@@ -104,7 +101,6 @@ const PAYMENT_METHODS = [
   { id: 'transfer', label: 'Transfer', icon: '📱' },
 ]
 
-// ─── 6. MAIN COMPONENT ───────────────────────────────────────
 export default function PaymentModal({
   visible,
   onClose,
@@ -128,10 +124,8 @@ export default function PaymentModal({
 
   const changeDue = Math.max(0, (parseFloat(amountPaid) || 0) - totalWithTax)
 
-  // ── Mutation ─────────────────────────────────────────────
   const payMutation = useMutation({
     mutationFn: async () => {
-      // 1. Create order
       const { order_id } = await createOrder({
         table_id:      selectedTable?.table_id,
         order_type:    selectedTable ? 'dine_in' : 'direct',
@@ -148,7 +142,7 @@ export default function PaymentModal({
         })),
       })
 
-      // 2. Create payment
+
       await createPayment({
         order_id,
         payment_method: method,
@@ -188,7 +182,6 @@ export default function PaymentModal({
 
   const canPay = cartItems.length > 0 && !payMutation.isPending
 
-  // ─── RENDER ──────────────────────────────────────────────
   return (
     <Modal
       visible={visible}
@@ -199,7 +192,6 @@ export default function PaymentModal({
       <View style={styles.overlay}>
         <View style={styles.sheet}>
 
-          {/* ── Success State ── */}
           {done ? (
             <View style={styles.successState}>
               <CheckCircle size={52} color={C.sage} />
@@ -209,7 +201,6 @@ export default function PaymentModal({
           ) : (
             <ScrollView showsVerticalScrollIndicator={false}>
 
-              {/* Header */}
               <View style={styles.header}>
                 <Text style={styles.headerTitle}>Payment</Text>
                 <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
@@ -217,7 +208,6 @@ export default function PaymentModal({
                 </TouchableOpacity>
               </View>
 
-              {/* Order Summary */}
               <View style={styles.summary}>
                 {selectedTable && (
                   <View style={styles.summaryRow}>
@@ -249,7 +239,6 @@ export default function PaymentModal({
                 </View>
               </View>
 
-              {/* Payment Method */}
               <Text style={styles.sectionLabel}>Payment Method</Text>
               <View style={styles.methodGrid}>
                 {PAYMENT_METHODS.map((m) => (
@@ -266,7 +255,6 @@ export default function PaymentModal({
                 ))}
               </View>
 
-              {/* Amount Paid (cash only) */}
               {method === 'cash' && (
                 <>
                   <Text style={styles.sectionLabel}>Amount Received</Text>
@@ -289,7 +277,6 @@ export default function PaymentModal({
                 </>
               )}
 
-              {/* Transaction Ref (card/transfer) */}
               {method !== 'cash' && (
                 <>
                   <Text style={styles.sectionLabel}>Transaction Ref (optional)</Text>
@@ -303,7 +290,6 @@ export default function PaymentModal({
                 </>
               )}
 
-              {/* Special Notes */}
               <Text style={styles.sectionLabel}>Special Notes (optional)</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -315,8 +301,7 @@ export default function PaymentModal({
                 numberOfLines={2}
               />
 
-              {/* Error */}
-              {payMutation.isError && (
+             {payMutation.isError && (
                 <View style={styles.errorBanner}>
                   <AlertCircle size={14} color={C.terracotta} />
                   <Text style={styles.errorText}>
@@ -325,7 +310,6 @@ export default function PaymentModal({
                 </View>
               )}
 
-              {/* Confirm Button */}
               <TouchableOpacity
                 style={[styles.confirmBtn, !canPay && styles.disabled]}
                 onPress={() => payMutation.mutate()}
@@ -354,7 +338,6 @@ export default function PaymentModal({
   )
 }
 
-// ─── 7. STYLESHEET ───────────────────────────────────────────
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -371,17 +354,14 @@ const styles = StyleSheet.create({
     maxHeight: '92%',
   },
 
-  // Success
   successState: { alignItems: 'center', paddingVertical: 48, gap: 12 },
   successTitle: { fontSize: 22, fontWeight: '900', color: C.espresso },
   successSub:   { fontSize: 14, color: C.clay },
 
-  // Header
   header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 },
   headerTitle: { fontSize: 18, fontWeight: '900', color: C.espresso },
   closeBtn:    { padding: 6, borderRadius: radius.xs, backgroundColor: C.cream, borderWidth: 1, borderColor: C.vellum },
 
-  // Summary
   summary:          { backgroundColor: C.cream, borderRadius: radius.md, borderWidth: 1, borderColor: C.vellum, padding: 14, marginBottom: 18, gap: 6 },
   summaryRow:       { flexDirection: 'row', justifyContent: 'space-between' },
   summaryLabel:     { fontSize: 12, color: C.clay },
@@ -390,10 +370,8 @@ const styles = StyleSheet.create({
   summaryTotalLabel:{ fontSize: 15, fontWeight: '800', color: C.espresso },
   summaryTotalValue:{ fontSize: 15, fontWeight: '900', color: C.brass },
 
-  // Sections
   sectionLabel: { fontSize: 10, fontWeight: '800', color: C.clay, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 14 },
 
-  // Method
   methodGrid:        { flexDirection: 'row', gap: 8 },
   methodBtn:         { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.md, borderWidth: 1.5, borderColor: C.vellum, backgroundColor: C.cream, gap: 4 },
   methodBtnActive:   { backgroundColor: C.sageLight, borderColor: C.sageBorder },
@@ -401,21 +379,17 @@ const styles = StyleSheet.create({
   methodLabel:       { fontSize: 11, fontWeight: '700', color: C.clay },
   methodLabelActive: { color: C.sage },
 
-  // Input
   input:    { borderWidth: 1.5, borderColor: C.vellum, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: C.espresso, backgroundColor: C.cream },
   textArea: { height: 64, textAlignVertical: 'top', marginBottom: 4 },
 
-  // Change
   changeRow:  { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, paddingHorizontal: 4 },
   changeLabel:{ fontSize: 12, color: C.clay },
   changeValue:{ fontSize: 14, fontWeight: '800', color: C.sage },
   changeNeg:  { color: C.terracotta },
 
-  // Error
   errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.tcLight, borderRadius: radius.sm, borderWidth: 1, borderColor: C.tcBorder, padding: 10, marginTop: 12 },
   errorText:   { fontSize: 12, color: C.terracotta, fontWeight: '600' },
 
-  // Buttons
   confirmBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.sage, borderRadius: radius.pill, paddingVertical: 15, marginTop: 20 },
   confirmBtnText: { fontSize: 15, fontWeight: '800', color: C.cream },
   cancelBtn:      { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
