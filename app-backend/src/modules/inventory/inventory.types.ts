@@ -1,27 +1,48 @@
-export interface PostInventory {
-    item_name: string
-    unit: string
-    quantity?: number
-    reorder_level?: number
-    cost_per_unit?: number
-    supplier?: string
+export interface CreateIngredientRequest {
+  name: string
+  description?: string
+  category: string
+  unit: string
+  min_stock: number
+  max_stock: number
+  cost_per_unit: number
+  supplier_id?: string
+  barcode?: string
+  image_url?: string
+  expiration_date?: string
 }
 
-export interface GetInventory {
-    inventory_id: number
+export interface UpdateIngredientRequest {
+  name?: string
+  description?: string
+  category?: string
+  unit?: string
+  current_stock?: number
+  min_stock?: number
+  max_stock?: number
+  cost_per_unit?: number
+  supplier_id?: string
+  barcode?: string
+  image_url?: string
+  expiration_date?: string
+  is_active?: boolean
 }
 
-export interface PutInventory {
-    inventory_id: number
-    item_name?: string
-    unit?: string
-    quantity?: number
-    reorder_level?: number
-    cost_per_unit?: number
-    supplier?: string
-    is_active?: boolean
+export interface CreateSupplierRequest {
+  name: string
+  contact_person?: string
+  email?: string
+  phone?: string
+  address?: string
+  payment_terms?: string
 }
 
-export interface DeleteInventory {
-    inventory_id: number
+export interface UpdateSupplierRequest {
+  name?: string
+  contact_person?: string
+  email?: string
+  phone?: string
+  address?: string
+  payment_terms?: string
+  is_active?: boolean
 }
