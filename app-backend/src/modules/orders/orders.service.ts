@@ -32,9 +32,26 @@ export const getOrder= async(body:any)=>{
 
 export const getAllOrder= async()=>{
 
-    const order = await prisma.orders.findMany();
+    const order = await prisma.orders.findMany(
+        {
+        include: {
+            order_items: true,  
+        },
+        orderBy: { created_at: 'desc' },
+    }
+    );
     return order;
 } 
+export const updateOrderStatus = async (body: any) => {
+    const { order_id, order_status } = body;
+    const orderExists = await prisma.orders.findUnique({ where: { order_id } });
+    if (!orderExists) throw new Error('Order does not exist');
+    const updated = await prisma.orders.update({
+        where: { order_id },
+        data: { order_status, updated_at: new Date() },
+    });
+    return { message: 'Status updated!', order_id: updated.order_id, order_status: updated.order_status };
+};
 
 export const putOrder=async(body:any)=>{
 
