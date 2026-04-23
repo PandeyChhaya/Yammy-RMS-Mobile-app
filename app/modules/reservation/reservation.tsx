@@ -26,8 +26,8 @@ import {
 } from 'react-native'
 import { ReservationStatus, ReservationWithTable } from '../pos/types/reservation'
 import ReservationModal from '../tables/components/ReservationModal'
-import reservationService from '../tables/services/reservationService'
 import tableService from '../tables/services/tableService'
+import reservationService from './services/reservationService'
 
 const C = {
   espresso:    '#1C1008',

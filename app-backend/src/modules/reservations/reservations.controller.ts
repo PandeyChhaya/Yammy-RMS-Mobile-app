@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import prisma from '../../db.js';
 import {
     deleteReservation,
     getReservation,
@@ -29,7 +30,15 @@ export const getReservationController = async (req: Request, res: Response) => {
 export const getReservationsByDateController = async (req: Request, res: Response) => {
     try {
         const { date } = req.query;
-        if (!date) throw new Error('Date is required');
+        
+        if (!date) {
+            const all = await prisma.reservations.findMany({
+                include: { tables: true },
+                orderBy: { reserved_at: 'desc' },
+            });
+            return res.status(200).json(all);
+        }
+        
         const response = await getReservationsByDate(String(date));
         res.status(200).json(response);
     } catch (error) {
