@@ -1,29 +1,29 @@
 import {
-    Edit,
-    Minus,
-    Package,
-    Plus,
-    Save,
-    Trash2,
-    X,
+  Edit,
+  Minus,
+  Package,
+  Plus,
+  Save,
+  Trash2,
+  X,
 } from 'lucide-react-native'
 import { useState } from 'react'
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import inventoryService from '../services/inventory'
 import {
-    Ingredient,
-    getStockIcon,
-    getStockLevel,
-    getStockPercentage
+  Ingredient,
+  getStockIcon,
+  getStockLevel,
+  getStockPercentage
 } from '../types/inventory'
 
 const C = {

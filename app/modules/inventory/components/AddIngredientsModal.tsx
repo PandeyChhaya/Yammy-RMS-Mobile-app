@@ -1,14 +1,14 @@
 import { Package, Save, X } from 'lucide-react-native'
 import { useState } from 'react'
 import {
-    ActivityIndicator,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import inventoryService from '../services/inventory'
 import { CreateIngredientRequest } from '../types/inventory'
@@ -88,7 +88,6 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
       <View style={styles.overlay}>
         <View style={styles.container}>
 
-          {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.headerIcon}>
@@ -109,14 +108,12 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Error */}
             {error && (
               <View style={styles.errorBanner}>
                 <Text style={styles.errorBannerText}>{error}</Text>
               </View>
             )}
 
-            {/* Name */}
             <Text style={styles.label}>Name *</Text>
             <TextInput
               style={styles.input}
@@ -126,13 +123,11 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
               onChangeText={t => handleInputChange('name', t)}
             />
 
-            {/* Unit */}
             <Text style={styles.label}>Unit</Text>
             <TouchableOpacity style={styles.picker} onPress={() => setUnitOpen(true)}>
               <Text style={styles.pickerText}>{formData.unit}</Text>
             </TouchableOpacity>
 
-            {/* Min / Max Stock */}
             <View style={styles.row}>
               <View style={styles.half}>
                 <Text style={styles.label}>Min Stock</Text>
@@ -156,7 +151,6 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
               </View>
             </View>
 
-            {/* Cost / Initial Stock */}
             <View style={styles.row}>
               <View style={styles.half}>
                 <Text style={styles.label}>Cost per Unit ($)</Text>
@@ -180,7 +174,7 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
               </View>
             </View>
 
-            {/* Description */}
+
             <Text style={styles.label}>Description (Optional)</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
@@ -192,7 +186,6 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
               numberOfLines={3}
             />
 
-            {/* Expiration Date — simple text input for RN */}
             <Text style={styles.label}>Expiration Date (Optional)</Text>
             <TextInput
               style={styles.input}
@@ -208,7 +201,6 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
               }
             />
 
-            {/* Actions */}
             <View style={styles.actions}>
               <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -231,7 +223,6 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
           </ScrollView>
         </View>
 
-        {/* Unit Picker Modal */}
         <Modal visible={unitOpen} transparent animationType="slide">
           <View style={styles.overlay}>
             <View style={styles.pickerModal}>

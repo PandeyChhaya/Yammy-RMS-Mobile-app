@@ -5,14 +5,14 @@ import type { CreateIngredientRequest, Ingredient, UpdateIngredientRequest } fro
 export const useIngredients = () => {
     const [ingredients, setIngredients] = useState<Ingredient[]>([])
     const [loading, setLoading] = useState(true)
-    const [mutating, setMutating] = useState(false)  // separate flag for CUD ops
+    const [mutating, setMutating] = useState(false) 
     const [error, setError] = useState<string | null>(null)
 
     const fetchIngredients = async () => {
         try {
             setLoading(true)
             setError(null)
-            const data = await inventoryService.getAllIngredients()  // ✅ was getIngredient()
+            const data = await inventoryService.getAllIngredients()
             setIngredients(data)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error loading ingredients')
@@ -25,7 +25,7 @@ export const useIngredients = () => {
         try {
             setMutating(true)
             setError(null)
-            const newIngredient = await inventoryService.postIngredient(request)  // ✅ was masterStocksService
+            const newIngredient = await inventoryService.postIngredient(request)  
             setIngredients(prev => [...prev, newIngredient])
             return newIngredient
         } catch (err) {
@@ -40,7 +40,7 @@ export const useIngredients = () => {
         try {
             setMutating(true)
             setError(null)
-            const updated = await inventoryService.putIngredient(id, request)  // ✅ was masterStocksService
+            const updated = await inventoryService.putIngredient(id, request)  
             setIngredients(prev => prev.map(ing => ing.id === id ? updated : ing))
             return updated
         } catch (err) {
@@ -55,7 +55,7 @@ export const useIngredients = () => {
         try {
             setMutating(true)
             setError(null)
-            await inventoryService.deleteIngredient(id)  // ✅ was masterStocksService
+            await inventoryService.deleteIngredient(id)  
             setIngredients(prev => prev.filter(ing => ing.id !== id))
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error deleting ingredient')

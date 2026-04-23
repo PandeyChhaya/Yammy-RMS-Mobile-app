@@ -58,13 +58,11 @@ export default function Inventory() {
 
    const {
     alerts,
-    refreshData: refetchAlerts,   // refreshData, not refetch
-    markAlertAsRead: markAsRead,  // alias it so StockAlerts prop stays the same
+    refreshData: refetchAlerts,   
+    markAlertAsRead: markAsRead,  
 } = useStockLevels()
 
-    // ─── Derived state ───────────────────────────────────────────
 
-    // Fix 1: memoize so it doesn't recompute on every render
     const categories = useMemo(
         () => ['all', ...Array.from(new Set(ingredients.map(i => i.category)))],
         [ingredients]
@@ -82,30 +80,25 @@ export default function Inventory() {
         [ingredients, searchTerm, filterCategory]
     )
 
-    // Fix 2: badge shows unread count only
     const unreadAlertCount = useMemo(
         () => alerts.filter(a => !a.is_read).length,
         [alerts]
     )
 
-    // ─── Handlers ────────────────────────────────────────────────
 
     const handleRefresh = () => {
         refetchIngredients()
         refetchAlerts()
     }
 
-    // ─── Tab config ──────────────────────────────────────────────
 
     const tabs = [
         { id: 'ingredients' as Tab, label: 'Ingredients', icon: Package },
         { id: 'alerts'      as Tab, label: 'Alerts',      icon: AlertTriangle },
     ]
 
-    // ─── Render helpers ──────────────────────────────────────────
 
     const renderIngredientsContent = () => {
-        // Fix 3: error state is now surfaced with a retry button
         if (ingredientsLoading) {
             return (
                 <View style={styles.centered}>
@@ -125,23 +118,20 @@ export default function Inventory() {
             )
         }
 
-        // Fix 4: loading prop removed — it's always false by this point
         return (
            <IngredientList
     ingredients={filteredIngredients}
     onRefresh={handleRefresh}
-    loading={false}        // always false here by design
-    error={null}           // error is handled above this point
+    loading={false}        
+    error={null}          
 />
         )
     }
 
-    // ─── JSX ─────────────────────────────────────────────────────
 
     return (
         <View style={styles.container}>
 
-            {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerIcon}>
                     <Warehouse size={22} color={C.cream} />
@@ -152,7 +142,6 @@ export default function Inventory() {
                 </View>
             </View>
 
-            {/* Tabs */}
             <View style={styles.tabBar}>
                 {tabs.map(tab => {
                     const Icon   = tab.icon
@@ -167,7 +156,6 @@ export default function Inventory() {
                             <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>
                                 {tab.label}
                             </Text>
-                            {/* Fix 2: unread count only */}
                             {tab.id === 'alerts' && unreadAlertCount > 0 && (
                                 <View style={styles.badge}>
                                     <Text style={styles.badgeText}>{unreadAlertCount}</Text>
@@ -178,7 +166,6 @@ export default function Inventory() {
                 })}
             </View>
 
-            {/* Search + Filter */}
             {activeTab === 'ingredients' && (
                 <View style={styles.searchRow}>
                     <View style={styles.searchBox}>
@@ -227,7 +214,6 @@ export default function Inventory() {
                 </View>
             )}
 
-            {/* Content */}
             <View style={styles.content}>
                 {activeTab === 'ingredients' && renderIngredientsContent()}
 
@@ -239,7 +225,6 @@ export default function Inventory() {
                 )}
             </View>
 
-            {/* Add Modal */}
             <AddIngredientModal
                 isOpen={showAddModal}
                 onClose={() => setShowAddModal(false)}
@@ -258,7 +243,6 @@ const styles = StyleSheet.create({
         flex: 1, alignItems: 'center', justifyContent: 'center',
     },
 
-    // Error
     errorText: {
         fontSize: 13,
         color: C.terracotta,
@@ -280,7 +264,6 @@ const styles = StyleSheet.create({
         color: C.brass,
     },
 
-    // Header
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -302,7 +285,6 @@ const styles = StyleSheet.create({
         fontSize: 11, color: C.latte, marginTop: 1,
     },
 
-    // Tabs
     tabBar: {
         flexDirection: 'row',
         backgroundColor: C.cream,
@@ -336,7 +318,6 @@ const styles = StyleSheet.create({
         fontSize: 10, fontWeight: '800', color: C.cream,
     },
 
-    // Search row
     searchRow: {
         backgroundColor: C.cream,
         paddingHorizontal: 12,
@@ -396,7 +377,6 @@ const styles = StyleSheet.create({
         fontSize: 13, fontWeight: '700', color: C.cream,
     },
 
-    // Content
     content: {
         flex: 1,
     },

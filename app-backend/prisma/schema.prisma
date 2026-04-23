@@ -70,17 +70,96 @@ model discounts {
   updated_at       DateTime? @default(now()) @db.Timestamp(6)
 }
 
-model inventory {
-  inventory_id  Int       @id @default(autoincrement())
-  item_name     String    @db.VarChar(200)
-  unit          String    @db.VarChar(50)
-  quantity      Decimal?  @default(0) @db.Decimal(10, 2)
-  reorder_level Decimal?  @default(0) @db.Decimal(10, 2)
-  cost_per_unit Decimal?  @default(0.00) @db.Decimal(10, 2)
-  supplier      String?   @db.VarChar(300)
-  is_active     Boolean?  @default(true)
-  created_at    DateTime? @default(now()) @db.Timestamp(6)
-  updated_at    DateTime? @default(now()) @db.Timestamp(6)
+model ingredients {
+  id              String    @id @default(uuid())
+  name            String    @db.VarChar(200)
+  description     String?
+  category        String    @db.VarChar(100)
+  unit            String    @db.VarChar(50)
+  current_stock   Decimal   @default(0) @db.Decimal(10, 2)
+  min_stock       Decimal   @default(0) @db.Decimal(10, 2)
+  max_stock       Decimal   @default(100) @db.Decimal(10, 2)
+  cost_per_unit   Decimal   @default(0) @db.Decimal(10, 2)
+  barcode         String?   @db.VarChar(100)
+  image_url       String?   @db.VarChar(500)
+  expiration_date DateTime? @db.Timestamp(6)
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now()) @db.Timestamp(6)
+  updated_at      DateTime  @updatedAt @db.Timestamp(6)
+  supplier_id     String?
+  supplier        suppliers?       @relation(fields: [supplier_id], references: [id], onDelete: SetNull)
+  stock_movements stock_movements[]
+  stock_alerts    stock_alerts[]
+  invoice_items   invoice_items[]
+}
+
+model suppliers {
+  id             String    @id @default(uuid())
+  name           String    @db.VarChar(200)
+  contact_person String?   @db.VarChar(200)
+  email          String?   @db.VarChar(200)
+  phone          String?   @db.VarChar(50)
+  address        String?
+  payment_terms  String?   @db.VarChar(200)
+  is_active      Boolean   @default(true)
+  created_at     DateTime  @default(now()) @db.Timestamp(6)
+  updated_at     DateTime  @updatedAt @db.Timestamp(6)
+  ingredients    ingredients[]
+  invoices       invoices[]
+}
+
+model invoices {
+  id             String        @id @default(uuid())
+  invoice_number String        @db.VarChar(100)
+  supplier_id    String?
+  supplier_name  String        @db.VarChar(200)
+  invoice_date   DateTime      @db.Timestamp(6)
+  total_amount   Decimal       @default(0) @db.Decimal(10, 2)
+  image_url      String?       @db.VarChar(500)
+  status         String        @default("pending") @db.VarChar(20)
+  created_at     DateTime      @default(now()) @db.Timestamp(6)
+  updated_at     DateTime      @updatedAt @db.Timestamp(6)
+  supplier       suppliers?    @relation(fields: [supplier_id], references: [id], onDelete: SetNull)
+  items          invoice_items[]
+}
+
+model invoice_items {
+  id              String      @id @default(uuid())
+  invoice_id      String
+  ingredient_id   String?
+  ingredient_name String      @db.VarChar(200)
+  quantity        Decimal     @db.Decimal(10, 2)
+  unit            String      @db.VarChar(50)
+  unit_price      Decimal     @db.Decimal(10, 2)
+  total_price     Decimal     @db.Decimal(10, 2)
+  expiration_date DateTime?   @db.Timestamp(6)
+  barcode         String?     @db.VarChar(100)
+  created_at      DateTime    @default(now()) @db.Timestamp(6)
+  invoice         invoices    @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  ingredient      ingredients? @relation(fields: [ingredient_id], references: [id], onDelete: SetNull)
+}
+
+model stock_movements {
+  id            String      @id @default(uuid())
+  ingredient_id String
+  movement_type String      @db.VarChar(20)
+  quantity      Decimal     @db.Decimal(10, 2)
+  unit          String      @db.VarChar(50)
+  reason        String      @db.VarChar(300)
+  reference_id  String?     @db.VarChar(100)
+  created_by    String?     @db.VarChar(100)
+  created_at    DateTime    @default(now()) @db.Timestamp(6)
+  ingredient    ingredients @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
+}
+
+model stock_alerts {
+  id            String      @id @default(uuid())
+  ingredient_id String
+  alert_type    String      @db.VarChar(30)
+  message       String
+  is_read       Boolean     @default(false)
+  created_at    DateTime    @default(now()) @db.Timestamp(6)
+  ingredient    ingredients @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

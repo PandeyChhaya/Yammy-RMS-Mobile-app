@@ -25,7 +25,6 @@ const auth_headers = async () => {
     };
 };
 
-// ─── Ingredients ────────────────────────────────────────────────
 
 const postIngredient = async (item: CreateIngredientRequest): Promise<Ingredient> => {
     const response = await fetch(`${BASE_URL}/ingredients`, {
@@ -33,6 +32,8 @@ const postIngredient = async (item: CreateIngredientRequest): Promise<Ingredient
         headers: await auth_headers(),
         body: JSON.stringify(item),
     });
+     const text = await response.text();
+    console.log('RAW RESPONSE:', text);
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || 'Failed to create ingredient');
     return data;
@@ -83,7 +84,6 @@ const deleteIngredient = async (id: string): Promise<{ message: string }> => {
     return data;
 };
 
-// ─── Suppliers ───────────────────────────────────────────────────
 
 const postSupplier = async (supplier: CreateSupplierRequest): Promise<Supplier> => {
     const response = await fetch(`${BASE_URL}/suppliers`, {
@@ -141,7 +141,6 @@ const deleteSupplier = async (id: string): Promise<{ message: string }> => {
     return data;
 };
 
-// ─── Invoices ────────────────────────────────────────────────────
 
 const getAllInvoices = async (): Promise<Invoice[]> => {
     const response = await fetch(`${BASE_URL}/invoices`, {
@@ -196,7 +195,6 @@ const deleteInvoice = async (id: string): Promise<{ message: string }> => {
     return data;
 };
 
-// ─── Stock Movements ─────────────────────────────────────────────
 
 const getStockMovements = async (ingredient_id?: string): Promise<StockMovement[]> => {
     const url = ingredient_id
@@ -212,7 +210,6 @@ const getStockMovements = async (ingredient_id?: string): Promise<StockMovement[
     return data;
 };
 
-// ─── Stock Alerts ─────────────────────────────────────────────────
 
 const getStockAlerts = async (): Promise<StockAlert[]> => {
     const response = await fetch(`${BASE_URL}/alerts`, {
@@ -235,7 +232,6 @@ const markAlertAsRead = async (alert_id: string): Promise<{ message: string }> =
     return data;
 };
 
-// ─── Dashboard ───────────────────────────────────────────────────
 
 const getDashboardData = async (): Promise<StockDashboardData> => {
     const response = await fetch(`${BASE_URL}/dashboard`, {
@@ -247,32 +243,26 @@ const getDashboardData = async (): Promise<StockDashboardData> => {
     return data;
 };
 
-// ─── Export ──────────────────────────────────────────────────────
 
 const inventoryService = {
-    // Ingredients
     postIngredient,
     getAllIngredients,
     getIngredient,
     putIngredient,
     deleteIngredient,
-    // Suppliers
     postSupplier,
     getAllSuppliers,
     getSupplier,
     putSupplier,
     deleteSupplier,
-    // Invoices
     getAllInvoices,
     getInvoice,
     getInvoiceItems,
     analyzeInvoice,
     deleteInvoice,
-    // Stock
     getStockMovements,
     getStockAlerts,
     markAlertAsRead,
-    // Dashboard
     getDashboardData,
 };
 

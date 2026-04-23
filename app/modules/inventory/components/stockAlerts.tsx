@@ -3,213 +3,295 @@ import {
     AlertTriangle,
     Check,
     Package,
-    X
+    X,
 } from 'lucide-react-native'
+import {
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native'
 import { StockAlert, getAlertIcon } from '../types/inventory'
+
+const C = {
+    espresso:    '#1C1008',
+    clay:        '#7A4528',
+    latte:       '#C8956A',
+    cream:       '#FDF6EC',
+    parchment:   '#F5E9D4',
+    vellum:      '#EDD9BC',
+    brass:       '#B5822A',
+    brassLight:  '#F7EDD8',
+    brassBorder: '#DEC07A',
+    sage:        '#3B6E52',
+    sageLight:   '#EBF4EE',
+    sageBorder:  '#9FCFB4',
+    terracotta:  '#A03020',
+    tcLight:     '#FAECEA',
+    tcBorder:    '#E8A898',
+    orange:      '#C2410C',
+    orangeLight: '#FFF7ED',
+    orangeBorder:'#FDBA74',
+    yellow:      '#92400E',
+    yellowLight: '#FFFBEB',
+    yellowBorder:'#FCD34D',
+}
+
+const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
 interface StockAlertsProps {
     alerts: StockAlert[]
     onMarkAsRead: (alertId: string) => void
 }
 
-export default function StockAlerts({ alerts, onMarkAsRead }: StockAlertsProps) {
-    const getAlertTitle = (type: string) => {
-        switch (type) {
-            case 'out_of_stock':
-                return 'Out of Stock'
-            case 'low_stock':
-                return 'Low Stock'
-            case 'expiring_soon':
-                return 'Expiring Soon'
-            case 'expired':
-                return 'Product Expired'
-            default:
-                return 'Alert'
-        }
+const getAlertTitle = (type: string) => {
+    switch (type) {
+        case 'out_of_stock':   return 'Out of Stock'
+        case 'low_stock':      return 'Low Stock'
+        case 'expiring_soon':  return 'Expiring Soon'
+        case 'expired':        return 'Product Expired'
+        default:               return 'Alert'
     }
+}
 
-    const getAlertPriority = (type: string) => {
-        switch (type) {
-            case 'out_of_stock':
-            case 'expired':
-                return 'high'
-            case 'low_stock':
-            case 'expiring_soon':
-                return 'medium'
-            default:
-                return 'low'
-        }
+const getAlertPriority = (type: string): 'high' | 'medium' | 'low' => {
+    switch (type) {
+        case 'out_of_stock':
+        case 'expired':        return 'high'
+        case 'low_stock':
+        case 'expiring_soon':  return 'medium'
+        default:               return 'low'
     }
+}
+
+const priorityStyle = (priority: 'high' | 'medium' | 'low') => {
+    switch (priority) {
+        case 'high':   return { bg: C.tcLight,     border: C.tcBorder,     text: C.terracotta, icon: C.terracotta }
+        case 'medium': return { bg: C.orangeLight,  border: C.orangeBorder, text: C.orange,     icon: C.orange }
+        default:       return { bg: C.yellowLight,  border: C.yellowBorder, text: C.yellow,     icon: C.yellow }
+    }
+}
+
+interface AlertGroupProps {
+    title: string
+    count: number
+    alerts: StockAlert[]
+    priority: 'high' | 'medium' | 'low'
+    onMarkAsRead: (id: string) => void
+}
+
+function AlertGroup({ title, count, alerts, priority, onMarkAsRead }: AlertGroupProps) {
+    const pStyle = priorityStyle(priority)
+    const Icon   = priority === 'high' ? AlertCircle : priority === 'medium' ? AlertTriangle : Package
+
+    return (
+        <View style={styles.group}>
+            <View style={styles.groupHeader}>
+                <Icon size={16} color={pStyle.icon} />
+                <Text style={[styles.groupTitle, { color: pStyle.text }]}>
+                    {title} ({count})
+                </Text>
+            </View>
+
+            {alerts.map(alert => (
+                <View
+                    key={alert.id}
+                    style={[styles.alertCard, { backgroundColor: pStyle.bg, borderColor: pStyle.border }]}
+                >
+                    <View style={styles.alertLeft}>
+                        <View style={[styles.alertIconBox, { backgroundColor: pStyle.bg, borderColor: pStyle.border, borderWidth: 1 }]}>
+                            <Text style={styles.alertEmoji}>{getAlertIcon(alert.alert_type)}</Text>
+                        </View>
+                        <View style={styles.alertBody}>
+                            <Text style={[styles.alertTitle, { color: pStyle.text }]}>
+                                {getAlertTitle(alert.alert_type)}
+                            </Text>
+                            <Text style={[styles.alertMessage, { color: pStyle.text }]} numberOfLines={2}>
+                                {alert.message}
+                            </Text>
+                            <Text style={[styles.alertTime, { color: pStyle.text }]}>
+                                {new Date(alert.created_at).toLocaleString()}
+                            </Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity
+                        style={styles.dismissBtn}
+                        onPress={() => onMarkAsRead(alert.id)}
+                    >
+                        <X size={14} color={pStyle.text} />
+                    </TouchableOpacity>
+                </View>
+            ))}
+        </View>
+    )
+}
+
+export default function StockAlerts({ alerts, onMarkAsRead }: StockAlertsProps) {
+    const highAlerts   = alerts.filter(a => getAlertPriority(a.alert_type) === 'high')
+    const mediumAlerts = alerts.filter(a => getAlertPriority(a.alert_type) === 'medium')
+    const lowAlerts    = alerts.filter(a => getAlertPriority(a.alert_type) === 'low')
 
     if (alerts.length === 0) {
         return (
-            <div className="h-full flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                    <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium">No alerts</p>
-                    <p className="text-sm">All your stocks are in good condition</p>
-                </div>
-            </div>
+            <View style={styles.empty}>
+                <View style={styles.emptyIcon}>
+                    <AlertTriangle size={32} color={C.brass} />
+                </View>
+                <Text style={styles.emptyTitle}>No Active Alerts</Text>
+                <Text style={styles.emptySub}>All your stocks are in good condition</Text>
+            </View>
         )
     }
 
-    // Group alerts by priority
-    const highPriorityAlerts = alerts.filter(alert => getAlertPriority(alert.alert_type) === 'high')
-    const mediumPriorityAlerts = alerts.filter(alert => getAlertPriority(alert.alert_type) === 'medium')
-    const lowPriorityAlerts = alerts.filter(alert => getAlertPriority(alert.alert_type) === 'low')
-
     return (
-        <div className="h-full overflow-y-auto p-6">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Stock Alerts</h2>
-                    <p className="text-gray-600">{alerts.length} active alerts</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <button className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                        <Check className="w-4 h-4" />
-                        <span>Mark all as read</span>
-                    </button>
-                </div>
-            </div>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-            {/* High Priority Alerts */}
-            {highPriorityAlerts.length > 0 && (
-                <div className="mb-8">
-                    <div className="flex items-center space-x-2 mb-4">
-                        <AlertCircle className="w-5 h-5 text-red-600" />
-                        <h3 className="text-lg font-semibold text-red-600">Urgent ({highPriorityAlerts.length})</h3>
-                    </div>
-                    <div className="space-y-4">
-                        {highPriorityAlerts.map((alert) => (
-                            <div key={alert.id} className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-start space-x-3">
-                                        <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="text-red-600 text-lg">{getAlertIcon(alert.alert_type)}</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h4 className="text-sm font-semibold text-red-900">
-                                                {getAlertTitle(alert.alert_type)}
-                                            </h4>
-                                            <p className="text-sm text-red-700 mt-1">{alert.message}</p>
-                                            <p className="text-xs text-red-600 mt-2">
-                                                {new Date(alert.created_at).toLocaleString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => onMarkAsRead(alert.id)}
-                                        className="p-2 text-red-400 hover:text-red-600 transition-colors"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            <View style={styles.summaryBar}>
+                <View style={styles.summaryItem}>
+                    <View style={[styles.summaryDot, { backgroundColor: C.terracotta }]} />
+                    <Text style={styles.summaryText}>{highAlerts.length} urgent</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                    <View style={[styles.summaryDot, { backgroundColor: C.orange }]} />
+                    <Text style={styles.summaryText}>{mediumAlerts.length} warning</Text>
+                </View>
+                <View style={styles.summaryItem}>
+                    <View style={[styles.summaryDot, { backgroundColor: C.yellow }]} />
+                    <Text style={styles.summaryText}>{lowAlerts.length} info</Text>
+                </View>
+                <TouchableOpacity
+                    style={styles.markAllBtn}
+                    onPress={() => alerts.forEach(a => onMarkAsRead(a.id))}
+                >
+                    <Check size={12} color={C.cream} />
+                    <Text style={styles.markAllText}>All Read</Text>
+                </TouchableOpacity>
+            </View>
+
+            {highAlerts.length > 0 && (
+                <AlertGroup
+                    title="Urgent"
+                    count={highAlerts.length}
+                    alerts={highAlerts}
+                    priority="high"
+                    onMarkAsRead={onMarkAsRead}
+                />
             )}
 
-            {/* Medium Priority Alerts */}
-            {mediumPriorityAlerts.length > 0 && (
-                <div className="mb-8">
-                    <div className="flex items-center space-x-2 mb-4">
-                        <AlertTriangle className="w-5 h-5 text-orange-600" />
-                        <h3 className="text-lg font-semibold text-orange-600">Warning ({mediumPriorityAlerts.length})</h3>
-                    </div>
-                    <div className="space-y-4">
-                        {mediumPriorityAlerts.map((alert) => (
-                            <div key={alert.id} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-start space-x-3">
-                                        <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="text-orange-600 text-lg">{getAlertIcon(alert.alert_type)}</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h4 className="text-sm font-semibold text-orange-900">
-                                                {getAlertTitle(alert.alert_type)}
-                                            </h4>
-                                            <p className="text-sm text-orange-700 mt-1">{alert.message}</p>
-                                            <p className="text-xs text-orange-600 mt-2">
-                                                {new Date(alert.created_at).toLocaleString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => onMarkAsRead(alert.id)}
-                                        className="p-2 text-orange-400 hover:text-orange-600 transition-colors"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            {mediumAlerts.length > 0 && (
+                <AlertGroup
+                    title="Warning"
+                    count={mediumAlerts.length}
+                    alerts={mediumAlerts}
+                    priority="medium"
+                    onMarkAsRead={onMarkAsRead}
+                />
             )}
 
-            {/* Low Priority Alerts */}
-            {lowPriorityAlerts.length > 0 && (
-                <div className="mb-8">
-                    <div className="flex items-center space-x-2 mb-4">
-                        <Package className="w-5 h-5 text-blue-600" />
-                        <h3 className="text-lg font-semibold text-blue-600">Information ({lowPriorityAlerts.length})</h3>
-                    </div>
-                    <div className="space-y-4">
-                        {lowPriorityAlerts.map((alert) => (
-                            <div key={alert.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-start space-x-3">
-                                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="text-blue-600 text-lg">{getAlertIcon(alert.alert_type)}</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h4 className="text-sm font-semibold text-blue-900">
-                                                {getAlertTitle(alert.alert_type)}
-                                            </h4>
-                                            <p className="text-sm text-blue-700 mt-1">{alert.message}</p>
-                                            <p className="text-xs text-blue-600 mt-2">
-                                                {new Date(alert.created_at).toLocaleString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => onMarkAsRead(alert.id)}
-                                        className="p-2 text-blue-400 hover:text-blue-600 transition-colors"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            {lowAlerts.length > 0 && (
+                <AlertGroup
+                    title="Information"
+                    count={lowAlerts.length}
+                    alerts={lowAlerts}
+                    priority="low"
+                    onMarkAsRead={onMarkAsRead}
+                />
             )}
 
-            {/* Summary */}
-            <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
-                            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                            <span className="text-sm text-gray-600">{highPriorityAlerts.length} urgent</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                            <span className="text-sm text-gray-600">{mediumPriorityAlerts.length} warning</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                            <span className="text-sm text-gray-600">{lowPriorityAlerts.length} info</span>
-                        </div>
-                    </div>
-                    <div className="text-sm text-gray-500">
-                        Last updated: {new Date().toLocaleTimeString()}
-                    </div>
-                </div>
-            </div>
-        </div>
+        </ScrollView>
     )
 }
+
+const styles = StyleSheet.create({
+    scroll: {
+        padding: 16, paddingBottom: 32, gap: 16,
+    },
+
+    empty: {
+        flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32,
+    },
+    emptyIcon: {
+        width: 72, height: 72, borderRadius: radius.lg,
+        backgroundColor: C.brassLight, borderWidth: 1.5, borderColor: C.brassBorder,
+        alignItems: 'center', justifyContent: 'center',
+    },
+    emptyTitle: {
+        fontSize: 17, fontWeight: '800', color: C.espresso,
+    },
+    emptySub: {
+        fontSize: 12, color: C.clay, textAlign: 'center',
+    },
+
+    summaryBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        backgroundColor: C.cream,
+        borderRadius: radius.md,
+        borderWidth: 1.5, borderColor: C.vellum,
+        padding: 12,
+    },
+    summaryItem: {
+        flexDirection: 'row', alignItems: 'center', gap: 5, flex: 1,
+    },
+    summaryDot: {
+        width: 8, height: 8, borderRadius: radius.pill,
+    },
+    summaryText: {
+        fontSize: 11, color: C.clay, fontWeight: '600',
+    },
+    markAllBtn: {
+        flexDirection: 'row', alignItems: 'center', gap: 4,
+        backgroundColor: C.sage, borderRadius: radius.pill,
+        paddingHorizontal: 10, paddingVertical: 5,
+    },
+    markAllText: {
+        fontSize: 10, fontWeight: '800', color: C.cream,
+    },
+
+    group: {
+        gap: 8,
+    },
+    groupHeader: {
+        flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2,
+    },
+    groupTitle: {
+        fontSize: 13, fontWeight: '800',
+    },
+
+    alertCard: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        borderWidth: 1.5,
+        borderRadius: radius.md,
+        padding: 12,
+        gap: 10,
+    },
+    alertLeft: {
+        flexDirection: 'row', alignItems: 'flex-start', gap: 10, flex: 1,
+    },
+    alertIconBox: {
+        width: 34, height: 34, borderRadius: radius.sm,
+        alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    },
+    alertEmoji: {
+        fontSize: 16,
+    },
+    alertBody: {
+        flex: 1, gap: 2,
+    },
+    alertTitle: {
+        fontSize: 12, fontWeight: '800',
+    },
+    alertMessage: {
+        fontSize: 12, fontWeight: '500', opacity: 0.85,
+    },
+    alertTime: {
+        fontSize: 10, fontWeight: '500', opacity: 0.7, marginTop: 2,
+    },
+    dismissBtn: {
+        padding: 4,
+    },
+})
