@@ -253,6 +253,7 @@ model users {
   audit_logs    audit_logs[]
   orders        orders[]
   shifts        shifts[]
+  minis minis[] 
 }
 model loyalty_transactions {
   transaction_id   Int       @id @default(autoincrement())

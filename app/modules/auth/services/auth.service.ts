@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const BASE_URL = 'http://192.168.1.71:5000/api/auth'
+const BASE_URL = 'http://192.168.1.4:5000/api/auth'
 
 export  const authService = {
 

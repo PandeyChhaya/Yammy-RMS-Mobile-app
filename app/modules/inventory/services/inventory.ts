@@ -15,7 +15,7 @@ import type {
     UpdateSupplierRequest,
 } from "../types/inventory";
 
-const BASE_URL = 'http://192.168.1.71:5000/api/inventory';
+const BASE_URL = 'http://192.168.1.4:5000/api/inventory';
 
 const auth_headers = async () => {
     const token = await authService.getToken();
