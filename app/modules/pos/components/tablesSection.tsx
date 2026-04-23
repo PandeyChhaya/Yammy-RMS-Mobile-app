@@ -1,12 +1,12 @@
 import { Receipt, Table2 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
-    ActivityIndicator,
-    ScrollView, StyleSheet,
-    Text, TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView, StyleSheet,
+  Text, TouchableOpacity,
+  View,
 } from 'react-native'
-import reservationService from '../../tables/services/reservationService'
+import reservationService from '../../reservation/services/reservationService'
 import { TableData } from '../types/tables'
 import TableCard from './tableCard'
 

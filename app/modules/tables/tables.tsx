@@ -23,9 +23,9 @@ import {
 } from 'react-native'
 import { ReservationStatus, ReservationWithTable } from '../pos/types/reservation'
 import { CreateTableRequest, TableData } from '../pos/types/tables'
+import reservationService from '../reservation/services/reservationService'
 import ReservationsCalendar from './components/ReservationCalender'
 import ReservationModal from './components/ReservationModal'
-import reservationService from './services/reservationService'
 import tableService from './services/tableService'
 
 const C = {

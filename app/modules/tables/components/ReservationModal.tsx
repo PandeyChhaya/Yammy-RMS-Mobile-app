@@ -12,9 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
-import { TableData} from '../../pos/types'
-import { CreateReservationRequest , Reservation, ReservationModalProps} from '../../pos/types/reservation'
-import reservationService from '../services/reservationService'
+import { CreateReservationRequest, ReservationModalProps } from '../../pos/types/reservation'
+import reservationService from '../../reservation/services/reservationService'
 
 const C = {
   espresso:    '#1C1008',
