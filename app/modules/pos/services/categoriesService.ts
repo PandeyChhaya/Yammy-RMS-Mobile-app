@@ -1,6 +1,6 @@
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http://192.168.1.4:5000/api/categories';
+const BASE_URL= 'http://192.168.1.71:5000/api/categories';
 
 
 export interface Category{

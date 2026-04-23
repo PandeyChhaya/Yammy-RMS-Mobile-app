@@ -72,7 +72,7 @@ export default function Categories() {
 
   const { data: categories, isLoading, error } = useQuery<Category[]>({
     queryKey: ['categories'],
-    queryFn:  () => categoriesService.getCategory(),
+    queryFn:  () => categoriesService.getAllCategory(),
     retry: 3,
   })
 

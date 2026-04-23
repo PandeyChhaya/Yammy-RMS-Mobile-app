@@ -8,6 +8,7 @@ import categoriesRouter from "./modules/categories/categories.routes.js";
 import inventoryRouter from "./modules/inventory/inventory.routes.js";
 import loyaltyRouter from "./modules/loyalty/loyalty.routes.js";
 import menuItemsRouter from "./modules/menu-items/menu-items.routes.js";
+import miniRouter from "./modules/minis/minis-routes.js";
 import orderItemRouter from "./modules/order_items/order_items.routes.js";
 import orderRouter from "./modules/orders/orders.routes.js";
 import paymentRouter from "./modules/payments/payments.routes.js";
@@ -29,6 +30,7 @@ app.use("/api/payment", paymentRouter);
 app.use("/api/loyalty", loyaltyRouter);
 app.use("/api/reservations",reservationsRouter )
 app.use("/api/inventory",inventoryRouter)
+app.use("/api/minis", miniRouter)
 
 app.get("/", (req, res) => {
   res.json({ message: "Yammy API is running" });

@@ -1,15 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import {
-  FileText,
-  LayoutDashboard,
   LogOut,
-  Package,
-  Receipt,
-  Shield,
-  ShoppingCart,
-  Users,
-  Video
+  ShoppingCart
 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
@@ -81,7 +74,7 @@ export default function Dashboard() {
   const loadUser = async () => {
     const name = await AsyncStorage.getItem('@userName')
     const role = await AsyncStorage.getItem('@userRole')
-    console.log('USER NAME:', name)   // ← add
+    console.log('USER NAME:', name)   
   console.log('USER ROLE:', role)
     if (name) setUserName(name)
     setUserRole(role ?? 'Admin')
@@ -91,7 +84,6 @@ export default function Dashboard() {
   try {
     const token = await AsyncStorage.getItem('@accessToken')
 
-    // If no token yet, skip fetching — don't crash
     if (!token) {
       console.log('No token yet, skipping stats')
       return
@@ -139,106 +131,17 @@ export default function Dashboard() {
 
   const allModules: ModuleItem[] = [
     {
-      id: 'pos',
-      label: 'Point of Sale',
+      id: 'categories',
+      label: 'Categories',
       sub: 'Take orders',
       icon: <ShoppingCart size={24} color={C.brass} />,
-      route: '/modules/pos/POS',
+      route: '/modules/categories/Categories',
       color: C.brassLight,
       borderColor: C.brassBorder,
       roles: ['Admin', 'Waiter', 'Cashier'],
     },
-    
-    {
-      id: 'orders',
-      label: 'Orders',
-      sub: 'View & manage',
-      icon: <Receipt size={24} color={C.sage} />,
-      route: '/modules/orders/Orders',
-      color: C.sageLight,
-      borderColor: C.sageBorder,
-      roles: ['Admin', 'Waiter', 'Cashier', 'Kitchen'],
-    },
-    {
-      id: 'products',
-      label: 'Menu Items',
-      sub: 'Edit menu',
-      icon: <Package size={24} color={C.clay} />,
-      route: '/modules/menu-items/menu-items',
-      color: C.parchment,
-      borderColor: C.vellum,
-      roles: ['Admin'],
-    },
-     {
-      id: 'tables',
-      label: 'Tables',
-      sub: 'Edit menu',
-      icon: <Package size={24} color={C.clay} />,
-      route: '/modules/tables/tables',
-      color: C.parchment,
-      borderColor: C.vellum,
-      roles: ['Admin', 'Waiter','Kitchen'],
-    },
-     {
-      id: 'inventory',
-      label: 'Inventory',
-      sub: 'Management tool',
-      icon: <Package size={24} color={C.clay} />,
-      route: '/modules/inventory/inventory',
-      color: C.parchment,
-      borderColor: C.vellum,
-      roles: ['Admin', 'Waiter','Kitchen'],
-    },
-    {
-      id: 'categories',
-      label: 'Categories',
-      sub: 'Manage groups',
-      icon: <LayoutDashboard size={24} color={C.clay} />,
-      route: '/modules/categories/Categories',
-      color: C.parchment,
-      borderColor: C.vellum,
-      roles: ['Admin'],
-    },
-    {
-      id: 'users',
-      label: 'Staff',
-      sub: 'Manage users',
-      icon: <Users size={24} color={C.terracotta} />,
-      route: '/modules/users/Users',
-      color: C.tcLight,
-      borderColor: C.tcBorder,
-      roles: ['Admin'],
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      sub: 'Sales & stats',
-      icon: <FileText size={24} color={C.brass} />,
-      route: '/modules/settings/settings',
-      color: C.brassLight,
-      borderColor: C.brassBorder,
-      roles: ['Admin'],
-    },
-    {
-      id: 'reservations',
-      label: 'Reservaions',
-      sub: 'View reservation',
-      icon: <Shield size={24} color={C.sage} />,
-      route: '/modules/reservation/reservation',
-      color: C.sageLight,
-      borderColor: C.sageBorder,
-      roles: ['Admin'],
-    },
-    {
-      id: 'minis',
-      label: 'Minis',
-      sub: 'Your video log',
-      icon: <Video size={24} color={C.terracotta} />,
-      route: '/modules/minis/minis',
-      color: C.tcLight,
-      borderColor: C.tcBorder,
-      roles: ['Admin'],
-    },
+      
+   
   ]
 
   const visibleModules = allModules.filter(m =>

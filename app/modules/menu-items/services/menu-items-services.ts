@@ -1,6 +1,6 @@
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http://192.168.1.4:5000/api/menuItems';
+const BASE_URL= 'http://192.168.1.715000/api/menuItems';
 
 
 export interface MenuItem{

@@ -2,11 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
 import {
-    StatusBar,
-    StyleSheet,
-    Text, TouchableOpacity,
-    useWindowDimensions,
-    View,
+  StatusBar,
+  StyleSheet,
+  Text, TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from 'react-native'
 import { MenuItemFilters } from '../../menu-items/services/menu-items-services'
 import { Category } from '../services/categoriesService'
@@ -267,7 +267,7 @@ export default function ModernPOSLayout({
           <View style={styles.brandIcon}>
             <Text style={styles.brandIconText}>Z</Text>
           </View>
-          <Text style={styles.brandName}>Zikiro POS</Text>
+          <Text style={styles.brandName}>Yammy POS</Text>
         </View>
 
         <TouchableOpacity
