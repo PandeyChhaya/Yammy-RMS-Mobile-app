@@ -20,6 +20,7 @@ export interface Order {
     special_notes?: string
     total_amount?: number
     created_at: string
+       items?:        OrderItem[]
 }
 
 

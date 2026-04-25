@@ -191,6 +191,17 @@ export default function Dashboard() {
       borderColor: C.brassBorder,
       roles: ['Admin', 'Waiter', 'Cashier'],
     },
+     {
+      id: 'customer',
+      label: 'customer',
+      sub: 'Take orders',
+      icon: <ShoppingCart size={24} color={C.brass} />,
+      route: '/modules/customer/customer_Dashboard',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin', 'Waiter', 'Cashier'],
+    },
+
       
    
   ]
