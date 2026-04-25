@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import {
+  Bell,
   LogOut,
   ShoppingCart
 } from 'lucide-react-native'
@@ -170,6 +171,16 @@ export default function Dashboard() {
       borderColor: C.brassBorder,
       roles: ['Admin', 'Waiter', 'Cashier'],
     },
+    {
+  id: 'waiter-notifications',
+  label: 'Waiter Calls',
+  sub: 'Customer requests',
+  icon: <Bell size={24} color={C.sage} />,
+  route: '/modules/waiter/WaiterNotifications',
+  color: C.sageLight,
+  borderColor: C.sageBorder,
+  roles: ['Waiter'],
+},
       {
       id: 'inventory',
       label: 'inventory',
