@@ -44,8 +44,10 @@ const staffRoles = [
  { id: 'Admin', label: 'Admin' },
 { id: 'Waiter', label: 'Waiter' },
 { id: 'Cashier', label: 'Cashier' },
-{ id: 'Kitchen', label: 'Kitchen Staff' },
+{ id: 'Kitchen Staff', label: 'Kitchen Staff' },
 { id: 'Customer', label: 'Customer' },
+{ id: 'Super Admin', label: 'Super Admin' },
+
 ]
 
 export default function Signup() {
@@ -56,7 +58,7 @@ export default function Signup() {
   const [phoneNum,        setPhoneNum]        = useState('')
   const [passwordFirst,   setPasswordFirst]   = useState('')
   const [passwordSecond,  setPasswordSecond]  = useState('')
-  const [pickedRole,      setPickedRole]      = useState('waiter')
+  const [pickedRole,      setPickedRole]      = useState('Customer')
   const [showingPassword1, setShowingPassword1] = useState(false)
   const [showingPassword2, setShowingPassword2] = useState(false)
   const [agreedToTerms,   setAgreedToTerms]  = useState(false)

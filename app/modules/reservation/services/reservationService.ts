@@ -1,9 +1,9 @@
 
 import { authService } from '../../auth/services/auth.service'
 import {
-    ReservationStatus,
-    ReservationWithTable,
-    UpdateReservationRequest
+  ReservationStatus,
+  ReservationWithTable,
+  UpdateReservationRequest
 } from '../../pos/types/reservation'
 export const API_BASE_URL = 'http://192.168.1.71:5000/api'
 

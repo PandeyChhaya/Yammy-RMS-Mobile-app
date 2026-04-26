@@ -7,7 +7,7 @@ import type {
     PaymentOrder,
 } from '../types/payment';
 
-const BASE = 'http://192.168.1.7:5000/api';
+const BASE = 'http://192.168.1.71:5000/api';
 
 const handleResponse = async (res: Response) => {
     const data = await res.json();

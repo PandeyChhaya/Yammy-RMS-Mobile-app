@@ -1,7 +1,7 @@
 import { authService } from '../../auth/services/auth.service'
 import { CreateTableRequest, TableData, UpdateTableRequest } from '../../pos/types/tables'
 
-const BASE_URL = 'http://192.168.1.71/api/table'
+const BASE_URL = 'http://192.168.1.71:5000/api/table'
 
 const auth_headers = async () => {
   const token = await authService.getToken()

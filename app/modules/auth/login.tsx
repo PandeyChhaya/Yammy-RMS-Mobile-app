@@ -68,7 +68,11 @@ export default function Login() {
 
 if (result.user_role === 'Customer') {
   router.replace('/modules/customer/customer_Dashboard')
-} else {
+}
+else if (result.user_role === 'Super Admin'){
+  router.replace('/superAdmin/superAdmin')
+}
+else {
   router.replace('/modules/Dashboard')
 }
 
