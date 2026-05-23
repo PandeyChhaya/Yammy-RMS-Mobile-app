@@ -1,30 +1,30 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import {
-    AlertCircle,
-    CheckCircle,
-    Clock,
-    Eye,
-    LogOut,
-    Shield,
-    Trash2,
-    TrendingUp,
-    Users,
-    Video,
-    XCircle,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Eye,
+  LogOut,
+  Shield,
+  Trash2,
+  TrendingUp,
+  Users,
+  Video,
+  XCircle,
 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import { authService } from '../modules/auth/services/auth.service'
 

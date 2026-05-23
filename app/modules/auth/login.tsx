@@ -1,428 +1,286 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native'
+import { Eye, EyeOff } from 'lucide-react-native'
 import { useState } from 'react'
 import {
   Alert,
   Dimensions,
-  Image,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native'
 import { authService } from './services/auth.service'
 
-const { height } = Dimensions.get('window')
+const { width, height } = Dimensions.get('window')
 
 const C = {
-  espresso:    '#1C1008',
-  roast:       '#3D2010',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-  onDark:      '#FDF6EC',
+  black:      '#0A0A0A',
+  charcoal:   '#1A1A1A',
+  graphite:   '#2C2C2C',
+  steel:      '#3D3D3D',
+  muted:      '#6B6B6B',
+  border:     '#2E2E2E',
+  card:       '#1E1E1E',
+  orange:     '#FF6B2C',
+  orangeTint: '#2A1A10',
+  white:      '#FFFFFF',
+  offWhite:   '#F0F0F0',
+  dim:        '#A0A0A0',
+  success:    '#22C55E',
 }
-
-const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
-
 
 export default function Login() {
   const router = useRouter()
-
-  const [emailText, setEmailText]           = useState('')
-  const [passwordText, setPasswordText]     = useState('')
+  const [emailText, setEmailText]             = useState('')
+  const [passwordText, setPasswordText]       = useState('')
   const [showingPassword, setShowingPassword] = useState(false)
-  const [isProcessing, setIsProcessing]     = useState(false)
+  const [isProcessing, setIsProcessing]       = useState(false)
+  const [focusedField, setFocusedField]       = useState<string | null>(null)
 
   const doLogin = async () => {
-  if (!emailText.trim() || !passwordText.trim()) {
-    Alert.alert('Oops', 'Fill in your email and password first')
-    return
+    if (!emailText.trim() || !passwordText.trim()) {
+      Alert.alert('Missing fields', 'Please enter your email and password.')
+      return
+    }
+    setIsProcessing(true)
+    try {
+      const result = await authService.login(emailText.trim(), passwordText.trim())
+      await AsyncStorage.setItem('@userName', result.user_name)
+      await AsyncStorage.setItem('@userRole', result.user_role)
+      if (result.user_role === 'Customer') {
+        router.replace('/modules/customer/customer_Dashboard')
+      } else if (result.user_role === 'Super Admin') {
+        router.replace('/superAdmin/superAdmin')
+      } else {
+        router.replace('/modules/Dashboard')
+      }
+    } catch (err: any) {
+      Alert.alert('Login failed', err.message || 'Wrong email or password.')
+    } finally {
+      setIsProcessing(false)
+    }
   }
-
-  setIsProcessing(true)
-
-  try {
-    const result = await authService.login(
-      emailText.trim(),
-      passwordText.trim(),
-    )
-    // authService.login already saves @accessToken and @refreshToken for you
-
-    await AsyncStorage.setItem('@userName', result.user_name)
-    await AsyncStorage.setItem('@userRole', result.user_role)
-
-if (result.user_role === 'Customer') {
-  router.replace('/modules/customer/customer_Dashboard')
-}
-else if (result.user_role === 'Super Admin'){
-  router.replace('/superAdmin/superAdmin')
-}
-else {
-  router.replace('/modules/Dashboard')
-}
-
-  } catch (err: any) {
-    Alert.alert('Could not log in', err.message || 'Wrong email or password maybe?')
-  } finally {
-    setIsProcessing(false)
-  }
-}
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <StatusBar barStyle="light-content" backgroundColor={C.black} />
 
-      {/* Top Zone */}
-      <View style={styles.topZone}>
-        <View style={styles.patternOverlay}>
-          {Array.from({ length: 40 }).map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                {
-                  left: `${(i % 8) * 12.5}%`,
-                  top:  `${Math.floor(i / 8) * 20}%`,
-                },
-              ]}
-            />
-          ))}
+      <View style={styles.blobOuter} />
+      <View style={styles.blobInner} />
+
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.logoArea}>
+          <View style={styles.iconRing}>
+            <View style={styles.iconDot} />
+            <Text style={styles.iconEmoji}>🍽</Text>
+          </View>
+          <Text style={styles.brand}>YAMMY</Text>
+          <View style={styles.pill}>
+            <View style={styles.pillDot} />
+            <Text style={styles.pillText}>Restaurant Management</Text>
+          </View>
         </View>
 
-        <View>
-        <Image source={require('../../../assets/images/yammy.png')} style={{ width: 200, height: 70 }} />
-        </View>
-
-   
-        <Text style={styles.appSub}>Login using your credentials</Text>
-      </View>
-
-      {/* Login Card */}
-      <View style={styles.loginCard}>
-        <ScrollView
-          style={styles.scrollArea}
-          contentContainerStyle={styles.cardContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-
-          <View style={styles.headingArea}>
-            <Text style={styles.welcomeText}>Welcome Back!!</Text>
-            <Text style={styles.welcomeSub}>Sign in to your account</Text>
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Welcome back</Text>
+            <Text style={styles.cardSub}>Sign in to your workspace</Text>
           </View>
 
-          {/* Email */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <View style={styles.inputWrapper}>
-              <Mail size={18} color={C.latte} style={styles.inputIcon} />
+          <View style={styles.field}>
+            <Text style={styles.label}>Email</Text>
+            <View style={[styles.inputBox, focusedField === 'email' && styles.inputFocused]}>
+              <Text style={styles.prefix}>@</Text>
               <TextInput
                 style={styles.input}
-                placeholder="user@restaurant.com"
-                placeholderTextColor={C.latte}
+                placeholder="you@restaurant.com"
+                placeholderTextColor={C.steel}
                 value={emailText}
                 onChangeText={setEmailText}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
+                onFocus={() => setFocusedField('email')}
+                onBlur={() => setFocusedField(null)}
               />
             </View>
           </View>
 
-          {/* Password */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <View style={styles.inputWrapper}>
-              <Lock size={18} color={C.latte} style={styles.inputIcon} />
+         <View style={styles.field}>
+            <Text style={styles.label}>Password</Text>
+            <View style={[styles.inputBox, focusedField === 'password' && styles.inputFocused]}>
+              <Text style={styles.prefix}>••</Text>
               <TextInput
                 style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor={C.latte}
+                placeholder="Enter your password"
+                placeholderTextColor={C.steel}
                 value={passwordText}
                 onChangeText={setPasswordText}
                 secureTextEntry={!showingPassword}
                 autoComplete="password"
+                onFocus={() => setFocusedField('password')}
+                onBlur={() => setFocusedField(null)}
               />
-              <TouchableOpacity
-                onPress={() => setShowingPassword(!showingPassword)}
-                style={styles.eyeButton}
-              >
+              <TouchableOpacity onPress={() => setShowingPassword(p => !p)} style={styles.eye}>
                 {showingPassword
-                  ? <EyeOff size={18} color={C.latte} />
-                  : <Eye    size={18} color={C.latte} />}
+                  ? <EyeOff size={17} color={C.muted} />
+                  : <Eye    size={17} color={C.muted} />}
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Forgot */}
-          <TouchableOpacity style={styles.forgotBtn}>
-            <Text style={styles.forgotText}>Forgot Password?</Text>
+          <TouchableOpacity style={styles.forgotRow}>
+            <Text style={styles.forgotText}>Forgot password?</Text>
           </TouchableOpacity>
 
-          {/* Sign In */}
           <TouchableOpacity
-            style={[styles.signInBtn, isProcessing && { opacity: 0.6 }]}
+            style={[styles.ctaBtn, isProcessing && { opacity: 0.55 }]}
             onPress={doLogin}
             disabled={isProcessing}
-            activeOpacity={0.85}
+            activeOpacity={0.8}
           >
-            <Text style={styles.signInText}>
-              {isProcessing ? 'Signing In...' : 'Sign In'}
-            </Text>
+            <Text style={styles.ctaText}>{isProcessing ? 'Signing in...' : 'Sign In'}</Text>
+            {!isProcessing && <Text style={styles.ctaArrow}>→</Text>}
           </TouchableOpacity>
 
-          {/* Divider */}
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
+          <View style={styles.divider}>
+            <View style={styles.divLine} />
+            <Text style={styles.divLabel}>or</Text>
+            <View style={styles.divLine} />
           </View>
 
-          {/* Create Account */}
           <TouchableOpacity
-            style={styles.guestBtn}
+            style={styles.secondaryBtn}
             onPress={() => router.push('/modules/auth/signup')}
+            activeOpacity={0.75}
           >
-            <Text style={styles.guestText}>Create New Account</Text>
+            <Text style={styles.secondaryText}>Create new account</Text>
           </TouchableOpacity>
+        </View>
 
-        </ScrollView>
-      </View>
-
-      <Text style={styles.versionText} />
-    </View>
+        <View style={styles.footer}>
+          <View style={styles.footerDot} />
+          <Text style={styles.footerText}>Secure · Encrypted · Private</Text>
+          <View style={styles.footerDot} />
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: C.cream,
+  root: { flex: 1, backgroundColor: C.black },
+
+  blobOuter: {
+    position: 'absolute', top: -80,
+    left: width / 2 - 130,
+    width: 260, height: 260, borderRadius: 130,
+    backgroundColor: C.orange, opacity: 0.10,
+  },
+  blobInner: {
+    position: 'absolute', top: -30,
+    left: width / 2 - 65,
+    width: 130, height: 130, borderRadius: 65,
+    backgroundColor: C.orange, opacity: 0.16,
   },
 
-  // Top zone
-  topZone: {
-    height: height * 0.30,
-    backgroundColor: C.espresso,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  patternOverlay: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    opacity: 0.06,
-  },
-  dot: {
-    position: 'absolute',
-    width: 3, height: 3,
-    borderRadius: 2,
-    backgroundColor: C.cream,
-  },
-  logoBadge: {
-    width: 72, height: 72,
-    borderRadius: radius.md,
-    backgroundColor: C.brass,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-    borderWidth: 1.5,
-    borderColor: C.brassBorder,
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  appTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: C.cream,
-    letterSpacing: 0.6,
-  },
-  appSub: {
-    fontSize: 11,
-    color: C.latte,
-    fontWeight: '500',
-    letterSpacing: 0.8,
-    marginTop: 3,
-  },
-
-  // Login card
-  loginCard: {
-    flex: 1,
-    backgroundColor: C.parchment,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    marginTop: -20,
-    marginHorizontal: 12,
-    borderWidth: 1.5,
-    borderColor: C.vellum,
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  cardContent: {
-    padding: 24,
-    paddingTop: 36,
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 22,
+    paddingTop: height * 0.10,
     paddingBottom: 40,
   },
 
-  
-  headingArea: {
-    marginBottom: 28,
+  logoArea: { alignItems: 'center', marginBottom: 38 },
+  iconRing: {
+    width: 72, height: 72, borderRadius: 22,
+    backgroundColor: C.orangeTint,
+    borderWidth: 1.5, borderColor: C.orange,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 14,
   },
-  welcomeText: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: C.espresso,
-    marginBottom: 5,
-    letterSpacing: 0.3,
+  iconDot: {
+    position: 'absolute', top: 8, right: 8,
+    width: 7, height: 7, borderRadius: 4,
+    backgroundColor: C.orange,
   },
-  welcomeSub: {
-    fontSize: 14,
-    color: C.clay,
-    fontWeight: '500',
-    letterSpacing: 0.2,
+  iconEmoji: { fontSize: 30 },
+  brand: {
+    fontSize: 28, fontWeight: '900', color: C.white,
+    letterSpacing: 7, marginBottom: 10,
   },
+  pill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: C.graphite, borderRadius: 100,
+    paddingHorizontal: 14, paddingVertical: 5,
+    borderWidth: 1, borderColor: C.border,
+  },
+  pillDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.success },
+  pillText: { fontSize: 11, color: C.dim, letterSpacing: 0.4 },
 
- 
+  card: {
+    backgroundColor: C.card, borderRadius: 24,
+    padding: 24, borderWidth: 1, borderColor: C.border,
+  },
+  cardHeader: { marginBottom: 26 },
+  cardTitle: { fontSize: 24, fontWeight: '800', color: C.white, marginBottom: 4 },
+  cardSub: { fontSize: 13, color: C.muted },
 
-  inputContainer: {
-    marginBottom: 18,
+  field: { marginBottom: 16 },
+  label: {
+    fontSize: 11, fontWeight: '700', color: C.muted,
+    letterSpacing: 1.1, textTransform: 'uppercase', marginBottom: 8,
   },
-  inputLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: C.clay,
-    marginBottom: 8,
-    marginLeft: 2,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
+  inputBox: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.graphite, borderRadius: 14,
+    borderWidth: 1, borderColor: C.border,
+    paddingHorizontal: 16, height: 52,
   },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.cream,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: C.vellum,
-    paddingHorizontal: 14,
-    height: 52,
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: C.espresso,
-  },
-  eyeButton: {
-    padding: 4,
-  },
+  inputFocused: { borderColor: C.orange, backgroundColor: C.steel },
+  prefix: { fontSize: 15, color: C.orange, marginRight: 10, fontWeight: '700' },
+  input: { flex: 1, fontSize: 15, color: C.white },
+  eye: { padding: 4 },
 
-  
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-    marginTop: -6,
-  },
-  forgotText: {
-    fontSize: 12,
-    color: C.brass,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
+  forgotRow: { alignSelf: 'flex-end', marginTop: -4, marginBottom: 22 },
+  forgotText: { fontSize: 12, color: C.orange, fontWeight: '600' },
 
-  
-  signInBtn: {
-    backgroundColor: C.brass,
-    height: 52,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '75%',
-    alignSelf: 'center',
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 4,
+  ctaBtn: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', backgroundColor: C.orange,
+    borderRadius: 14, height: 54, gap: 8,
   },
-  signInText: {
-    color: C.cream,
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
+  ctaText: { fontSize: 16, fontWeight: '800', color: C.white, letterSpacing: 0.3 },
+  ctaArrow: { fontSize: 18, color: C.white, fontWeight: '700' },
 
-  
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 22,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: C.vellum,
-  },
-  dividerText: {
-    marginHorizontal: 14,
-    fontSize: 12,
-    color: C.latte,
-    fontWeight: '500',
-  },
+  divider: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
+  divLine: { flex: 1, height: 1, backgroundColor: C.border },
+  divLabel: { marginHorizontal: 12, fontSize: 12, color: C.steel },
 
-  
-  guestBtn: {
-    height: 52,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: C.brassBorder,
-    backgroundColor: C.brassLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '75%',
-    alignSelf: 'center',
+  secondaryBtn: {
+    height: 52, borderRadius: 14, borderWidth: 1,
+    borderColor: C.border, backgroundColor: C.graphite,
+    alignItems: 'center', justifyContent: 'center',
   },
-  guestText: {
-    fontSize: 14,
-    color: C.roast,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
+  secondaryText: { fontSize: 14, color: C.offWhite, fontWeight: '600' },
 
-  versionText: {
-    textAlign: 'center',
-    fontSize: 11,
-    color: C.latte,
-    paddingVertical: 14,
+  footer: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 8, marginTop: 28,
   },
+  footerDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.steel },
+  footerText: { fontSize: 11, color: C.steel, letterSpacing: 1 },
 })

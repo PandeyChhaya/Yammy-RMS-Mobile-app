@@ -17,27 +17,21 @@ import MenuItemsSection from './menuItemSection'
 import TablesSection from './tablesSection'
 
 const C = {
-  espresso:    '#1C1008',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
+  background:       '#0A0A0A', 
+  surface:          '#1A1A1A', 
+  surfaceHighlight: '#2C2C2C', 
+  primary:          '#FF6B2C', 
+  primaryDim:       '#3D1C00', 
+  textMain:         '#FFFFFF', 
+  textMuted:        '#9CA3AF', 
+  border:           '#2C2C2C',
 }
+
 const radius = { xs: 6, sm: 10, md: 14, pill: 100 }
 const SK = {
   showTables: 'modern-pos-show-tables',
   handedMode: 'modern-pos-left-handed',
 }
-
-
 
 interface ModernPOSLayoutProps {
   tables: TableData[]
@@ -198,7 +192,7 @@ export default function ModernPOSLayout({
   if (isTablet) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={C.parchment} />
+        <StatusBar barStyle="light-content" backgroundColor={C.surface} />
 
         <View style={styles.topBar}>
           <View style={styles.brand}>
@@ -260,7 +254,7 @@ export default function ModernPOSLayout({
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.parchment} />
+      <StatusBar barStyle="light-content" backgroundColor={C.surface} />
 
       <View style={styles.topBar}>
         <View style={styles.brand}>
@@ -320,9 +314,8 @@ export default function ModernPOSLayout({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.cream,
+    backgroundColor: C.background,
   },
-
 
   topBar: {
     flexDirection: 'row',
@@ -330,9 +323,9 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: C.parchment,
+    backgroundColor: C.surface,
     borderBottomWidth: 1.5,
-    borderBottomColor: C.vellum,
+    borderBottomColor: C.border,
   },
   brand: {
     flexDirection: 'row',
@@ -344,19 +337,19 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: radius.sm,
-    backgroundColor: C.sage,
+    backgroundColor: C.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   brandIconText: {
     fontSize: 14,
     fontWeight: '900',
-    color: C.cream,
+    color: C.textMain,
   },
   brandName: {
     fontSize: 16,
     fontWeight: '800',
-    color: C.espresso,
+    color: C.textMain,
   },
 
   topBarControls: {
@@ -367,34 +360,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.pill,
-    backgroundColor: C.cream,
+    backgroundColor: C.surfaceHighlight,
     borderWidth: 1.5,
-    borderColor: C.vellum,
+    borderColor: C.border,
   },
   topToggleActive: {
-    backgroundColor: C.sageLight,
-    borderColor: C.sageBorder,
+    backgroundColor: C.primaryDim,
+    borderColor: C.primary,
   },
   topToggleHanded: {
-    backgroundColor: C.brassLight,
-    borderColor: C.brass,
+    backgroundColor: C.surfaceHighlight,
+    borderColor: C.border,
   },
   topToggleText: {
     fontSize: 12,
     fontWeight: '700',
-    color: C.clay,
+    color: C.textMuted,
   },
   topToggleTextActive: {
-    color: C.sage,
+    color: C.primary,
   },
   topToggleTextHanded: {
     fontSize: 12,
     fontWeight: '700',
-    color: C.brass,
+    color: C.textMain,
   },
 
   selectedTableBadge: {
-    backgroundColor: C.sage,
+    backgroundColor: C.primary,
     borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 5,
@@ -402,7 +395,7 @@ const styles = StyleSheet.create({
   selectedTableText: {
     fontSize: 12,
     fontWeight: '800',
-    color: C.cream,
+    color: C.textMain,
   },
 
   body: {
@@ -418,7 +411,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: 1.5,
-    backgroundColor: C.vellum,
+    backgroundColor: C.border,
   },
 
   mobileTabs: {
@@ -426,34 +419,34 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: C.parchment,
+    backgroundColor: C.surface,
     borderBottomWidth: 1.5,
-    borderBottomColor: C.vellum,
+    borderBottomColor: C.border,
   },
   mobileTab: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 9,
     borderRadius: radius.pill,
-    backgroundColor: C.cream,
+    backgroundColor: C.surfaceHighlight,
     borderWidth: 1.5,
-    borderColor: C.vellum,
+    borderColor: C.border,
   },
   mobileTabActive: {
-    backgroundColor: C.sageLight,
-    borderColor: C.sageBorder,
+    backgroundColor: C.primaryDim,
+    borderColor: C.primary,
   },
   mobileTabText: {
     fontSize: 13,
     fontWeight: '700',
-    color: C.clay,
+    color: C.textMuted,
   },
   mobileTabTextActive: {
-    color: C.sage,
+    color: C.primary,
   },
 
   bottomRule: {
-    height: 2,
-    backgroundColor: C.espresso,
+    height: 3,
+    backgroundColor: C.primary, 
   },
 })

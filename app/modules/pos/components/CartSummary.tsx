@@ -1,24 +1,25 @@
 import { ChefHat, Users, Zap } from 'lucide-react-native'
 import {
-    ActivityIndicator, StyleSheet,
-    Text, TextInput, TouchableOpacity,
-    View,
+  ActivityIndicator, StyleSheet,
+  Text, TextInput, TouchableOpacity,
+  View,
 } from 'react-native'
 
 const C = {
-  espresso:    '#1C1008',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  amber:       '#D97706',
-  violet:      '#7C3AED',
+  background: '#0A0A0A',
+  surface: '#1A1A1A',
+  surfaceHighlight: '#2C2C2C',
+  primary: '#FF6B2C',
+  primaryDim: '#3D1C00',
+  textMain: '#FFFFFF',
+  textMuted: '#9CA3AF',
+  border: '#2C2C2C',
+  danger: '#EF4444',
+  dangerDim: '#450A0A',
+  success: '#10B981',
+  successDim: '#064E3B',
+  warning: '#F59E0B',
+  info: '#3B82F6',
 }
 const radius = { xs: 6, sm: 10, md: 14, pill: 100 }
 
@@ -112,7 +113,7 @@ export default function CartSummary({
           value={customerName}
           onChangeText={setCustomerName}
           placeholder="Customer name (optional)"
-          placeholderTextColor={C.latte}
+          placeholderTextColor={C.textMuted}
         />
       </View>
 
@@ -145,7 +146,7 @@ export default function CartSummary({
         onPress={onPayment}
         disabled={!hasItems}
       >
-        <Zap size={15} color={C.cream} />
+        <Zap size={15} color={C.textMain} />
         <Text style={styles.payButtonText}>Pay {fmt(totalWithTax, symbol)}</Text>
       </TouchableOpacity>
 
@@ -158,8 +159,8 @@ export default function CartSummary({
         disabled={!selectedTable || !hasItems || isSendingToKitchen}
       >
         {isSendingToKitchen
-          ? <ActivityIndicator size="small" color={C.cream} />
-          : <ChefHat size={15} color={C.cream} />
+          ? <ActivityIndicator size="small" color={C.textMain} />
+          : <ChefHat size={15} color={C.textMain} />
         }
         <Text style={styles.kitchenButtonText}>
           {isSendingToKitchen ? 'Sending…' : 'Send to Kitchen'}
@@ -171,7 +172,7 @@ export default function CartSummary({
         onPress={onSplitTicket}
         disabled={!hasItems}
       >
-        <Users size={15} color={C.cream} />
+        <Users size={15} color={C.textMain} />
         <Text style={styles.splitButtonText}>Split the Bill</Text>
       </TouchableOpacity>
 
@@ -189,69 +190,69 @@ export default function CartSummary({
 const styles = StyleSheet.create({
   container: {
     borderTopWidth: 1.5,
-    borderTopColor: C.vellum,
-    backgroundColor: C.parchment,
+    borderTopColor: C.border,
+    backgroundColor: C.surface,
     padding: 14,
     gap: 10,
   },
 
   taxBlock: {
-    backgroundColor: C.cream, borderRadius: radius.sm,
-    borderWidth: 1, borderColor: C.vellum, padding: 10, gap: 5,
+    backgroundColor: C.background, borderRadius: radius.sm,
+    borderWidth: 1, borderColor: C.border, padding: 10, gap: 5,
   },
   taxRow:        { flexDirection: 'row', justifyContent: 'space-between' },
-  taxLabel:      { fontSize: 12, color: C.clay },
-  taxValue:      { fontSize: 12, fontWeight: '600', color: C.espresso },
-  taxTotalRow:   { borderTopWidth: 1, borderTopColor: C.vellum, marginTop: 4, paddingTop: 6 },
-  taxTotalLabel: { fontSize: 14, fontWeight: '800', color: C.espresso },
-  taxTotalValue: { fontSize: 14, fontWeight: '900', color: C.brass },
+  taxLabel:      { fontSize: 12, color: C.textMuted },
+  taxValue:      { fontSize: 12, fontWeight: '600', color: C.textMain },
+  taxTotalRow:   { borderTopWidth: 1, borderTopColor: C.border, marginTop: 4, paddingTop: 6 },
+  taxTotalLabel: { fontSize: 14, fontWeight: '800', color: C.textMain },
+  taxTotalValue: { fontSize: 14, fontWeight: '900', color: C.primary },
 
   fieldBlock: { gap: 6 },
   fieldLabel: {
-    fontSize: 10, fontWeight: '800', color: C.clay,
+    fontSize: 10, fontWeight: '800', color: C.textMuted,
     textTransform: 'uppercase', letterSpacing: 1,
   },
   input: {
-    borderWidth: 1.5, borderColor: C.vellum, borderRadius: radius.md,
+    borderWidth: 1.5, borderColor: C.border, borderRadius: radius.md,
     paddingHorizontal: 12, paddingVertical: 10,
-    fontSize: 13, color: C.espresso, backgroundColor: C.cream,
+    fontSize: 13, color: C.textMain, backgroundColor: C.background,
   },
 
   paymentGrid:         { flexDirection: 'row', gap: 8 },
   paymentButton: {
     flex: 1, alignItems: 'center', paddingVertical: 9,
-    borderRadius: radius.md, borderWidth: 1.5, borderColor: C.vellum,
-    backgroundColor: C.cream, gap: 3,
+    borderRadius: radius.md, borderWidth: 1.5, borderColor: C.border,
+    backgroundColor: C.background, gap: 3,
   },
-  paymentButtonActive: { backgroundColor: C.sageLight, borderColor: C.sageBorder },
+  paymentButtonActive: { backgroundColor: C.primaryDim, borderColor: C.primary },
   paymentIcon:         { fontSize: 14 },
-  paymentLabel:        { fontSize: 11, fontWeight: '700', color: C.clay },
-  paymentLabelActive:  { color: C.sage },
+  paymentLabel:        { fontSize: 11, fontWeight: '700', color: C.textMuted },
+  paymentLabelActive:  { color: C.primary },
 
   payButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, backgroundColor: C.sage, borderRadius: radius.pill, paddingVertical: 14,
+    gap: 7, backgroundColor: C.primary, borderRadius: radius.pill, paddingVertical: 14,
   },
-  payButtonText: { fontSize: 14, fontWeight: '800', color: C.cream },
+  payButtonText: { fontSize: 14, fontWeight: '800', color: C.textMain },
 
   kitchenButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, backgroundColor: C.amber, borderRadius: radius.pill, paddingVertical: 12,
+    gap: 7, backgroundColor: C.warning, borderRadius: radius.pill, paddingVertical: 12,
   },
-  kitchenButtonText: { fontSize: 13, fontWeight: '700', color: C.cream },
+  kitchenButtonText: { fontSize: 13, fontWeight: '700', color: C.textMain },
 
   splitButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, backgroundColor: C.violet, borderRadius: radius.pill, paddingVertical: 12,
+    gap: 7, backgroundColor: C.info, borderRadius: radius.pill, paddingVertical: 12,
   },
-  splitButtonText: { fontSize: 13, fontWeight: '700', color: C.cream },
+  splitButtonText: { fontSize: 13, fontWeight: '700', color: C.textMain },
 
   clearButton: {
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: C.cream, borderRadius: radius.pill,
-    paddingVertical: 11, borderWidth: 1.5, borderColor: C.vellum,
+    backgroundColor: C.background, borderRadius: radius.pill,
+    paddingVertical: 11, borderWidth: 1.5, borderColor: C.border,
   },
-  clearButtonText: { fontSize: 13, fontWeight: '700', color: C.clay },
+  clearButtonText: { fontSize: 13, fontWeight: '700', color: C.danger },
 
   disabled: { opacity: 0.45 },
 })

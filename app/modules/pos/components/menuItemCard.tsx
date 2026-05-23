@@ -1,21 +1,20 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
-
 const C = {
-  espresso:    '#1C1008',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  amber:       '#D97706',
-  amberLight:  '#FEF3C7',
+  background: '#0A0A0A',
+  surface: '#1A1A1A',
+  surfaceHighlight: '#2C2C2C',
+  primary: '#FF6B2C',
+  primaryDim: '#3D1C00',
+  textMain: '#FFFFFF',
+  textMuted: '#9CA3AF',
+  border: '#2C2C2C',
+  danger: '#EF4444',
+  dangerDim: '#450A0A',
+  success: '#10B981',
+  successDim: '#064E3B',
+  warning: '#F59E0B',
+  info: '#3B82F6',
 }
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
@@ -119,8 +118,8 @@ export default function MenuItemCard({
 
 const styles = StyleSheet.create({
   card: {
-    aspectRatio: 1, backgroundColor: C.parchment,
-    borderRadius: radius.md, borderWidth: 1.5, borderColor: C.vellum,
+    aspectRatio: 1, backgroundColor: C.surface,
+    borderRadius: radius.md, borderWidth: 1.5, borderColor: C.border,
     padding: 10, paddingTop: 18,
     justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden',
   },
@@ -128,32 +127,32 @@ const styles = StyleSheet.create({
 
   priceBadge: {
     position: 'absolute', top: -1, right: -1,
-    backgroundColor: C.sage,
+    backgroundColor: C.primary,
     borderBottomLeftRadius: radius.sm, borderTopRightRadius: radius.md,
     paddingHorizontal: 8, paddingVertical: 3,
   },
-  priceText: { fontSize: 10, fontWeight: '800', color: C.cream },
+  priceText: { fontSize: 10, fontWeight: '800', color: C.textMain },
 
   stockDot: {
     position: 'absolute', top: 4, left: 4,
     minWidth: 18, height: 18, borderRadius: radius.pill,
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
   },
-  stockOk:   { backgroundColor: C.sage },
-  stockLow:  { backgroundColor: C.amber },
-  stockOut:  { backgroundColor: C.terracotta },
-  stockText: { fontSize: 9, fontWeight: '900', color: C.cream },
+  stockOk:   { backgroundColor: C.success },
+  stockLow:  { backgroundColor: C.warning },
+  stockOut:  { backgroundColor: C.danger },
+  stockText: { fontSize: 9, fontWeight: '900', color: C.textMain },
 
   unavailableBadge: {
     position: 'absolute', bottom: 6, left: 6, right: 6,
-    backgroundColor: C.tcLight, borderRadius: radius.xs,
-    borderWidth: 1, borderColor: C.terracotta,
+    backgroundColor: C.dangerDim, borderRadius: radius.xs,
+    borderWidth: 1, borderColor: C.danger,
     paddingVertical: 2, alignItems: 'center',
   },
-  unavailableText: { fontSize: 9, fontWeight: '800', color: C.terracotta, textTransform: 'uppercase', letterSpacing: 0.8 },
+  unavailableText: { fontSize: 9, fontWeight: '800', color: C.danger, textTransform: 'uppercase', letterSpacing: 0.8 },
 
   nameContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  itemName:      { fontWeight: '800', color: C.espresso, textAlign: 'center', lineHeight: 18 },
+  itemName:      { fontWeight: '800', color: C.textMain, textAlign: 'center', lineHeight: 18 },
 
   categoryDotWrapper: { alignItems: 'center', marginTop: 6 },
   categoryDot:        { width: 8, height: 8, borderRadius: 4 },
