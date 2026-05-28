@@ -11,7 +11,7 @@ import {
 import { MenuItemFilters } from '../../menu-items/services/menu-items-services'
 import { Category } from '../services/categoriesService'
 import { CartItemDisplay, TableData } from '../types'
-import CartSection from './cartSection'
+import CartSection from './CartSection'
 import { MenuItemDisplay } from './menuItemCard'
 import MenuItemsSection from './menuItemSection'
 import ReservationWidget from './reservationWidget'
