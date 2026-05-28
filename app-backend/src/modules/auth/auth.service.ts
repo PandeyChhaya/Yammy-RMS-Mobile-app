@@ -2,9 +2,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "../../db.js";
 
-
-
-
 export const registerUser = async (body: any) => {
   const { user_name, user_email, user_password, user_role } = body;
 
@@ -27,7 +24,6 @@ export const registerUser = async (body: any) => {
     },
   });
 
-  
   const accessToken = jwt.sign(
     { user_id: user.user_id, user_role: user.user_role },
     JWT_SECRET,
@@ -40,13 +36,11 @@ export const registerUser = async (body: any) => {
     { expiresIn: "7d" }
   );
 
-
   await prisma.users.update({
     where: { user_id: user.user_id },
     data: { refresh_token: refreshToken },
   });
 
-  
   return {
     message: "User registered successfully",
     user_id: user.user_id,
@@ -56,10 +50,11 @@ export const registerUser = async (body: any) => {
     refreshToken,
   };
 };
+
 export const loginUser = async (body: any) => {
-  
-const JWT_SECRET = process.env.JWT_SECRET as string;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
+  const JWT_SECRET = process.env.JWT_SECRET as string;
+  const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
+
   const { user_email, user_password } = body;
 
   const user = await prisma.users.findUnique({
@@ -90,11 +85,18 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
     },
   });
 
-  return { accessToken, refreshToken, user_name: user.user_name, user_role:user.user_role };
+  return {
+    accessToken,
+    refreshToken,
+    user_id:      user.user_id,
+    user_name:    user.user_name,
+    user_role:    user.user_role,
+    first_login:  user.first_login,   // 👈 new
+    totp_enabled: user.totp_enabled,  // 👈 new
+  };
 };
 
 export const logoutUser = async (body: any) => {
-  
   const { user_id } = body;
 
   await prisma.users.update({
@@ -106,9 +108,9 @@ export const logoutUser = async (body: any) => {
 };
 
 export const refreshToken = async (body: any) => {
-  
-const JWT_SECRET = process.env.JWT_SECRET as string;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
+  const JWT_SECRET = process.env.JWT_SECRET as string;
+  const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
+
   const { token } = body;
   if (!token) throw new Error("Refresh token required");
 

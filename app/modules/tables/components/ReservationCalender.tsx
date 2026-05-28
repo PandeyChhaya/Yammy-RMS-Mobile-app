@@ -7,30 +7,28 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
-import { ReservationStatus , ReservationWithTable, ReservationsCalendarProps} from '../../pos/types/reservation'
+import { ReservationStatus, ReservationsCalendarProps } from '../../pos/types/reservation'
 
 const C = {
-  espresso:    '#1C1008',
-  roast:       '#3D2010',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-  onDark:      '#FDF6EC',
+  black:      '#0A0A0A',
+  charcoal:   '#1A1A1A',
+  graphite:   '#2C2C2C',
+  steel:      '#3D3D3D',
+  muted:      '#6B6B6B',
+  border:     '#2E2E2E',
+  card:       '#1E1E1E',
+  orange:     '#FF6B2C',
+  orangeTint: '#2A1A10',
+  orangeDim:  '#7A3010',
+  white:      '#FFFFFF',
+  offWhite:   '#F0F0F0',
+  dim:        '#A0A0A0',
+  success:    '#22C55E',
+  successBg:  '#0D2818',
+  error:      '#EF4444',
+  errorBg:    '#2A0A0A',
 }
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
-
-
 
 const STATUS_CONFIG: Record<ReservationStatus, {
   label: string
@@ -42,43 +40,43 @@ const STATUS_CONFIG: Record<ReservationStatus, {
 }> = {
   confirmed: {
     label:  'Confirmed',
-    icon:   <CheckCircle  size={14} color="#B5822A" />,
-    bg:     '#F7EDD8',
-    border: '#DEC07A',
-    text:   '#B5822A',
-    dot:    '#B5822A',
+    icon:   <CheckCircle size={14} color={C.orange} />,
+    bg:     C.orangeTint,
+    border: C.orangeDim,
+    text:   C.orange,
+    dot:    C.orange,
   },
   cancelled: {
     label:  'Cancelled',
-    icon:   <XCircle      size={14} color="#A03020" />,
-    bg:     '#FAECEA',
-    border: '#E8A898',
-    text:   '#A03020',
-    dot:    '#A03020',
+    icon:   <XCircle size={14} color={C.error} />,
+    bg:     C.errorBg,
+    border: '#7A1010',
+    text:   C.error,
+    dot:    C.error,
   },
   completed: {
     label:  'Completed',
-    icon:   <CheckCircle  size={14} color="#3B6E52" />,
-    bg:     '#EBF4EE',
-    border: '#9FCFB4',
-    text:   '#3B6E52',
-    dot:    '#3B6E52',
+    icon:   <CheckCircle size={14} color={C.success} />,
+    bg:     C.successBg,
+    border: '#1A4A2A',
+    text:   C.success,
+    dot:    C.success,
   },
   no_show: {
     label:  'No Show',
-    icon:   <AlertCircle  size={14} color="#7A4528" />,
-    bg:     '#F5E9D4',
-    border: '#EDD9BC',
-    text:   '#7A4528',
-    dot:    '#7A4528',
+    icon:   <AlertCircle size={14} color={C.dim} />,
+    bg:     C.graphite,
+    border: C.steel,
+    text:   C.dim,
+    dot:    C.dim,
   },
   arrived: {
     label:  'Arrived',
-    icon:   <CheckCircle  size={14} color="#1C1008" />,
-    bg:     '#EDD9BC',
-    border: '#C8956A',
-    text:   '#1C1008',
-    dot:    '#3D2010',
+    icon:   <CheckCircle size={14} color={C.offWhite} />,
+    bg:     C.steel,
+    border: C.muted,
+    text:   C.offWhite,
+    dot:    C.offWhite,
   },
 }
 
@@ -116,11 +114,11 @@ export default function ReservationsCalendar({
       <View style={styles.header}>
         <View style={styles.navRow}>
           <TouchableOpacity style={styles.navBtn} onPress={() => navigateDate('prev')} activeOpacity={0.8}>
-            <ChevronLeft size={16} color={C.cream} />
+            <ChevronLeft size={16} color={C.white} />
           </TouchableOpacity>
           <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
           <TouchableOpacity style={styles.navBtn} onPress={() => navigateDate('next')} activeOpacity={0.8}>
-            <ChevronRight size={16} color={C.cream} />
+            <ChevronRight size={16} color={C.white} />
           </TouchableOpacity>
         </View>
 
@@ -148,7 +146,6 @@ export default function ReservationsCalendar({
 
       <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
         {filteredReservations.length === 0 ? (
-
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>No Reservations</Text>
             <Text style={styles.emptySubtitle}>
@@ -157,14 +154,13 @@ export default function ReservationsCalendar({
                 : `No ${STATUS_CONFIG[filterStatus as ReservationStatus]?.label.toLowerCase()} reservations`}
             </Text>
           </View>
-
         ) : (
           filteredReservations.map((reservation, index) => {
             const cfg = STATUS_CONFIG[reservation.status]
             return (
               <TouchableOpacity
                 key={reservation.id}
-                style={[styles.card, index === filteredReservations.length - 1 && { marginBottom: 0 }]}
+                style={[styles.card, index === filteredReservations.length - 1 && { borderBottomWidth: 0 }]}
                 onPress={() => onReservationClick(reservation)}
                 activeOpacity={0.8}
               >
@@ -194,18 +190,18 @@ export default function ReservationsCalendar({
                 {reservation.status === 'confirmed' && (
                   <View style={styles.actionsRow}>
                     <TouchableOpacity
-                      style={[styles.actionBtn, { backgroundColor: C.sageLight, borderColor: C.sageBorder }]}
+                      style={[styles.actionBtn, { backgroundColor: C.successBg, borderColor: '#1A4A2A' }]}
                       onPress={() => onReservationStatusChange(reservation.id, 'arrived')}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.actionBtnText, { color: C.sage }]}>Arrived</Text>
+                      <Text style={[styles.actionBtnText, { color: C.success }]}>Arrived</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.actionBtn, { backgroundColor: C.tcLight, borderColor: C.tcBorder }]}
+                      style={[styles.actionBtn, { backgroundColor: C.errorBg, borderColor: '#7A1010' }]}
                       onPress={() => onReservationStatusChange(reservation.id, 'cancelled')}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.actionBtnText, { color: C.terracotta }]}>Cancel</Text>
+                      <Text style={[styles.actionBtnText, { color: C.error }]}>Cancel</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -213,11 +209,11 @@ export default function ReservationsCalendar({
                 {reservation.status === 'completed' && (
                   <View style={styles.actionsRow}>
                     <TouchableOpacity
-                      style={[styles.actionBtn, { backgroundColor: C.brassLight, borderColor: C.brassBorder }]}
+                      style={[styles.actionBtn, { backgroundColor: C.graphite, borderColor: C.steel }]}
                       onPress={() => onReservationStatusChange(reservation.id, 'no_show')}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.actionBtnText, { color: C.clay }]}>No Show</Text>
+                      <Text style={[styles.actionBtnText, { color: C.dim }]}>No Show</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -233,13 +229,13 @@ export default function ReservationsCalendar({
         </Text>
         <View style={styles.footerStats}>
           <View style={styles.footerStat}>
-            <View style={[styles.footerDot, { backgroundColor: C.brass }]} />
+            <View style={[styles.footerDot, { backgroundColor: C.orange }]} />
             <Text style={styles.footerStatText}>
               Confirmed: {reservations.filter(r => r.status === 'confirmed').length}
             </Text>
           </View>
           <View style={styles.footerStat}>
-            <View style={[styles.footerDot, { backgroundColor: C.sage }]} />
+            <View style={[styles.footerDot, { backgroundColor: C.success }]} />
             <Text style={styles.footerStatText}>
               Completed: {reservations.filter(r => r.status === 'completed').length}
             </Text>
@@ -252,77 +248,64 @@ export default function ReservationsCalendar({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: C.cream, borderRadius: radius.lg,
-    borderWidth: 1.5, borderColor: C.vellum, overflow: 'hidden',
-    shadowColor: C.espresso, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1, shadowRadius: 12, elevation: 4,
+    backgroundColor: C.card, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: C.border, overflow: 'hidden',
   },
 
   header: {
-    backgroundColor: C.espresso,
+    backgroundColor: C.charcoal,
     paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, gap: 10,
+    borderBottomWidth: 1, borderBottomColor: C.border,
   },
-  navRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  navRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   navBtn: {
     width: 30, height: 30, borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: C.graphite, borderWidth: 1, borderColor: C.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  dateText: { fontSize: 13, fontWeight: '700', color: C.cream, flex: 1, textAlign: 'center', marginHorizontal: 8 },
-  todayBtn: {
-    alignSelf: 'flex-end', backgroundColor: C.brass,
-    borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 6,
-  },
-  todayBtnText:  { fontSize: 11, fontWeight: '800', color: C.cream, letterSpacing: 0.3 },
-  filterScroll:  { marginTop: 2 },
-  filterRow:     { flexDirection: 'row', gap: 6, paddingBottom: 2 },
-  filterPill: {
-    backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: radius.pill,
-    paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
-  },
-  filterPillActive:     { backgroundColor: C.brass, borderColor: C.brass },
-  filterPillText:       { fontSize: 11, fontWeight: '600', color: C.latte },
-  filterPillTextActive: { color: C.cream },
+  dateText:             { fontSize: 13, fontWeight: '700', color: C.offWhite, flex: 1, textAlign: 'center', marginHorizontal: 8 },
+  todayBtn:             { alignSelf: 'flex-end', backgroundColor: C.orange, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 6 },
+  todayBtnText:         { fontSize: 11, fontWeight: '800', color: C.white, letterSpacing: 0.3 },
+  filterScroll:         { marginTop: 2 },
+  filterRow:            { flexDirection: 'row', gap: 6, paddingBottom: 2 },
+  filterPill:           { backgroundColor: C.graphite, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: C.border },
+  filterPillActive:     { backgroundColor: C.orange, borderColor: C.orange },
+  filterPillText:       { fontSize: 11, fontWeight: '600', color: C.dim },
+  filterPillTextActive: { color: C.white, fontWeight: '700' },
 
   list: { maxHeight: 420 },
 
   card: {
-    backgroundColor: C.parchment, borderBottomWidth: 1,
-    borderBottomColor: C.vellum, padding: 14, gap: 8,
+    backgroundColor: C.card, borderBottomWidth: 1,
+    borderBottomColor: C.border, padding: 14, gap: 8,
   },
   cardTop:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cardLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, flexWrap: 'wrap' },
-  statusBadge: {
-    borderRadius: radius.pill, borderWidth: 1,
-    paddingHorizontal: 8, paddingVertical: 3,
-  },
-  statusText: { fontSize: 10, fontWeight: '700' },
-  timeText:   { fontSize: 13, fontWeight: '700', color: C.espresso },
-  nameText:   { fontSize: 13, fontWeight: '800', color: C.espresso },
+  statusBadge: { borderRadius: radius.pill, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
+  statusText:  { fontSize: 10, fontWeight: '700' },
+  timeText:    { fontSize: 13, fontWeight: '700', color: C.offWhite },
+  nameText:    { fontSize: 13, fontWeight: '800', color: C.white },
 
-  cardMeta:   { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 2 },
-  metaText:   { fontSize: 11, color: C.clay },
-  metaDot:    { fontSize: 11, color: C.latte },
+  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 2 },
+  metaText: { fontSize: 11, color: C.dim },
+  metaDot:  { fontSize: 11, color: C.muted },
 
-  actionsRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
-  actionBtn: {
-    borderRadius: radius.pill, borderWidth: 1,
-    paddingHorizontal: 14, paddingVertical: 6,
-  },
+  actionsRow:    { flexDirection: 'row', gap: 8, marginTop: 4 },
+  actionBtn:     { borderRadius: radius.pill, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 6 },
   actionBtnText: { fontSize: 11, fontWeight: '700' },
 
   emptyState:    { alignItems: 'center', paddingVertical: 48, gap: 8 },
-  emptyTitle:    { fontSize: 16, fontWeight: '800', color: C.espresso },
-  emptySubtitle: { fontSize: 13, color: C.clay },
+  emptyTitle:    { fontSize: 16, fontWeight: '800', color: C.offWhite },
+  emptySubtitle: { fontSize: 13, color: C.muted },
 
   footer: {
-    backgroundColor: C.parchment, borderTopWidth: 1.5,
-    borderTopColor: C.vellum, paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: C.charcoal, borderTopWidth: 1, borderTopColor: C.border,
+    paddingHorizontal: 16, paddingVertical: 12,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
-  footerCount:    { fontSize: 12, fontWeight: '600', color: C.clay },
+  footerCount:    { fontSize: 12, fontWeight: '600', color: C.dim },
   footerStats:    { flexDirection: 'row', gap: 14 },
   footerStat:     { flexDirection: 'row', alignItems: 'center', gap: 5 },
   footerDot:      { width: 7, height: 7, borderRadius: 4 },
-  footerStatText: { fontSize: 11, color: C.clay, fontWeight: '500' },
+  footerStatText: { fontSize: 11, color: C.dim, fontWeight: '500' },
 })

@@ -1,621 +1,361 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
-import { CheckCircle2, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react-native'
+import { ArrowRight, CheckCircle2, Eye, EyeOff, Lock, Mail, Phone, User } from 'lucide-react-native'
 import { useState } from 'react'
 import {
   Alert,
-  Dimensions,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native'
 import { authService } from './services/auth.service'
 
-const { height } = Dimensions.get('window')
-
 const C = {
-  espresso:    '#1C1008',
-  roast:       '#3D2010',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-  onDark:      '#FDF6EC',
+  bg:        '#0A0A0A',
+  card:      '#1A1A1A',
+  inner:     '#2C2C2C',
+  border:    '#2E2E2E',
+  accent:    '#FF6B2C',
+  success:   '#22C55E',
+  error:     '#EF4444',
+  white:     '#FFFFFF',
+  muted:     '#777777',
+  mutedDark: '#444444',
+  label:     '#999999',
 }
 
-const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
+const R = { md: 14, xl: 24 }
 
-
-const staffRoles = [
- { id: 'Admin', label: 'Admin' },
-{ id: 'Waiter', label: 'Waiter' },
-{ id: 'Cashier', label: 'Cashier' },
-{ id: 'Kitchen Staff', label: 'Kitchen Staff' },
-{ id: 'Customer', label: 'Customer' },
-{ id: 'Super Admin', label: 'Super Admin' },
-
+const PASSWORD_RULES = [
+  { id: 'length',    label: 'At least 8 characters',      test: (p: string) => p.length >= 8 },
+  { id: 'uppercase', label: 'One uppercase letter',        test: (p: string) => /[A-Z]/.test(p) },
+  { id: 'lowercase', label: 'One lowercase letter',        test: (p: string) => /[a-z]/.test(p) },
+  { id: 'number',    label: 'One number',                  test: (p: string) => /[0-9]/.test(p) },
+  { id: 'special',   label: 'One special character (!@#$)', test: (p: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
 ]
 
 export default function Signup() {
   const router = useRouter()
 
-  const [fullName,        setFullName]        = useState('')
-  const [emailAddress,    setEmailAddress]    = useState('')
-  const [phoneNum,        setPhoneNum]        = useState('')
-  const [passwordFirst,   setPasswordFirst]   = useState('')
-  const [passwordSecond,  setPasswordSecond]  = useState('')
-  const [pickedRole,      setPickedRole]      = useState('Customer')
-  const [showingPassword1, setShowingPassword1] = useState(false)
-  const [showingPassword2, setShowingPassword2] = useState(false)
-  const [agreedToTerms,   setAgreedToTerms]  = useState(false)
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false)
+  const [fullName,  setFullName]  = useState('')
+  const [email,     setEmail]     = useState('')
+  const [phone,     setPhone]     = useState('')
+  const [pass1,     setPass1]     = useState('')
+  const [pass2,     setPass2]     = useState('')
+  const [showPass1, setShowPass1] = useState(false)
+  const [showPass2, setShowPass2] = useState(false)
+  const [agreed,    setAgreed]    = useState(false)
+  const [loading,   setLoading]   = useState(false)
+  const [pass1Touched, setPass1Touched] = useState(false)
 
-  const passwordsMatch     = passwordFirst.length > 0 && passwordFirst === passwordSecond
-  const passwordsDontMatch = passwordSecond.length > 0 && passwordFirst !== passwordSecond
+  const [nameFocused,  setNameFocused]  = useState(false)
+  const [emailFocused, setEmailFocused] = useState(false)
+  const [phoneFocused, setPhoneFocused] = useState(false)
+  const [pass1Focused, setPass1Focused] = useState(false)
+  const [pass2Focused, setPass2Focused] = useState(false)
 
-  const createTheAccount = async () => {
-    if (!fullName.trim() || !emailAddress.trim() || !phoneNum.trim() || !passwordFirst.trim()) {
+  const passMatch    = pass1.length > 0 && pass1 === pass2
+  const passMismatch = pass2.length > 0 && pass1 !== pass2
+  const passValid    = PASSWORD_RULES.every(r => r.test(pass1))
+
+  const createAccount = async () => {
+    if (!fullName.trim() || !email.trim() || !phone.trim() || !pass1.trim()) {
       Alert.alert('Missing Info', 'Please fill in all the fields')
       return
     }
-
-    if (passwordFirst !== passwordSecond) {
-      Alert.alert('Password Mismatch', 'Your passwords dont match')
+    if (!passValid) {
+      Alert.alert('Weak Password', 'Your password does not meet the requirements')
       return
     }
-
-    if (!agreedToTerms) {
+    if (pass1 !== pass2) {
+      Alert.alert('Password Mismatch', 'Your passwords do not match')
+      return
+    }
+    if (!agreed) {
       Alert.alert('Terms Required', 'You need to agree to the terms first')
       return
     }
-
-    setIsCreatingAccount(true)
-
+    setLoading(true)
     try {
-  const result = await authService.register(
-    fullName.trim(),
-    emailAddress.trim(),
-    passwordFirst.trim(),
-    pickedRole,
-  )
-  
-
-  if (result.message === 'Email already exists') {
-    throw new Error('This email is already registered')
+      const result = await authService.register(fullName.trim(), email.trim(), pass1.trim(), 'Customer')
+      if (result.message === 'Email already exists') throw new Error('This email is already registered')
+      await authService.login(email.trim(), pass1.trim())
+      await AsyncStorage.setItem('@userName', result.user_name)
+      await AsyncStorage.setItem('@userEmail', result.user_email)
+      await AsyncStorage.setItem('@userRole', result.user_role)
+      await AsyncStorage.setItem('@userId', String(result.user_id))
+      router.replace('/modules/auth/login')
+    } catch (err: any) {
+      Alert.alert('Signup Failed', err.message || 'Something went wrong, try again?')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  await authService.login(
-    emailAddress.trim(),
-    passwordFirst.trim(),
-  )
-
-  await AsyncStorage.setItem('@userName', result.user_name)
-  await AsyncStorage.setItem('@userRole', result.user_role)
-  await AsyncStorage.setItem('@userId', String(result.user_id))
-
-  router.replace('/modules/auth/login')
-
-} catch (err: any) {
-  Alert.alert('Signup Failed', err.message || 'Something went wrong, try again?')
-} finally {
-  setIsCreatingAccount(false)
-}}
-
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={styles.blobTR} />
+      <View style={styles.blobBL} />
 
-      {/* Top Zone */}
-      <View style={styles.topZone}>
-        <View style={styles.patternOverlay}>
-          {Array.from({ length: 30 }).map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                {
-                  left: `${(i % 8) * 12.5}%`,
-                  top:  `${Math.floor(i / 8) * 25}%`,
-                },
-              ]}
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+
+        <View style={styles.logoZone}>
+          <View style={styles.iconBox}>
+            <Image source={require('../../../assets/images/yammy.png')} style={styles.logoImg} resizeMode="contain" />
+          </View>
+          <Text style={styles.brand}>YAMMY</Text>
+          <Text style={styles.logoSub}>Create your account to get started</Text>
+        </View>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Create Account</Text>
+          <Text style={styles.cardSub}>Fill in your details below</Text>
+
+          <Text style={styles.label}>FULL NAME</Text>
+          <View style={[styles.inputRow, nameFocused && styles.focused]}>
+            <View style={styles.prefix}><User size={15} color={nameFocused ? C.accent : C.muted} /></View>
+            <View style={styles.sep} />
+            <TextInput
+              style={styles.input}
+              placeholder="Your full name"
+              placeholderTextColor={C.mutedDark}
+              value={fullName}
+              onChangeText={setFullName}
+              onFocus={() => setNameFocused(true)}
+              onBlur={() => setNameFocused(false)}
             />
-          ))}
-        </View>
-
-        <View>
-        <Image source={require('../../../assets/images/yammy.png')} style={{ width: 200, height: 70 }} />
-        </View>
-
-        
-        <Text style={styles.appSub}>Register as a user or a customer</Text>
-      </View>
-
-      {/* Signup Card */}
-      <View style={styles.signupCard}>
-        <ScrollView
-          style={styles.scrollArea}
-          contentContainerStyle={styles.cardContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-
-          {/* Heading */}
-          <View style={styles.headingArea}>
-            <Text style={styles.welcomeText}>Create Account</Text>
-            <Text style={styles.welcomeSub}>Fill in your details to get started</Text>
           </View>
 
-          {/* Full Name */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Full Name</Text>
-            <View style={styles.inputWrapper}>
-              <User size={18} color={C.latte} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="User Name"
-                placeholderTextColor={C.latte}
-                value={fullName}
-                onChangeText={setFullName}
-              />
+          <Text style={[styles.label, { marginTop: 16 }]}>EMAIL ADDRESS</Text>
+          <View style={[styles.inputRow, emailFocused && styles.focused]}>
+            <View style={styles.prefix}><Mail size={15} color={emailFocused ? C.accent : C.muted} /></View>
+            <View style={styles.sep} />
+            <TextInput
+              style={styles.input}
+              placeholder="user@restaurant.com"
+              placeholderTextColor={C.mutedDark}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
+            />
+          </View>
+
+          <Text style={[styles.label, { marginTop: 16 }]}>PHONE NUMBER</Text>
+          <View style={[styles.inputRow, phoneFocused && styles.focused]}>
+            <View style={styles.prefix}><Phone size={15} color={phoneFocused ? C.accent : C.muted} /></View>
+            <View style={styles.sep} />
+            <View style={styles.countryCode}>
+              <Text style={styles.countryTxt}>+977</Text>
+              <View style={styles.codeSep} />
             </View>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="98XXXXXXXX"
+              placeholderTextColor={C.mutedDark}
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              onFocus={() => setPhoneFocused(true)}
+              onBlur={() => setPhoneFocused(false)}
+            />
           </View>
 
-          {/* Email */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <View style={styles.inputWrapper}>
-              <Mail size={18} color={C.latte} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="user@restaurant.com"
-                placeholderTextColor={C.latte}
-                value={emailAddress}
-                onChangeText={setEmailAddress}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+          <Text style={[styles.label, { marginTop: 16 }]}>PASSWORD</Text>
+          <View style={[
+            styles.inputRow,
+            pass1Focused && styles.focused,
+            pass1Touched && !pass1Focused && (passValid ? styles.matchBorder : styles.errorBorder),
+          ]}>
+            <View style={styles.prefix}><Lock size={15} color={pass1Focused ? C.accent : C.muted} /></View>
+            <View style={styles.sep} />
+            <TextInput
+              style={styles.input}
+              placeholder="••••••••"
+              placeholderTextColor={C.mutedDark}
+              value={pass1}
+              onChangeText={setPass1}
+              secureTextEntry={!showPass1}
+              onFocus={() => setPass1Focused(true)}
+              onBlur={() => { setPass1Focused(false); setPass1Touched(true) }}
+            />
+            <TouchableOpacity onPress={() => setShowPass1(!showPass1)} style={styles.eyeBtn}>
+              {showPass1 ? <EyeOff size={15} color={C.muted} /> : <Eye size={15} color={C.muted} />}
+            </TouchableOpacity>
+          </View>
+
+          {(pass1Focused || pass1Touched) && pass1.length > 0 && (
+            <View style={styles.rulesBox}>
+              {PASSWORD_RULES.map(r => {
+                const ok = r.test(pass1)
+                return (
+                  <View key={r.id} style={styles.ruleRow}>
+                    <View style={[styles.ruleDot, ok ? styles.ruleDotOk : styles.ruleDotFail]} />
+                    <Text style={[styles.ruleTxt, ok ? styles.ruleTxtOk : styles.ruleTxtFail]}>
+                      {r.label}
+                    </Text>
+                  </View>
+                )
+              })}
             </View>
-          </View>
+          )}
 
-          {/* Phone */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Phone Number</Text>
-            <View style={styles.inputWrapper}>
-              <Phone size={18} color={C.latte} style={styles.inputIcon} />
-              <View style={styles.countryCode}>
-                <Text style={styles.countryFlag}>🇳🇵</Text>
-                <Text style={styles.countryPrefix}>+977</Text>
-              </View>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                placeholder="981234567"
-                placeholderTextColor={C.latte}
-                value={phoneNum}
-                onChangeText={setPhoneNum}
-                keyboardType="phone-pad"
-              />
-            </View>
-          </View>
-
-          {/* Password */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <View style={styles.inputWrapper}>
-              <Lock size={18} color={C.latte} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor={C.latte}
-                value={passwordFirst}
-                onChangeText={setPasswordFirst}
-                secureTextEntry={!showingPassword1}
-              />
-              <TouchableOpacity
-                onPress={() => setShowingPassword1(!showingPassword1)}
-                style={styles.eyeButton}
-              >
-                {showingPassword1
-                  ? <EyeOff size={18} color={C.latte} />
-                  : <Eye    size={18} color={C.latte} />}
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Confirm Password */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Confirm Password</Text>
-            <View style={[
-              styles.inputWrapper,
-              passwordsMatch     && styles.inputWrapperMatch,
-              passwordsDontMatch && styles.inputWrapperMismatch,
-            ]}>
-              <Lock size={18} color={C.latte} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor={C.latte}
-                value={passwordSecond}
-                onChangeText={setPasswordSecond}
-                secureTextEntry={!showingPassword2}
-              />
-              {passwordsMatch ? (
-                <CheckCircle2 size={18} color={C.sage} style={styles.eyeButton} />
-              ) : (
-                <TouchableOpacity
-                  onPress={() => setShowingPassword2(!showingPassword2)}
-                  style={styles.eyeButton}
-                >
-                  {showingPassword2
-                    ? <EyeOff size={18} color={C.latte} />
-                    : <Eye    size={18} color={C.latte} />}
+          <Text style={[styles.label, { marginTop: 16 }]}>CONFIRM PASSWORD</Text>
+          <View style={[styles.inputRow, pass2Focused && styles.focused, passMatch && styles.matchBorder, passMismatch && styles.errorBorder]}>
+            <View style={styles.prefix}><Lock size={15} color={pass2Focused ? C.accent : C.muted} /></View>
+            <View style={styles.sep} />
+            <TextInput
+              style={styles.input}
+              placeholder="••••••••"
+              placeholderTextColor={C.mutedDark}
+              value={pass2}
+              onChangeText={setPass2}
+              secureTextEntry={!showPass2}
+              onFocus={() => setPass2Focused(true)}
+              onBlur={() => setPass2Focused(false)}
+            />
+            {passMatch
+              ? <CheckCircle2 size={15} color={C.success} style={{ marginRight: 14 }} />
+              : (
+                <TouchableOpacity onPress={() => setShowPass2(!showPass2)} style={styles.eyeBtn}>
+                  {showPass2 ? <EyeOff size={15} color={C.muted} /> : <Eye size={15} color={C.muted} />}
                 </TouchableOpacity>
-              )}
-            </View>
+              )
+            }
           </View>
+          {passMismatch && <Text style={styles.errorTxt}>Passwords do not match</Text>}
 
-          {/* Role Selector */}
-          <View style={styles.roleSection}>
-            <Text style={styles.inputLabel}>Your Role</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.rolesScroll}
-            >
-              <View style={styles.rolesRow}>
-                {staffRoles.map((role) => {
-                  const isActive = pickedRole === role.id
-                  return (
-                    <TouchableOpacity
-                      key={role.id}
-                      style={[styles.rolePill, isActive && styles.rolePillActive]}
-                      onPress={() => setPickedRole(role.id)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.rolePillText, isActive && styles.rolePillTextActive]}>
-                        {role.label}
-                      </Text>
-                    </TouchableOpacity>
-                  )
-                })}
-              </View>
-            </ScrollView>
-          </View>
-
-          {/* Terms Checkbox */}
-          <TouchableOpacity
-            style={styles.termsRow}
-            onPress={() => setAgreedToTerms(!agreedToTerms)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-              {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
+          <TouchableOpacity style={styles.termsRow} onPress={() => setAgreed(!agreed)} activeOpacity={0.7}>
+            <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
+              {agreed && <Text style={styles.checkmark}>✓</Text>}
             </View>
-            <Text style={styles.termsText}>
-              I agree to the{' '}
-              <Text style={styles.termsLink}>Terms & Conditions</Text>
+            <Text style={styles.termsTxt}>
+              I agree to the <Text style={styles.termsLink}>Terms & Conditions</Text>
             </Text>
           </TouchableOpacity>
 
-          {/* Create Account Button */}
           <TouchableOpacity
-            style={[styles.createBtn, isCreatingAccount && { opacity: 0.6 }]}
-            onPress={createTheAccount}
-            disabled={isCreatingAccount}
-            activeOpacity={0.85}
+            style={[styles.cta, loading && { opacity: 0.55 }]}
+            onPress={createAccount}
+            disabled={loading}
+            activeOpacity={0.82}
           >
-            <Text style={styles.createText}>
-              {isCreatingAccount ? 'Creating Account...' : 'Create Account'}
-            </Text>
+            <Text style={styles.ctaTxt}>{loading ? 'Creating Account...' : 'Create Account'}</Text>
+            {!loading && <ArrowRight size={16} color="#fff" style={{ marginLeft: 8 }} />}
           </TouchableOpacity>
 
-          {/* Sign In Redirect */}
-          <TouchableOpacity
-            style={styles.signInRedirect}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.signInText}>
-              Already have an account?{' '}
-              <Text style={styles.signInLink}>Sign In</Text>
+          <TouchableOpacity style={styles.signInRow} onPress={() => router.back()}>
+            <Text style={styles.signInTxt}>
+              Already have an account? <Text style={styles.signInLink}>Sign In</Text>
             </Text>
           </TouchableOpacity>
+        </View>
 
-        </ScrollView>
-      </View>
-
-      <Text style={styles.versionText} />
-    </View>
+        <Text style={styles.footer}>Powered by YAMMY · Restaurant OS</Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: C.cream,
-  },
+  container: { flex: 1, backgroundColor: C.bg },
 
-  // Top Zone
-  topZone: {
-    height: height * 0.26,
-    backgroundColor: C.espresso,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  patternOverlay: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    opacity: 0.06,
-  },
-  dot: {
-    position: 'absolute',
-    width: 3, height: 3,
-    borderRadius: 2,
-    backgroundColor: C.cream,
-  },
-  logoBadge: {
-    width: 64, height: 64,
-    borderRadius: radius.md,
-    backgroundColor: C.brass,
+  blobTR: { position: 'absolute', top: -70, right: -70, width: 200, height: 200, borderRadius: 100, backgroundColor: C.accent, opacity: 0.07 },
+  blobBL: { position: 'absolute', bottom: 100, left: -90, width: 240, height: 240, borderRadius: 120, backgroundColor: C.accent, opacity: 0.05 },
+
+  scroll: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 40 },
+
+  logoZone: { alignItems: 'center', marginBottom: 28 },
+  iconBox: {
+    width: 68, height: 68,
+    borderRadius: 18,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
-    borderWidth: 1.5,
-    borderColor: C.brassBorder,
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 4,
   },
-  appTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: C.cream,
-    letterSpacing: 0.6,
-  },
-  appSub: {
-    fontSize: 11,
-    color: C.latte,
-    fontWeight: '500',
-    letterSpacing: 0.8,
-    marginTop: 3,
-  },
+  logoImg:  { width: 48, height: 48 },
+  brand:    { fontSize: 24, fontWeight: '900', color: C.white, letterSpacing: 9, marginBottom: 6 },
+  logoSub:  { fontSize: 12, color: C.muted },
 
-  // Signup Card
-  signupCard: {
-    flex: 1,
-    backgroundColor: C.parchment,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    marginTop: -20,
-    marginHorizontal: 12,
-    borderWidth: 1.5,
-    borderColor: C.vellum,
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  cardContent: {
-    padding: 24,
-    paddingTop: 32,
-    paddingBottom: 40,
-  },
-
-  // Heading
-  headingArea: {
-    marginBottom: 22,
-  },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: C.espresso,
-    marginBottom: 4,
-    letterSpacing: 0.3,
-  },
-  welcomeSub: {
-    fontSize: 13,
-    color: C.clay,
-    fontWeight: '500',
-    letterSpacing: 0.2,
-  },
-
-  // Inputs
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: C.clay,
-    marginBottom: 7,
-    marginLeft: 2,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.cream,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: C.vellum,
-    paddingHorizontal: 14,
-    height: 52,
-  },
-  inputWrapperMatch: {
-    borderColor: C.sageBorder,
-    backgroundColor: C.sageLight,
-  },
-  inputWrapperMismatch: {
-    borderColor: C.tcBorder,
-    backgroundColor: C.tcLight,
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: C.espresso,
-  },
-  eyeButton: {
-    padding: 4,
-  },
-
-  // Country Code
-  countryCode: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingRight: 12,
-    marginRight: 12,
-    borderRightWidth: 1,
-    borderRightColor: C.vellum,
-  },
-  countryFlag: {
-    fontSize: 16,
-  },
-  countryPrefix: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: C.roast,
-  },
-
-  // Role Selector
-  roleSection: {
+  card: {
+    backgroundColor: C.card,
+    borderRadius: R.xl,
+    borderWidth: 1,
+    borderColor: C.border,
+    padding: 22,
+    paddingTop: 26,
     marginBottom: 20,
   },
-  rolesScroll: {
-    marginTop: 2,
-  },
-  rolesRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  rolePill: {
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: C.vellum,
-    backgroundColor: C.cream,
-  },
-  rolePillActive: {
-    backgroundColor: C.roast,
-    borderColor: C.roast,
-  },
-  rolePillText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: C.clay,
-  },
-  rolePillTextActive: {
-    color: C.cream,
-  },
 
-  // Terms Checkbox
-  termsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 22,
-    gap: 10,
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: radius.xs,
-    borderWidth: 1.5,
-    borderColor: C.vellum,
-    backgroundColor: C.cream,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: C.brass,
-    borderColor: C.brassBorder,
-  },
-  checkmark: {
-    color: C.cream,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  termsText: {
-    fontSize: 13,
-    color: C.clay,
-    flex: 1,
-  },
-  termsLink: {
-    color: C.brass,
-    fontWeight: '700',
-    textDecorationLine: 'underline',
-  },
+  cardTitle: { fontSize: 22, fontWeight: '900', color: C.white, marginBottom: 3 },
+  cardSub:   { fontSize: 13, color: C.muted, marginBottom: 22 },
 
-  // Create Button
-  createBtn: {
-    backgroundColor: C.brass,
-    height: 52,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    width: '75%',
-    alignSelf: 'center',
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  createText: {
-    color: C.cream,
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
+  label: { fontSize: 10, fontWeight: '800', color: C.label, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 },
 
-  // Sign In Redirect
-  signInRedirect: {
-    alignItems: 'center',
-    paddingVertical: 8,
+  inputRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.inner, borderRadius: R.md,
+    borderWidth: 1, borderColor: C.border, height: 48, overflow: 'hidden',
   },
-  signInText: {
-    fontSize: 13,
-    color: C.clay,
-  },
-  signInLink: {
-    color: C.brass,
-    fontWeight: '700',
-  },
+  focused:     { borderColor: C.accent },
+  matchBorder: { borderColor: C.success },
+  errorBorder: { borderColor: C.error },
 
-  // Version
-  versionText: {
-    textAlign: 'center',
-    fontSize: 11,
-    color: C.latte,
-    paddingVertical: 12,
+  prefix: { width: 44, alignItems: 'center', justifyContent: 'center' },
+  sep:    { width: 1, height: 20, backgroundColor: C.border, marginRight: 12 },
+  input:  { flex: 1, fontSize: 14, color: C.white, paddingRight: 12 },
+  eyeBtn: { paddingHorizontal: 14 },
+
+  countryCode: { flexDirection: 'row', alignItems: 'center' },
+  countryTxt:  { fontSize: 13, fontWeight: '600', color: C.label },
+  codeSep:     { width: 1, height: 20, backgroundColor: C.border, marginLeft: 8, marginRight: 12 },
+
+  errorTxt: { fontSize: 11, color: C.error, marginTop: 5, marginLeft: 2 },
+
+  rulesBox: {
+    backgroundColor: C.inner,
+    borderRadius: R.md,
+    borderWidth: 1,
+    borderColor: C.border,
+    padding: 12,
+    marginTop: 8,
+    gap: 6,
   },
+  ruleRow:     { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  ruleDot:     { width: 6, height: 6, borderRadius: 3 },
+  ruleDotOk:   { backgroundColor: C.success },
+  ruleDotFail: { backgroundColor: C.mutedDark },
+  ruleTxt:     { fontSize: 11 },
+  ruleTxtOk:   { color: C.success },
+  ruleTxtFail: { color: C.muted },
+
+  termsRow: { flexDirection: 'row', alignItems: 'center', marginTop: 18, marginBottom: 20, gap: 10 },
+  checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 1, borderColor: C.border, backgroundColor: C.inner, alignItems: 'center', justifyContent: 'center' },
+  checkboxChecked: { backgroundColor: C.accent, borderColor: C.accent },
+  checkmark: { color: C.white, fontSize: 12, fontWeight: '700' },
+  termsTxt:  { fontSize: 13, color: C.muted, flex: 1 },
+  termsLink: { color: C.accent, fontWeight: '700' },
+
+  cta: {
+    backgroundColor: C.accent, height: 50, borderRadius: R.md,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    shadowColor: C.accent, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5,
+  },
+  ctaTxt: { color: '#fff', fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
+
+  signInRow:  { alignItems: 'center', paddingTop: 16 },
+  signInTxt:  { fontSize: 13, color: C.muted },
+  signInLink: { color: C.accent, fontWeight: '700' },
+
+  footer: { textAlign: 'center', fontSize: 10, color: C.mutedDark, letterSpacing: 0.8 },
 })

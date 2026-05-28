@@ -16,26 +16,25 @@ import { CreateReservationRequest, ReservationModalProps } from '../../pos/types
 import reservationService from '../../reservation/services/reservationService'
 
 const C = {
-  espresso:    '#1C1008',
-  roast:       '#3D2010',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-  onDark:      '#FDF6EC',
+  black:      '#0A0A0A',
+  charcoal:   '#1A1A1A',
+  graphite:   '#2C2C2C',
+  steel:      '#3D3D3D',
+  muted:      '#6B6B6B',
+  border:     '#2E2E2E',
+  card:       '#1E1E1E',
+  orange:     '#FF6B2C',
+  orangeTint: '#2A1A10',
+  orangeDim:  '#7A3010',
+  white:      '#FFFFFF',
+  offWhite:   '#F0F0F0',
+  dim:        '#A0A0A0',
+  success:    '#22C55E',
+  successBg:  '#0D2818',
+  error:      '#EF4444',
+  errorBg:    '#2A0A0A',
 }
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
-
 
 const DURATION_OPTIONS = [
   { label: '1h',   value: 60  },
@@ -65,6 +64,7 @@ export default function ReservationModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors,       setErrors]       = useState<string[]>([])
   const [showSuccess,  setShowSuccess]  = useState(false)
+  const [focusedInput, setFocusedInput] = useState<string | null>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -111,8 +111,13 @@ export default function ReservationModal({
     }
   }
 
+  const inputStyle = (key: string) => [
+    styles.input,
+    focusedInput === key && styles.inputFocused,
+  ]
+
   return (
-    <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={isOpen} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -127,7 +132,7 @@ export default function ReservationModal({
               </Text>
             </View>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.8}>
-              <X size={16} color={C.cream} />
+              <X size={16} color={C.white} />
             </TouchableOpacity>
           </View>
 
@@ -138,23 +143,21 @@ export default function ReservationModal({
             keyboardShouldPersistTaps="handled"
           >
             {showSuccess ? (
-
               <View style={styles.emptyState}>
                 <View style={styles.successIcon}>
-                  <CheckCircle size={32} color={C.sage} />
+                  <CheckCircle size={32} color={C.success} />
                 </View>
                 <Text style={styles.title}>Reservation Created!</Text>
                 <Text style={styles.subtitle}>The reservation has been successfully saved.</Text>
               </View>
-
             ) : (
               <>
                 {errors.length > 0 && (
                   <View style={styles.errorBanner}>
-                    <AlertCircle size={16} color={C.terracotta} />
+                    <AlertCircle size={16} color={C.error} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.errorBannerText}>
-                        {errors.map((e, i) => `• ${e}`).join('\n')}
+                        {errors.map((e) => `• ${e}`).join('\n')}
                       </Text>
                     </View>
                   </View>
@@ -162,33 +165,37 @@ export default function ReservationModal({
 
                 <View style={styles.sectionHeader}>
                   <View style={styles.sectionIconBadge}>
-                    <Users size={14} color={C.brass} />
+                    <Users size={14} color={C.orange} />
                   </View>
                   <Text style={styles.sectionTitle}>Customer Information</Text>
                 </View>
 
                 <Text style={styles.label}>Customer Name *</Text>
                 <TextInput
-                  style={styles.input}
+                  style={inputStyle('name')}
                   placeholder="Full name"
-                  placeholderTextColor={C.latte}
+                  placeholderTextColor={C.muted}
                   value={formData.customer_name}
                   onChangeText={v => handleChange('customer_name', v)}
+                  onFocus={() => setFocusedInput('name')}
+                  onBlur={() => setFocusedInput(null)}
                 />
 
                 <Text style={styles.label}>Phone</Text>
                 <TextInput
-                  style={styles.input}
+                  style={inputStyle('phone')}
                   placeholder="+1 234 567 8900"
-                  placeholderTextColor={C.latte}
+                  placeholderTextColor={C.muted}
                   value={formData.customer_phone}
                   onChangeText={v => handleChange('customer_phone', v)}
                   keyboardType="phone-pad"
+                  onFocus={() => setFocusedInput('phone')}
+                  onBlur={() => setFocusedInput(null)}
                 />
 
                 <View style={[styles.sectionHeader, { marginTop: 8 }]}>
                   <View style={styles.sectionIconBadge}>
-                    <Calendar size={14} color={C.brass} />
+                    <Calendar size={14} color={C.orange} />
                   </View>
                   <Text style={styles.sectionTitle}>Reservation Details</Text>
                 </View>
@@ -197,21 +204,25 @@ export default function ReservationModal({
                   <View style={{ flex: 1 }}>
                     <Text style={styles.label}>Date *</Text>
                     <TextInput
-                      style={styles.input}
+                      style={inputStyle('date')}
                       placeholder="YYYY-MM-DD"
-                      placeholderTextColor={C.latte}
+                      placeholderTextColor={C.muted}
                       value={formData.reservation_date}
                       onChangeText={v => handleChange('reservation_date', v)}
+                      onFocus={() => setFocusedInput('date')}
+                      onBlur={() => setFocusedInput(null)}
                     />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.label}>Time *</Text>
                     <TextInput
-                      style={styles.input}
+                      style={inputStyle('time')}
                       placeholder="HH:MM"
-                      placeholderTextColor={C.latte}
+                      placeholderTextColor={C.muted}
                       value={formData.reservation_time}
                       onChangeText={v => handleChange('reservation_time', v)}
+                      onFocus={() => setFocusedInput('time')}
+                      onBlur={() => setFocusedInput(null)}
                     />
                   </View>
                 </View>
@@ -250,14 +261,16 @@ export default function ReservationModal({
 
                 <Text style={styles.label}>Special Requests</Text>
                 <TextInput
-                  style={[styles.input, styles.textArea]}
+                  style={[inputStyle('notes'), styles.textArea]}
                   placeholder="Allergies, birthday, etc."
-                  placeholderTextColor={C.latte}
+                  placeholderTextColor={C.muted}
                   value={formData.special_requests}
                   onChangeText={v => handleChange('special_requests', v)}
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
+                  onFocus={() => setFocusedInput('notes')}
+                  onBlur={() => setFocusedInput(null)}
                 />
 
                 <View style={styles.modalButtons}>
@@ -270,10 +283,10 @@ export default function ReservationModal({
                     disabled={isSubmitting}
                     activeOpacity={0.85}
                   >
-                    {isSubmitting && <ActivityIndicator size="small" color={C.cream} />}
-                    <Text style={styles.submitButtonText}>
-                      {isSubmitting ? 'Creating…' : 'Create Reservation'}
-                    </Text>
+                    {isSubmitting
+                      ? <ActivityIndicator size="small" color={C.white} />
+                      : <Text style={styles.submitButtonText}>Create Reservation →</Text>
+                    }
                   </TouchableOpacity>
                 </View>
               </>
@@ -288,41 +301,40 @@ export default function ReservationModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(28,16,8,0.65)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: C.cream,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: C.charcoal,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderTopWidth: 1,
+    borderColor: C.border,
     maxHeight: '92%',
     overflow: 'hidden',
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 12,
   },
 
   header: {
-    backgroundColor: C.espresso,
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    backgroundColor: C.charcoal,
+    paddingHorizontal: 24,
+    paddingTop: 24,
     paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
   },
-  headerTitle: { fontSize: 17, fontWeight: '900', color: C.cream, letterSpacing: 0.4 },
-  headerSub:   { fontSize: 12, color: C.latte, marginTop: 3, fontWeight: '500' },
+  headerTitle: { fontSize: 17, fontWeight: '900', color: C.white, letterSpacing: 0.4 },
+  headerSub:   { fontSize: 12, color: C.muted, marginTop: 3, fontWeight: '500' },
   closeBtn: {
     width: 30, height: 30, borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: C.graphite, borderWidth: 1, borderColor: C.border,
     alignItems: 'center', justifyContent: 'center',
   },
 
-  body:      { flex: 1 },
-  bodyInner: { padding: 20, paddingBottom: 40 },
+  body:      { flex: 1, backgroundColor: C.charcoal },
+  bodyInner: { padding: 24, paddingBottom: 40 },
 
   sectionHeader: {
     flexDirection: 'row', alignItems: 'center',
@@ -330,69 +342,55 @@ const styles = StyleSheet.create({
   },
   sectionIconBadge: {
     width: 28, height: 28, borderRadius: radius.sm,
-    backgroundColor: C.brassLight, borderWidth: 1, borderColor: C.brassBorder,
+    backgroundColor: C.orangeTint, borderWidth: 1, borderColor: C.orangeDim,
     alignItems: 'center', justifyContent: 'center',
   },
   sectionTitle: {
-    fontSize: 11, fontWeight: '800', color: C.clay,
-    textTransform: 'uppercase', letterSpacing: 1.4,
+    fontSize: 11, fontWeight: '700', color: C.muted,
+    textTransform: 'uppercase', letterSpacing: 1.1,
   },
 
   label: {
-    fontSize: 11, fontWeight: '800', color: C.clay,
+    fontSize: 11, fontWeight: '700', color: C.muted,
     marginBottom: 6, marginTop: 14,
-    textTransform: 'uppercase', letterSpacing: 1.2,
+    textTransform: 'uppercase', letterSpacing: 1.1,
   },
   input: {
-    borderWidth: 1.5, borderColor: C.vellum, borderRadius: radius.md,
-    paddingHorizontal: 14, paddingVertical: 10,
-    fontSize: 14, color: C.espresso, backgroundColor: C.parchment,
+    backgroundColor: C.graphite, borderWidth: 1, borderColor: C.border,
+    borderRadius: radius.md, paddingHorizontal: 16, height: 52,
+    fontSize: 15, color: C.white,
   },
-  textArea: { height: 80, textAlignVertical: 'top' },
-  row:      { flexDirection: 'row', gap: 12 },
+  inputFocused: { borderColor: C.orange, backgroundColor: C.steel },
+  textArea:     { height: 80, paddingTop: 14, textAlignVertical: 'top' },
+  row:          { flexDirection: 'row', gap: 12 },
 
-  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-  pill: {
-    backgroundColor: C.parchment, borderWidth: 1.5,
-    borderColor: C.vellum, borderRadius: radius.pill,
-    paddingHorizontal: 14, paddingVertical: 8,
-  },
-  pillActive:     { backgroundColor: C.roast, borderColor: C.roast },
-  pillText:       { fontSize: 12, fontWeight: '600', color: C.clay },
-  pillTextActive: { color: C.cream },
+  pillRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
+  pill:           { backgroundColor: C.graphite, borderWidth: 1, borderColor: C.border, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 8 },
+  pillActive:     { backgroundColor: C.orange, borderColor: C.orange },
+  pillText:       { fontSize: 12, fontWeight: '600', color: C.dim },
+  pillTextActive: { color: C.white, fontWeight: '700' },
 
   errorBanner: {
     flexDirection: 'row', alignItems: 'flex-start',
-    backgroundColor: C.tcLight, borderWidth: 1,
-    borderColor: C.tcBorder, borderRadius: radius.md,
+    backgroundColor: C.errorBg, borderWidth: 1,
+    borderColor: '#7A1010', borderRadius: radius.md,
     padding: 12, marginBottom: 8, gap: 8,
   },
-  errorBannerText: { color: C.terracotta, fontSize: 13, fontWeight: '600', lineHeight: 20 },
+  errorBannerText: { color: C.error, fontSize: 13, fontWeight: '600', lineHeight: 20 },
 
   emptyState:  { alignItems: 'center', paddingVertical: 56, gap: 12 },
   successIcon: {
     width: 72, height: 72, borderRadius: radius.lg,
-    backgroundColor: C.sageLight, borderWidth: 1.5, borderColor: C.sageBorder,
+    backgroundColor: C.successBg, borderWidth: 1, borderColor: '#1A4A2A',
     alignItems: 'center', justifyContent: 'center',
   },
-  title:    { fontSize: 18, fontWeight: '800', color: C.espresso },
-  subtitle: { fontSize: 13, color: C.clay, textAlign: 'center' },
+  title:    { fontSize: 18, fontWeight: '800', color: C.offWhite },
+  subtitle: { fontSize: 13, color: C.muted, textAlign: 'center' },
 
-  modalButtons: { flexDirection: 'row', gap: 12, marginTop: 24, marginBottom: 8 },
-  cancelButton: {
-    flex: 1, borderWidth: 1.5, borderColor: C.vellum,
-    borderRadius: radius.pill, paddingVertical: 12,
-    alignItems: 'center', backgroundColor: C.cream,
-  },
-  cancelButtonText: { fontSize: 14, color: C.clay, fontWeight: '700' },
-  submitButton: {
-    flex: 1, flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', gap: 8,
-    backgroundColor: C.brass, borderRadius: radius.pill,
-    paddingVertical: 12,
-    shadowColor: C.brass, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35, shadowRadius: 8, elevation: 4,
-  },
-  submitButtonDisabled: { opacity: 0.5 },
-  submitButtonText:     { fontSize: 14, color: C.cream, fontWeight: '800' },
+  modalButtons:         { flexDirection: 'row', gap: 12, marginTop: 24, marginBottom: 8 },
+  cancelButton:         { flex: 1, backgroundColor: C.graphite, borderWidth: 1, borderColor: C.border, borderRadius: radius.md, height: 52, alignItems: 'center', justifyContent: 'center' },
+  cancelButtonText:     { fontSize: 14, color: C.offWhite, fontWeight: '600' },
+  submitButton:         { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.orange, borderRadius: radius.md, height: 54 },
+  submitButtonDisabled: { opacity: 0.55 },
+  submitButtonText:     { fontSize: 16, color: C.white, fontWeight: '800' },
 })

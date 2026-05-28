@@ -1,28 +1,31 @@
 import { Search, Star } from 'lucide-react-native'
 import { useState } from 'react'
 import {
-    FlatList,
-    ScrollView,
-    StyleSheet,
-    Text, TextInput, TouchableOpacity,
-    useWindowDimensions,
-    View,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text, TextInput, TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from 'react-native'
 import { MenuItemFilters } from '../../menu-items/services/menu-items-services'
 import MenuItemCard, { MenuItemDisplay } from './menuItemCard'
 
 const C = {
-  espresso:    '#1C1008',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
+  background: '#0A0A0A',
+  surface: '#1A1A1A',
+  surfaceHighlight: '#2C2C2C',
+  primary: '#FF6B2C',
+  primaryDim: '#3D1C00',
+  textMain: '#FFFFFF',
+  textMuted: '#9CA3AF',
+  border: '#2C2C2C',
+  danger: '#EF4444',
+  dangerDim: '#450A0A',
+  success: '#10B981',
+  successDim: '#064E3B',
+  warning: '#F59E0B',
+  info: '#3B82F6',
 }
 const radius = { xs: 6, sm: 10, md: 14, pill: 100 }
 
@@ -30,7 +33,6 @@ interface Category {
   category_id: number
   category_name: string
 }
-
 
 interface MenuItemsSectionProps {
   items: MenuItemDisplay[]
@@ -75,7 +77,7 @@ export default function MenuItemsSection({
 
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <Star size={15} color={C.brass} />
+          <Star size={15} color={C.primary} />
           <Text style={styles.headerTitle}>Menu</Text>
           <View style={styles.countBadge}>
             <Text style={styles.countText}>{filtered.length}</Text>
@@ -83,11 +85,11 @@ export default function MenuItemsSection({
         </View>
 
         <View style={styles.searchRow}>
-          <Search size={13} color={C.latte} />
+          <Search size={13} color={C.textMuted} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search items..."
-            placeholderTextColor={C.latte}
+            placeholderTextColor={C.textMuted}
             value={filters.searchTerm}
             onChangeText={filters.onSearchChange}
           />
@@ -104,7 +106,7 @@ export default function MenuItemsSection({
           style={[styles.tab, selectedCategory === 'all' && styles.tabActive]}
           onPress={() => handleCategorySelect('all')}
         >
-          <View style={[styles.tabDot, { backgroundColor: C.latte }]} />
+          <View style={[styles.tabDot, { backgroundColor: C.textMuted }]} />
           <Text style={[styles.tabText, selectedCategory === 'all' && styles.tabTextActive]}>
             ⭐ All
           </Text>
@@ -161,7 +163,7 @@ export default function MenuItemsSection({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.cream,
+    backgroundColor: C.background,
   },
 
   header: {
@@ -169,8 +171,8 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: C.vellum,
-    backgroundColor: C.parchment,
+    borderBottomColor: C.border,
+    backgroundColor: C.surface,
     gap: 10,
   },
   headerRow: {
@@ -181,10 +183,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: C.espresso,
+    color: C.textMain,
   },
   countBadge: {
-    backgroundColor: C.sage,
+    backgroundColor: C.primary,
     borderRadius: radius.pill,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -192,16 +194,16 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 11,
     fontWeight: '800',
-    color: C.cream,
+    color: C.textMain,
   },
 
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: C.cream,
+    backgroundColor: C.background,
     borderWidth: 1.5,
-    borderColor: C.vellum,
+    borderColor: C.border,
     borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -209,15 +211,15 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 13,
-    color: C.espresso,
+    color: C.textMain,
     padding: 0,
   },
 
   tabsScroll: {
     flexGrow: 0,
     borderBottomWidth: 1,
-    borderBottomColor: C.vellum,
-    backgroundColor: C.parchment,
+    borderBottomColor: C.border,
+    backgroundColor: C.surface,
   },
   tabsContent: {
     flexDirection: 'row',
@@ -232,13 +234,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.pill,
-    backgroundColor: C.cream,
+    backgroundColor: C.background,
     borderWidth: 1.5,
-    borderColor: C.vellum,
+    borderColor: C.border,
   },
   tabActive: {
-    backgroundColor: C.sageLight,
-    borderColor: C.sageBorder,
+    backgroundColor: C.primaryDim,
+    borderColor: C.primary,
   },
   tabDot: {
     width: 7,
@@ -248,10 +250,10 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 12,
     fontWeight: '700',
-    color: C.clay,
+    color: C.textMuted,
   },
   tabTextActive: {
-    color: C.sage,
+    color: C.primary,
   },
 
   grid:    { padding: 14 },
@@ -264,6 +266,6 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 60,
   },
-  emptyTitle:    { fontSize: 15, fontWeight: '800', color: C.espresso },
-  emptySubtitle: { fontSize: 12, color: C.clay },
+  emptyTitle:    { fontSize: 15, fontWeight: '800', color: C.textMain },
+  emptySubtitle: { fontSize: 12, color: C.textMuted },
 })

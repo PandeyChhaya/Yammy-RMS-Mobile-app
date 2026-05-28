@@ -75,55 +75,32 @@ export default function Dashboard() {
   const loadUser = async () => {
     const name = await AsyncStorage.getItem('@userName')
     const role = await AsyncStorage.getItem('@userRole')
-    console.log('USER NAME:', name)   
-  console.log('USER ROLE:', role)
     if (name) setUserName(name)
     setUserRole(role ?? 'Admin')
   }
 
   const loadStats = async () => {
-  try {
-    const token = await AsyncStorage.getItem('@accessToken')
-
-    if (!token) {
-      console.log('No token yet, skipping stats')
-      return
+    try {
+      const token = await AsyncStorage.getItem('@accessToken')
+      if (!token) return
+      const [orders, tables] = await Promise.all([
+        ordersService.getOrder(),
+        tablesService.getTable(),
+      ])
+      const today = new Date().toISOString().split('T')[0]
+      const todayOrders = orders.filter((o: any) => o.created_at?.startsWith(today)).length
+      const pendingOrders = orders.filter((o: any) => o.order_status === 'pending').length
+      const activeTables = tables.filter((t: any) => t.table_status !== 'available' && t.table_status !== 'free').length
+      const totalRevenue = orders
+        .filter((o: any) => o.created_at?.startsWith(today))
+        .reduce((sum: number, o: any) => sum + (Number(o.total_amount) || 0), 0)
+      setStats({ todayOrders, activeTables, totalRevenue, pendingOrders })
+    } catch (error) {
+      console.log('DASHBOARD ERROR:', error)
+    } finally {
+      setLoadingStats(false)
     }
-
-    const [orders, tables] = await Promise.all([
-      ordersService.getOrder(),
-      tablesService.getTable(),
-    ])
-
-    console.log('ORDERS:', orders)
-    console.log('TABLES:', tables)
-
-    const today = new Date().toISOString().split('T')[0]
-
-    const todayOrders = orders.filter((o: any) =>
-      o.created_at?.startsWith(today)
-    ).length
-
-    const pendingOrders = orders.filter((o: any) =>
-      o.order_status === 'pending'
-    ).length
-
-    const activeTables = tables.filter((t: any) =>
-      t.table_status !== 'available' && t.table_status !== 'free'
-    ).length
-
-    const totalRevenue = orders
-      .filter((o: any) => o.created_at?.startsWith(today))
-      .reduce((sum: number, o: any) => sum + (Number(o.total_amount) || 0), 0)
-
-    setStats({ todayOrders, activeTables, totalRevenue, pendingOrders })
-
-  } catch (error) {
-    console.log('DASHBOARD ERROR:', error)
-  } finally {
-    setLoadingStats(false)
   }
-}
 
   const handleLogout = async () => {
     await authService.logout()
@@ -132,99 +109,115 @@ export default function Dashboard() {
 
   const allModules: ModuleItem[] = [
     {
-      id: 'categories',
-      label: 'Categories',
-      sub: 'Take orders',
-      icon: <ShoppingCart size={24} color={C.brass} />,
-      route: '/modules/categories/Categories',
-      color: C.brassLight,
-      borderColor: C.brassBorder,
-      roles: ['Admin', 'Waiter', 'Cashier'],
-    },
-     {
-      id: 'menu-items',
-      label: 'Menu-items',
-      sub: 'Take orders',
-      icon: <ShoppingCart size={24} color={C.brass} />,
-      route: '/modules/menu-items/menu-items',
-      color: C.brassLight,
-      borderColor: C.brassBorder,
-      roles: ['Admin', 'Waiter', 'Cashier'],
-    },
-       {
-      id: 'reservation',
-      label: 'reservation',
-      sub: 'Take orders',
-      icon: <ShoppingCart size={24} color={C.brass} />,
-      route: '/modules/reservation/reservation',
-      color: C.brassLight,
-      borderColor: C.brassBorder,
-      roles: ['Admin', 'Waiter', 'Cashier'],
-    },
-     {
-      id: 'order',
-      label: 'order',
-      sub: 'Take orders',
-      icon: <ShoppingCart size={24} color={C.brass} />,
-      route: '/modules/orders/Orders',
-      color: C.brassLight,
-      borderColor: C.brassBorder,
-      roles: ['Admin', 'Waiter', 'Cashier'],
-    },
-    {
-  id: 'waiter-notifications',
-  label: 'Waiter Calls',
-  sub: 'Customer requests',
-  icon: <Bell size={24} color={C.sage} />,
-  route: '/modules/waiter/WaiterNotifications',
-  color: C.sageLight,
-  borderColor: C.sageBorder,
-  roles: ['Waiter'],
-},
-      {
-      id: 'inventory',
-      label: 'inventory',
-      sub: 'Take orders',
-      icon: <ShoppingCart size={24} color={C.brass} />,
-      route: '/modules/inventory/inventory',
-      color: C.brassLight,
-      borderColor: C.brassBorder,
-      roles: ['Admin', 'Waiter', 'Cashier'],
-    },
-    {
-      id: 'table',
-      label: 'table',
-      sub: 'Take orders',
-      icon: <ShoppingCart size={24} color={C.brass} />,
-      route: '/modules/tables/tables',
-      color: C.brassLight,
-      borderColor: C.brassBorder,
-      roles: ['Admin', 'Waiter', 'Cashier'],
-    },
-     {
-      id: 'customer',
-      label: 'customer',
-      sub: 'Take orders',
-      icon: <ShoppingCart size={24} color={C.brass} />,
-      route: '/modules/customer/customer_Dashboard',
-      color: C.brassLight,
-      borderColor: C.brassBorder,
-      roles: ['Admin', 'Waiter', 'Cashier'],
-    },
-    {
       id: 'pos',
-      label: 'pos',
-      sub: 'Take orders',
+      label: 'POS',
+      sub: 'Point of sale',
       icon: <ShoppingCart size={24} color={C.brass} />,
       route: '/modules/pos/pos',
       color: C.brassLight,
       borderColor: C.brassBorder,
-      roles: ['Admin', 'Waiter', 'Cashier'],
+      roles: ['Admin', 'Cashier'],
     },
-
-
-      
-   
+    {
+      id: 'orders',
+      label: 'Orders',
+      sub: 'Manage orders',
+      icon: <ShoppingCart size={24} color={C.brass} />,
+      route: '/modules/orders/Orders',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin', 'Cashier', 'Kitchen Staff'],
+    },
+    {
+      id: 'tables',
+      label: 'Tables',
+      sub: 'Manage tables',
+      icon: <ShoppingCart size={24} color={C.brass} />,
+      route: '/modules/tables/tables',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin', 'Cashier', 'Waiter'],
+    },
+    {
+      id: 'reservation',
+      label: 'Reservation',
+      sub: 'Manage reservations',
+      icon: <ShoppingCart size={24} color={C.brass} />,
+      route: '/modules/reservation/reservation',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin', 'Cashier', 'Waiter'],
+    },
+    {
+      id: 'inventory',
+      label: 'Inventory',
+      sub: 'Stock management',
+      icon: <ShoppingCart size={24} color={C.brass} />,
+      route: '/modules/inventory/inventory',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin'],
+    },
+    {
+      id: 'categories',
+      label: 'Categories',
+      sub: 'Menu categories',
+      icon: <ShoppingCart size={24} color={C.brass} />,
+      route: '/modules/categories/Categories',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin'],
+    },
+    {
+      id: 'menu-items',
+      label: 'Menu Items',
+      sub: 'Manage menu',
+      icon: <ShoppingCart size={24} color={C.brass} />,
+      route: '/modules/menu-items/menu-items',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin'],
+    },
+    {
+      id: 'users',
+      label: 'Users',
+      sub: 'Manage staff',
+      icon: <ShoppingCart size={24} color={C.brass} />,
+      route: '/modules/users/Users',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Admin'],
+    },
+    // {
+    //   id: 'reports',
+    //   label: 'Reports',
+    //   sub: 'Sales & analytics',
+    //   icon: <ShoppingCart size={24} color={C.brass} />,
+    //   route: '/modules/reports/Reports',
+    //   color: C.brassLight,
+    //   borderColor: C.brassBorder,
+    //   roles: ['Admin'],
+    // },
+    {
+      id: 'waiter-notifications',
+      label: 'Waiter Calls',
+      sub: 'Customer requests',
+      icon: <Bell size={24} color={C.sage} />,
+      route: '/modules/waiter/WaiterNotifications',
+      color: C.sageLight,
+      borderColor: C.sageBorder,
+      roles: ['Waiter'],
+    },
+    {
+      id: 'customer',
+      label: 'Customer',
+      sub: 'Customer dashboard',
+      icon: <ShoppingCart size={24} color={C.brass} />,
+      route: '/modules/customer/customer_Dashboard',
+      color: C.brassLight,
+      borderColor: C.brassBorder,
+      roles: ['Customer'],
+    },
   ]
 
   const visibleModules = allModules.filter(m =>
@@ -269,14 +262,11 @@ export default function Dashboard() {
   return (
     <View style={s.root}>
       <ScrollView showsVerticalScrollIndicator={false}>
-
-       
         <View style={s.header}>
           <View style={s.headerTop}>
             <View>
-                  <Image source={require('../../assets/images/yammy.png')}
-                   style={{ width: 140, height: 30 }} />
-          </View>
+              <Image source={require('../../assets/images/yammy.png')} style={{ width: 140, height: 30 }} />
+            </View>
             <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
               <LogOut size={16} color={C.latte} />
             </TouchableOpacity>
@@ -300,8 +290,6 @@ export default function Dashboard() {
         </View>
 
         <View style={s.body}>
-
-          
           <View style={s.section}>
             <Text style={s.sectionTitle}>Today's Overview</Text>
             <View style={s.statsGrid}>
@@ -345,7 +333,6 @@ export default function Dashboard() {
               ))}
             </View>
           </View>
-
         </View>
       </ScrollView>
     </View>

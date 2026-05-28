@@ -14,9 +14,16 @@ import { TableData } from './types/tables'
 
 const TAX_RATES = [{ name: 'VAT', rate: 13 }]
 
+// Vibrant, accessible colors tailored for a modern dark-mode interface
 const CATEGORY_COLORS = [
-  '#3B6E52', '#B5822A', '#A03020', '#0284C7',
-  '#7C3AED', '#D97706', '#7A4528', '#C8956A',
+  '#14B8A6', // Teal
+  '#F59E0B', // Amber
+  '#F43F5E', // Rose
+  '#0EA5E9', // Sky
+  '#8B5CF6', // Violet
+  '#FF6B2C', // Primary Orange
+  '#10B981', // Emerald
+  '#6366F1', // Indigo
 ]
 
 export default function POS() {

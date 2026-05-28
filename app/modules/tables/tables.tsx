@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertCircle,
@@ -29,27 +30,26 @@ import ReservationModal from './components/ReservationModal'
 import tableService from './services/tableService'
 
 const C = {
-  espresso:    '#1C1008',
-  roast:       '#3D2010',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-  onDark:      '#FDF6EC',
+  black:       '#0A0A0A',
+  charcoal:    '#1A1A1A',
+  graphite:    '#2C2C2C',
+  steel:       '#3D3D3D',
+  muted:       '#6B6B6B',
+  border:      '#2E2E2E',
+  card:        '#1E1E1E',
+  orange:      '#FF6B2C',
+  orangeTint:  '#2A1A10',
+  orangeDim:   '#7A3010',
+  white:       '#FFFFFF',
+  offWhite:    '#F0F0F0',
+  dim:         '#A0A0A0',
+  success:     '#22C55E',
+  successBg:   '#0D2818',
+  error:       '#EF4444',
+  errorBg:     '#2A0A0A',
 }
+
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
-
-
 
 const DEFAULT_FORM: CreateTableRequest = {
   table_number: '',
@@ -58,10 +58,10 @@ const DEFAULT_FORM: CreateTableRequest = {
 }
 
 const STATUS_CONFIG: Record<TableData['table_status'], { label: string; bg: string; border: string; text: string; dot: string }> = {
-  Available:   { label: 'Available',   bg: C.sageLight,  border: C.sageBorder,  text: C.sage,       dot: C.sage       },
-  Occupied:    { label: 'Occupied',    bg: C.brassLight, border: C.brassBorder, text: C.brass,      dot: C.brass      },
-  Reserved:    { label: 'Reserved',    bg: C.tcLight,    border: C.tcBorder,    text: C.terracotta, dot: C.terracotta },
-  Maintenance: { label: 'Maintenance', bg: C.parchment,  border: C.vellum,      text: C.clay,       dot: C.clay       },
+  Available:   { label: 'Available',   bg: C.successBg,  border: '#1A4A2A',  text: C.success,  dot: C.success  },
+  Occupied:    { label: 'Occupied',    bg: '#1A1400',    border: '#5A4500',  text: '#C8A020',  dot: '#C8A020'  },
+  Reserved:    { label: 'Reserved',    bg: C.orangeTint, border: C.orangeDim, text: C.orange,  dot: C.orange   },
+  Maintenance: { label: 'Maintenance', bg: C.graphite,   border: C.steel,    text: C.dim,      dot: C.dim      },
 }
 
 const CAPACITY_OPTIONS = [2, 4, 6, 8, 10, 12]
@@ -69,6 +69,7 @@ const CAPACITY_OPTIONS = [2, 4, 6, 8, 10, 12]
 export default function Tables() {
   const queryClient = useQueryClient()
 
+  const [canManage,             setCanManage]             = useState(false)
   const [showAddModal,          setShowAddModal]          = useState(false)
   const [showEditModal,         setShowEditModal]         = useState(false)
   const [editingTable,          setEditingTable]          = useState<TableData | null>(null)
@@ -81,6 +82,13 @@ export default function Tables() {
   const [selectedDate,          setSelectedDate]          = useState(new Date())
   const [reservations,          setReservations]          = useState<ReservationWithTable[]>([])
   const [isLoadingReservations, setIsLoadingReservations] = useState(false)
+  const [focusedInput,          setFocusedInput]          = useState<string | null>(null)
+
+  useEffect(() => {
+    AsyncStorage.getItem('@userRole').then(role => {
+      setCanManage(role === 'Admin')
+    })
+  }, [])
 
   const { data: tables = [], isLoading, error } = useQuery<TableData[]>({
     queryKey: ['tables'],
@@ -215,6 +223,11 @@ export default function Tables() {
 
   useEffect(() => { loadReservations(selectedDate) }, [selectedDate])
 
+  const inputStyle = (key: string) => [
+    styles.input,
+    focusedInput === key && styles.inputFocused,
+  ]
+
   const renderForm = (
     form: CreateTableRequest,
     setForm: (f: CreateTableRequest) => void,
@@ -222,24 +235,29 @@ export default function Tables() {
     onCancel: () => void,
     isPending: boolean,
     submitLabel: string,
+    prefix: string,
   ) => (
     <ScrollView showsVerticalScrollIndicator={false}>
       <Text style={styles.label}>Table Number *</Text>
       <TextInput
-        style={styles.input}
+        style={inputStyle(`${prefix}_num`)}
         placeholder="e.g. T1"
-        placeholderTextColor={C.latte}
+        placeholderTextColor={C.muted}
         value={form.table_number}
         onChangeText={v => setForm({ ...form, table_number: v })}
+        onFocus={() => setFocusedInput(`${prefix}_num`)}
+        onBlur={() => setFocusedInput(null)}
       />
 
       <Text style={styles.label}>Floor</Text>
       <TextInput
-        style={styles.input}
+        style={inputStyle(`${prefix}_floor`)}
         placeholder="e.g. Ground Floor"
-        placeholderTextColor={C.latte}
+        placeholderTextColor={C.muted}
         value={form.floor}
         onChangeText={v => setForm({ ...form, floor: v })}
+        onFocus={() => setFocusedInput(`${prefix}_floor`)}
+        onBlur={() => setFocusedInput(null)}
       />
 
       <Text style={styles.label}>Capacity</Text>
@@ -268,10 +286,10 @@ export default function Tables() {
           disabled={isPending}
           activeOpacity={0.85}
         >
-          {isPending && <ActivityIndicator size="small" color={C.cream} />}
-          <Text style={styles.submitButtonText}>
-            {isPending ? 'Saving…' : submitLabel}
-          </Text>
+          {isPending
+            ? <ActivityIndicator size="small" color={C.white} />
+            : <Text style={styles.submitButtonText}>{submitLabel} →</Text>
+          }
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -280,7 +298,7 @@ export default function Tables() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={C.brass} />
+        <ActivityIndicator size="large" color={C.orange} />
         <Text style={styles.loadingText}>Loading tables…</Text>
       </View>
     )
@@ -289,7 +307,7 @@ export default function Tables() {
   if (error) {
     return (
       <View style={styles.centered}>
-        <AlertCircle size={48} color={C.terracotta} />
+        <AlertCircle size={48} color={C.error} />
         <Text style={styles.errorTitle}>Something went wrong</Text>
         <Text style={styles.errorSub}>{String(error)}</Text>
       </View>
@@ -298,6 +316,9 @@ export default function Tables() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.blob1} />
+      <View style={styles.blob2} />
+
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         <View style={styles.header}>
@@ -305,72 +326,82 @@ export default function Tables() {
             <Text style={styles.title}>Table Management</Text>
             <Text style={styles.subtitle}>Table plan and status</Text>
           </View>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => { setAddForm(DEFAULT_FORM); setShowAddModal(true) }}
-          >
-            <Plus size={16} color={C.cream} />
-            <Text style={styles.addButtonText}>Add Table</Text>
-          </TouchableOpacity>
+          {canManage && (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => { setAddForm(DEFAULT_FORM); setShowAddModal(true) }}
+              activeOpacity={0.85}
+            >
+              <Plus size={16} color={C.white} />
+              <Text style={styles.addButtonText}>Add Table</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {showSuccessMessage && (
           <View style={styles.successBanner}>
-            <CheckCircle size={16} color={C.sage} />
+            <CheckCircle size={16} color={C.success} />
             <Text style={styles.successText}>{showSuccessMessage}</Text>
           </View>
         )}
 
         {showErrorMessage && (
           <View style={styles.errorBanner}>
-            <AlertCircle size={16} color={C.terracotta} />
+            <AlertCircle size={16} color={C.error} />
             <Text style={styles.errorBannerText}>{showErrorMessage}</Text>
           </View>
         )}
 
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionIconBadge}>
-            <Calendar size={14} color={C.brass} />
-          </View>
-          <Text style={styles.sectionTitle}>Planning</Text>
-        </View>
+        {canManage && (
+          <>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconBadge}>
+                <Calendar size={14} color={C.orange} />
+              </View>
+              <Text style={styles.sectionTitle}>Planning</Text>
+            </View>
 
-        {isLoadingReservations ? (
-          <View style={{ alignItems: 'center', paddingVertical: 24 }}>
-            <ActivityIndicator size="small" color={C.brass} />
-            <Text style={styles.loadingText}>Loading reservations…</Text>
-          </View>
-        ) : (
-          <ReservationsCalendar
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-            reservations={reservations as any}
-            onReservationClick={(r) => console.log('Reservation clicked:', r)}
-            onReservationStatusChange={handleReservationStatusChange as any}
-          />
+            {isLoadingReservations ? (
+              <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                <ActivityIndicator size="small" color={C.orange} />
+                <Text style={styles.loadingText}>Loading reservations…</Text>
+              </View>
+            ) : (
+              <ReservationsCalendar
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
+                reservations={reservations as any}
+                onReservationClick={(r) => console.log('Reservation clicked:', r)}
+                onReservationStatusChange={handleReservationStatusChange as any}
+              />
+            )}
+          </>
         )}
 
         <View style={[styles.sectionHeader, { marginTop: 24 }]}>
           <View style={styles.sectionIconBadge}>
-            <Settings size={14} color={C.brass} />
+            <Settings size={14} color={C.orange} />
           </View>
           <Text style={styles.sectionTitle}>Tables ({tables.length})</Text>
         </View>
 
         {tables.length === 0 ? (
           <View style={styles.emptyState}>
+            <Settings size={40} color={C.steel} />
             <Text style={styles.emptyTitle}>No Tables</Text>
             <Text style={styles.emptySubtitle}>Start by creating your first table</Text>
-            <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)}>
-              <Plus size={16} color={C.cream} />
-              <Text style={styles.addButtonText}>Create Table</Text>
-            </TouchableOpacity>
+            {canManage && (
+              <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)} activeOpacity={0.85}>
+                <Plus size={16} color={C.white} />
+                <Text style={styles.addButtonText}>Create Table</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           tables.map((table) => {
             const cfg = STATUS_CONFIG[table.table_status] ?? STATUS_CONFIG.Available
             return (
-              <View key={table.table_id} style={[styles.card, { borderColor: cfg.border }]}>
+              <View key={table.table_id} style={styles.card}>
 
                 <View style={styles.cardHeader}>
                   <View style={styles.cardTitleRow}>
@@ -380,21 +411,24 @@ export default function Tables() {
                       <Text style={styles.cardSub}>Floor {table.floor} · 👥 {table.capacity} seats</Text>
                     </View>
                   </View>
-                  <View style={styles.cardActions}>
-                    <TouchableOpacity style={styles.iconButton} onPress={() => handleEdit(table)}>
-                      <Edit size={14} color={C.brass} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.iconButton, styles.iconButtonDelete]}
-                      onPress={() => handleDelete(table.table_id, table.table_number)}
-                    >
-                      <Trash2 size={14} color={C.terracotta} />
-                    </TouchableOpacity>
-                  </View>
+                  {canManage && (
+                    <View style={styles.cardActions}>
+                      <TouchableOpacity style={styles.iconButtonEdit} onPress={() => handleEdit(table)} activeOpacity={0.8}>
+                        <Edit size={14} color={C.orange} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.iconButtonDelete}
+                        onPress={() => handleDelete(table.table_id, table.table_number)}
+                        activeOpacity={0.8}
+                      >
+                        <Trash2 size={14} color={C.error} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
 
-
                 <View style={[styles.statusBadge, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
+                  <View style={[styles.statusBadgeDot, { backgroundColor: cfg.dot }]} />
                   <Text style={[styles.statusText, { color: cfg.text }]}>{cfg.label}</Text>
                 </View>
 
@@ -402,20 +436,21 @@ export default function Tables() {
                 <View style={styles.pillRow}>
                   {(Object.keys(STATUS_CONFIG) as TableData['table_status'][]).map((key) => {
                     const config = STATUS_CONFIG[key]
+                    const isActive = table.table_status === key
                     return (
                       <TouchableOpacity
                         key={key}
                         style={[
                           styles.pill,
-                          table.table_status === key && { backgroundColor: config.bg, borderColor: config.border },
+                          isActive && { backgroundColor: config.bg, borderColor: config.border },
                         ]}
                         onPress={() => handleStatusChange(table, key)}
-                        disabled={table.table_status === key || updateStatusMutation.isPending}
+                        disabled={isActive || updateStatusMutation.isPending}
                         activeOpacity={0.8}
                       >
                         <Text style={[
                           styles.pillText,
-                          table.table_status === key && { color: config.text },
+                          isActive && { color: config.text, fontWeight: '700' },
                         ]}>
                           {config.label}
                         </Text>
@@ -429,7 +464,7 @@ export default function Tables() {
                   activeOpacity={0.85}
                   onPress={() => console.log('Take order for table:', table.table_id)}
                 >
-                  <CreditCard size={14} color={C.cream} />
+                  <CreditCard size={14} color={C.white} />
                   <Text style={styles.orderBtnText}>Take Order</Text>
                 </TouchableOpacity>
               </View>
@@ -438,23 +473,27 @@ export default function Tables() {
         )}
       </ScrollView>
 
-      <Modal visible={showAddModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>New Table</Text>
-            {renderForm(addForm, setAddForm, handleAddSubmit, () => setShowAddModal(false), createMutation.isPending, 'Create')}
-          </View>
-        </View>
-      </Modal>
+      {canManage && (
+        <>
+          <Modal visible={showAddModal} animationType="slide" transparent>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>New Table</Text>
+                {renderForm(addForm, setAddForm, handleAddSubmit, () => setShowAddModal(false), createMutation.isPending, 'Create', 'add')}
+              </View>
+            </View>
+          </Modal>
 
-      <Modal visible={showEditModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Edit Table</Text>
-            {renderForm(editForm, setEditForm, handleEditSubmit, () => { setShowEditModal(false); setEditingTable(null) }, updateMutation.isPending, 'Update')}
-          </View>
-        </View>
-      </Modal>
+          <Modal visible={showEditModal} animationType="slide" transparent>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>Edit Table</Text>
+                {renderForm(editForm, setEditForm, handleEditSubmit, () => { setShowEditModal(false); setEditingTable(null) }, updateMutation.isPending, 'Update', 'edit')}
+              </View>
+            </View>
+          </Modal>
+        </>
+      )}
 
       {selectedTable && (
         <ReservationModal
@@ -469,69 +508,71 @@ export default function Tables() {
 }
 
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: C.cream },
-  content:     { padding: 16, paddingTop: 52, paddingBottom: 32 },
-  centered:    { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
-  loadingText: { fontSize: 14, color: C.clay },
-  errorTitle:  { fontSize: 16, fontWeight: '700', color: C.terracotta },
-  errorSub:    { fontSize: 13, color: C.clay },
+  container:   { flex: 1, backgroundColor: C.black },
+  content:     { padding: 20, paddingTop: 56, paddingBottom: 32 },
+  centered:    { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, backgroundColor: C.black },
+  loadingText: { fontSize: 14, color: C.muted, marginTop: 8 },
+  errorTitle:  { fontSize: 16, fontWeight: '700', color: C.error },
+  errorSub:    { fontSize: 13, color: C.dim },
+
+  blob1: { position: 'absolute', top: -80, left: '20%', width: 260, height: 260, borderRadius: 130, backgroundColor: C.orange, opacity: 0.10 },
+  blob2: { position: 'absolute', top: -40, left: '45%', width: 180, height: 180, borderRadius: 90,  backgroundColor: C.orange, opacity: 0.16 },
 
   header:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  title:         { fontSize: 22, fontWeight: '900', color: C.espresso },
-  subtitle:      { fontSize: 13, color: C.clay, marginTop: 3 },
+  title:         { fontSize: 22, fontWeight: '900', color: C.white, letterSpacing: 0.3 },
+  subtitle:      { fontSize: 13, color: C.muted, marginTop: 3 },
+  addButton:     { flexDirection: 'row', alignItems: 'center', backgroundColor: C.orange, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 9, gap: 6 },
+  addButtonText: { color: C.white, fontWeight: '700', fontSize: 13 },
 
-  addButton:     { flexDirection: 'row', alignItems: 'center', backgroundColor: C.brass, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 9, gap: 6 },
-  addButtonText: { color: C.cream, fontWeight: '700', fontSize: 13 },
-
-  successBanner:   { flexDirection: 'row', alignItems: 'center', backgroundColor: C.sageLight, borderWidth: 1, borderColor: C.sageBorder, borderRadius: radius.md, padding: 12, marginBottom: 16, gap: 8 },
-  successText:     { color: C.sage, fontSize: 13, fontWeight: '600' },
-  errorBanner:     { flexDirection: 'row', alignItems: 'center', backgroundColor: C.tcLight, borderWidth: 1, borderColor: C.tcBorder, borderRadius: radius.md, padding: 12, marginBottom: 16, gap: 8 },
-  errorBannerText: { color: C.terracotta, fontSize: 13, fontWeight: '600' },
+  successBanner:   { flexDirection: 'row', alignItems: 'center', backgroundColor: C.successBg, borderWidth: 1, borderColor: C.success, borderRadius: 12, padding: 12, marginBottom: 16, gap: 8 },
+  successText:     { color: C.success, fontSize: 13, fontWeight: '600' },
+  errorBanner:     { flexDirection: 'row', alignItems: 'center', backgroundColor: C.errorBg, borderWidth: 1, borderColor: C.error, borderRadius: 12, padding: 12, marginBottom: 16, gap: 8 },
+  errorBannerText: { color: C.error, fontSize: 13, fontWeight: '600' },
 
   sectionHeader:    { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 14 },
-  sectionIconBadge: { width: 28, height: 28, borderRadius: radius.sm, backgroundColor: C.brassLight, borderWidth: 1, borderColor: C.brassBorder, alignItems: 'center', justifyContent: 'center' },
-  sectionTitle:     { fontSize: 11, fontWeight: '800', color: C.clay, textTransform: 'uppercase', letterSpacing: 1.4 },
+  sectionIconBadge: { width: 28, height: 28, borderRadius: radius.sm, backgroundColor: C.orangeTint, borderWidth: 1, borderColor: C.orangeDim, alignItems: 'center', justifyContent: 'center' },
+  sectionTitle:     { fontSize: 11, fontWeight: '700', color: C.muted, textTransform: 'uppercase', letterSpacing: 1.1 },
 
   emptyState:    { alignItems: 'center', paddingVertical: 56, gap: 12 },
-  emptyTitle:    { fontSize: 17, fontWeight: '800', color: C.espresso },
-  emptySubtitle: { fontSize: 13, color: C.clay },
+  emptyTitle:    { fontSize: 17, fontWeight: '800', color: C.offWhite },
+  emptySubtitle: { fontSize: 13, color: C.muted },
 
-  card:         { backgroundColor: C.parchment, borderRadius: radius.md, borderWidth: 1.5, padding: 14, marginBottom: 12, gap: 10 },
+  card:         { backgroundColor: C.card, borderRadius: radius.lg, borderWidth: 1, borderColor: C.border, padding: 16, marginBottom: 12, gap: 10 },
   cardHeader:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  statusDot:    { width: 10, height: 10, borderRadius: 5 },
-  cardTitle:    { fontSize: 15, fontWeight: '800', color: C.espresso },
-  cardSub:      { fontSize: 11, color: C.clay, marginTop: 2 },
+  statusDot:    { width: 7, height: 7, borderRadius: 4 },
+  cardTitle:    { fontSize: 15, fontWeight: '800', color: C.white },
+  cardSub:      { fontSize: 11, color: C.muted, marginTop: 2 },
   cardActions:  { flexDirection: 'row', gap: 6 },
 
-  iconButton:       { padding: 7, borderRadius: radius.xs, backgroundColor: C.brassLight, borderWidth: 1, borderColor: C.brassBorder },
-  iconButtonDelete: { backgroundColor: C.tcLight, borderColor: C.tcBorder },
+  iconButtonEdit:   { padding: 8, borderRadius: 10, backgroundColor: C.orangeTint, borderWidth: 1, borderColor: C.orangeDim },
+  iconButtonDelete: { padding: 8, borderRadius: 10, backgroundColor: C.errorBg,    borderWidth: 1, borderColor: '#7A1010' },
 
-  statusBadge: { alignSelf: 'flex-start', borderRadius: radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4 },
-  statusText:  { fontSize: 10, fontWeight: '700' },
+  statusBadge:    { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', borderRadius: radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4 },
+  statusBadgeDot: { width: 6, height: 6, borderRadius: 3 },
+  statusText:     { fontSize: 10, fontWeight: '700' },
 
   pillRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pill:           { backgroundColor: C.cream, borderWidth: 1.5, borderColor: C.vellum, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
-  pillActive:     { backgroundColor: C.roast, borderColor: C.roast },
-  pillText:       { fontSize: 12, fontWeight: '600', color: C.clay },
-  pillTextActive: { color: C.cream },
+  pill:           { backgroundColor: C.graphite, borderWidth: 1, borderColor: C.border, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 8 },
+  pillActive:     { backgroundColor: C.orange, borderColor: C.orange },
+  pillText:       { fontSize: 12, fontWeight: '600', color: C.dim },
+  pillTextActive: { color: C.white, fontWeight: '700' },
 
-  orderBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: C.roast, borderRadius: radius.md, paddingVertical: 10, marginTop: 4 },
-  orderBtnText: { color: C.cream, fontSize: 13, fontWeight: '700' },
+  orderBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: C.orange, borderRadius: radius.md, height: 44, marginTop: 4 },
+  orderBtnText: { color: C.white, fontSize: 13, fontWeight: '800' },
 
-  label: { fontSize: 11, fontWeight: '800', color: C.clay, marginBottom: 6, marginTop: 14, textTransform: 'uppercase', letterSpacing: 1.2 },
-  input: { borderWidth: 1.5, borderColor: C.vellum, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: C.espresso, backgroundColor: C.cream },
+  label:        { fontSize: 11, fontWeight: '700', color: C.muted, marginBottom: 6, marginTop: 14, textTransform: 'uppercase', letterSpacing: 1.1 },
+  input:        { backgroundColor: C.graphite, borderWidth: 1, borderColor: C.border, borderRadius: radius.md, paddingHorizontal: 16, height: 52, fontSize: 15, color: C.white },
+  inputFocused: { borderColor: C.orange, backgroundColor: C.steel },
 
-  modalOverlay:   { flex: 1, backgroundColor: 'rgba(28,16,8,0.6)', justifyContent: 'flex-end' },
-  modalContainer: { backgroundColor: C.parchment, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, borderWidth: 1.5, borderColor: C.vellum, padding: 24, maxHeight: '90%' },
-  modalTitle:     { fontSize: 16, fontWeight: '900', color: C.espresso, letterSpacing: 0.3, marginBottom: 20 },
+  modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
+  modalContainer: { backgroundColor: C.charcoal, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: C.border, padding: 24, maxHeight: '90%' },
+  modalTitle:     { fontSize: 16, fontWeight: '900', color: C.white, letterSpacing: 0.3, marginBottom: 20 },
 
   modalButtons:         { flexDirection: 'row', gap: 12, marginTop: 24, marginBottom: 8 },
-  cancelButton:         { flex: 1, borderWidth: 1.5, borderColor: C.vellum, borderRadius: radius.pill, paddingVertical: 12, alignItems: 'center', backgroundColor: C.cream },
-  cancelButtonText:     { fontSize: 14, color: C.clay, fontWeight: '700' },
-  submitButton:         { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.brass, borderRadius: radius.pill, paddingVertical: 12 },
-  submitButtonDisabled: { opacity: 0.5 },
-  submitButtonText:     { fontSize: 14, color: C.cream, fontWeight: '800' },
+  cancelButton:         { flex: 1, backgroundColor: C.graphite, borderWidth: 1, borderColor: C.border, borderRadius: radius.md, height: 52, alignItems: 'center', justifyContent: 'center' },
+  cancelButtonText:     { fontSize: 14, color: C.offWhite, fontWeight: '600' },
+  submitButton:         { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.orange, borderRadius: radius.md, height: 54 },
+  submitButtonDisabled: { opacity: 0.55 },
+  submitButtonText:     { fontSize: 16, color: C.white, fontWeight: '800' },
 })
-
-

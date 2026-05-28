@@ -12,26 +12,30 @@ import QRCode from 'react-native-qrcode-svg'
 import type { PaymentCalculatorProps, PaymentMethod, SplitEntry } from './types/payment'
 
 const C = {
-    espresso:    '#1C1008',
-    clay:        '#7A4528',
-    latte:       '#C8956A',
-    cream:       '#FDF6EC',
-    parchment:   '#F5E9D4',
-    vellum:      '#EDD9BC',
-    brass:       '#B5822A',
-    brassLight:  '#F7EDD8',
-    brassBorder: '#DEC07A',
-    sage:        '#3B6E52',
-    sageLight:   '#EBF4EE',
-    sageBorder:  '#9FCFB4',
-    terracotta:  '#A03020',
-    tcLight:     '#FAECEA',
-    tcBorder:    '#E8A898',
+  black:      '#0A0A0A',
+  charcoal:   '#1A1A1A',
+  graphite:   '#2C2C2C',
+  steel:      '#3D3D3D',
+  muted:      '#6B6B6B',
+  border:     '#2E2E2E',
+  card:       '#1E1E1E',
+  orange:     '#FF6B2C',
+  orangeTint: '#2A1A10',
+  orangeDim:  '#7A3010',
+  white:      '#FFFFFF',
+  offWhite:   '#F0F0F0',
+  dim:        '#A0A0A0',
+  success:    '#22C55E',
+  successBg:  '#0D2818',
+  successBorder: '#1A4A2A',
+  error:      '#EF4444',
+  errorBg:    '#2A0A0A',
+  errorBorder:'#7A1010',
 }
+
 const radius = { xs: 6, sm: 10, md: 14, lg: 20, pill: 100 }
 
 const KEYS = ['7','8','9','4','5','6','1','2','3','.','0','⌫']
-
 const fmt = (n: number, sym = 'NPR') => `${sym} ${Number(n).toFixed(2)}`
 
 type Screen = 'calculator' | 'qr' | 'split'
@@ -79,12 +83,13 @@ export default function PaymentCalculator({
     const removeSplit = (id: number) => { if (splits.length > 2) setSplits(p => p.filter(s => s.id !== id)) }
     const updateSplit = (id: number, val: string) => setSplits(p => p.map(s => s.id === id ? { ...s, amount: val } : s))
 
+    // ── QR Screen ────────────────────────────────────────────
     if (screen === 'qr') {
         const qrValue = esewaQrUrl || `https://rc-epay.esewa.com.np/epay/main?amt=${totalWithTax}&scd=EPAYTEST`
         return (
             <ScrollView contentContainerStyle={s.qrScreen} showsVerticalScrollIndicator={false}>
                 <TouchableOpacity style={s.backRow} onPress={() => setScreen('calculator')}>
-                    <ArrowLeft size={16} color={C.clay} />
+                    <ArrowLeft size={16} color={C.orange} />
                     <Text style={s.backText}>Back</Text>
                 </TouchableOpacity>
 
@@ -95,8 +100,8 @@ export default function PaymentCalculator({
                     <QRCode
                         value={qrValue}
                         size={220}
-                        color={C.espresso}
-                        backgroundColor={C.cream}
+                        color={C.white}
+                        backgroundColor={C.graphite}
                     />
                 </View>
 
@@ -112,12 +117,13 @@ export default function PaymentCalculator({
         )
     }
 
+    // ── Split Screen ─────────────────────────────────────────
     if (screen === 'split') {
         return (
             <ScrollView contentContainerStyle={s.padded} showsVerticalScrollIndicator={false}>
                 <View style={s.splitHeader}>
                     <TouchableOpacity onPress={() => setScreen('calculator')}>
-                        <ArrowLeft size={16} color={C.clay} />
+                        <ArrowLeft size={16} color={C.orange} />
                     </TouchableOpacity>
                     <Text style={s.splitTitle}>Split Bill</Text>
                 </View>
@@ -135,12 +141,12 @@ export default function PaymentCalculator({
                             value={sp.amount}
                             onChangeText={val => updateSplit(sp.id, val)}
                             placeholder="0.00"
-                            placeholderTextColor={C.latte}
+                            placeholderTextColor={C.muted}
                             keyboardType="decimal-pad"
                         />
                         {splits.length > 2 && (
                             <TouchableOpacity style={s.splitRemove} onPress={() => removeSplit(sp.id)}>
-                                <X size={14} color={C.terracotta} />
+                                <X size={14} color={C.error} />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -148,7 +154,7 @@ export default function PaymentCalculator({
 
                 <View style={s.splitRemainingRow}>
                     <Text style={s.splitRemainingLabel}>Remaining</Text>
-                    <Text style={[s.splitRemainingValue, splitLeft === 0 && { color: C.sage }]}>
+                    <Text style={[s.splitRemainingValue, splitLeft === 0 && { color: C.success }]}>
                         {fmt(splitLeft, symbol)}
                     </Text>
                 </View>
@@ -168,25 +174,26 @@ export default function PaymentCalculator({
         )
     }
 
+    // ── Calculator Screen ────────────────────────────────────
     return (
         <ScrollView contentContainerStyle={s.padded} showsVerticalScrollIndicator={false}>
             <View style={s.header}>
                 <Text style={s.headerTitle}>Charge</Text>
                 <TouchableOpacity style={s.closeBtn} onPress={onClose}>
-                    <X size={18} color={C.clay} />
+                    <X size={18} color={C.dim} />
                 </TouchableOpacity>
             </View>
 
+            {/* Display */}
             <View style={s.displayBox}>
                 <Text style={s.totalDue}>Due: {fmt(totalWithTax, symbol)}</Text>
-                <Text style={s.displayValue}>
-                    {symbol} {input || '0.00'}
-                </Text>
+                <Text style={s.displayValue}>{symbol} {input || '0.00'}</Text>
                 {numericValue > 0 && (
                     <Text style={s.changeText}>Change: {fmt(changeDue, symbol)}</Text>
                 )}
             </View>
 
+            {/* Method selector */}
             <View style={s.methodRow}>
                 {(['cash', 'esewa'] as PaymentMethod[]).map(m => (
                     <TouchableOpacity
@@ -201,6 +208,7 @@ export default function PaymentCalculator({
                 ))}
             </View>
 
+            {/* Keypad */}
             {method === 'cash' && (
                 <View style={s.keypad}>
                     {KEYS.map(k => (
@@ -224,14 +232,11 @@ export default function PaymentCalculator({
                 </View>
             )}
 
-            <TouchableOpacity
-                style={s.notesRow}
-                onPress={() => setShowNotes(p => !p)}
-                activeOpacity={0.7}
-            >
-                <FileText size={15} color={C.clay} />
+            {/* Notes */}
+            <TouchableOpacity style={s.notesRow} onPress={() => setShowNotes(p => !p)} activeOpacity={0.7}>
+                <FileText size={15} color={C.orange} />
                 <Text style={s.notesLabel}>{notes || 'Add a note...'}</Text>
-                <ChevronRight size={15} color={C.latte} />
+                <ChevronRight size={15} color={C.muted} />
             </TouchableOpacity>
 
             {showNotes && (
@@ -240,13 +245,14 @@ export default function PaymentCalculator({
                     value={notes}
                     onChangeText={setNotes}
                     placeholder="Write a note for this order..."
-                    placeholderTextColor={C.latte}
+                    placeholderTextColor={C.muted}
                     multiline
                     numberOfLines={2}
                     autoFocus
                 />
             )}
 
+            {/* Actions */}
             <View style={s.actionRow}>
                 <TouchableOpacity style={s.splitBtn} onPress={() => setScreen('split')}>
                     <Text style={s.splitBtnText}>Split</Text>
@@ -263,129 +269,141 @@ export default function PaymentCalculator({
 
 const s = StyleSheet.create({
     padded: { padding: 20, paddingBottom: 32 },
+
+    // ── Header
     header: {
         flexDirection: 'row', alignItems: 'center',
         justifyContent: 'space-between', marginBottom: 16,
     },
-    headerTitle: { fontSize: 18, fontWeight: '900', color: C.espresso },
+    headerTitle: { fontSize: 20, fontWeight: '900', color: C.white },
     closeBtn: {
         padding: 6, borderRadius: radius.xs,
-        backgroundColor: C.cream, borderWidth: 1, borderColor: C.vellum,
+        backgroundColor: C.graphite, borderWidth: 1, borderColor: C.border,
     },
+
+    // ── Display
     displayBox: {
-        backgroundColor: C.espresso, borderRadius: radius.md,
+        backgroundColor: C.charcoal, borderRadius: radius.md,
+        borderWidth: 1, borderColor: C.border,
         padding: 20, alignItems: 'flex-end', marginBottom: 14, gap: 4,
     },
-    totalDue:     { fontSize: 12, color: C.latte, fontWeight: '600' },
-    displayValue: { fontSize: 36, fontWeight: '900', color: C.cream, letterSpacing: 1 },
-    changeText:   { fontSize: 13, color: C.sage, fontWeight: '700' },
-    methodRow:    { flexDirection: 'row', gap: 8, marginBottom: 14 },
+    totalDue:     { fontSize: 12, color: C.muted, fontWeight: '600' },
+    displayValue: { fontSize: 36, fontWeight: '900', color: C.orange, letterSpacing: 1 },
+    changeText:   { fontSize: 13, color: C.success, fontWeight: '700' },
+
+    // ── Method
+    methodRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
     methodBtn: {
-        flex: 1, alignItems: 'center', paddingVertical: 9,
-        borderRadius: radius.pill, borderWidth: 1.5,
-        borderColor: C.vellum, backgroundColor: C.cream,
+        flex: 1, alignItems: 'center', paddingVertical: 10,
+        borderRadius: radius.pill, borderWidth: 1,
+        borderColor: C.border, backgroundColor: C.graphite,
     },
-    methodActive:     { backgroundColor: C.sageLight, borderColor: C.sageBorder },
-    methodText:       { fontSize: 13, fontWeight: '700', color: C.clay },
-    methodTextActive: { color: C.sage },
+    methodActive:     { backgroundColor: C.successBg, borderColor: C.successBorder },
+    methodText:       { fontSize: 13, fontWeight: '700', color: C.dim },
+    methodTextActive: { color: C.success },
+
+    // ── Keypad
     keypad: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
     key: {
         width: '30%', paddingVertical: 16, alignItems: 'center',
-        borderRadius: radius.md, backgroundColor: C.cream,
-        borderWidth: 1.5, borderColor: C.vellum, flexGrow: 1,
+        borderRadius: radius.md, backgroundColor: C.graphite,
+        borderWidth: 1, borderColor: C.border, flexGrow: 1,
     },
-    keyDelete:     { backgroundColor: C.tcLight, borderColor: C.tcBorder },
-    keyText:       { fontSize: 20, fontWeight: '700', color: C.espresso },
-    keyDeleteText: { color: C.terracotta },
+    keyDelete:     { backgroundColor: C.errorBg, borderColor: C.errorBorder },
+    keyText:       { fontSize: 20, fontWeight: '700', color: C.offWhite },
+    keyDeleteText: { color: C.error },
+
+    // ── eSewa hint
     esewaHint: {
-        backgroundColor: C.sageLight, borderRadius: radius.md,
-        borderWidth: 1.5, borderColor: C.sageBorder,
+        backgroundColor: C.successBg, borderRadius: radius.md,
+        borderWidth: 1, borderColor: C.successBorder,
         padding: 14, alignItems: 'center', marginBottom: 14,
     },
-    esewaHintText: { fontSize: 13, color: C.sage, fontWeight: '600', textAlign: 'center' },
+    esewaHintText: { fontSize: 13, color: C.success, fontWeight: '600', textAlign: 'center' },
+
+    // ── Notes
     notesRow: {
         flexDirection: 'row', alignItems: 'center', gap: 8,
-        backgroundColor: C.cream, borderRadius: radius.md,
-        borderWidth: 1.5, borderColor: C.vellum, padding: 12, marginBottom: 8,
+        backgroundColor: C.graphite, borderRadius: radius.md,
+        borderWidth: 1, borderColor: C.border, padding: 12, marginBottom: 8,
     },
-    notesLabel: { flex: 1, fontSize: 13, color: C.clay, fontWeight: '500' },
+    notesLabel: { flex: 1, fontSize: 13, color: C.dim, fontWeight: '500' },
     notesInput: {
-        borderWidth: 1.5, borderColor: C.brassBorder, borderRadius: radius.md,
-        backgroundColor: C.brassLight, paddingHorizontal: 14, paddingVertical: 10,
-        fontSize: 13, color: C.espresso, height: 72,
+        borderWidth: 1, borderColor: C.border, borderRadius: radius.md,
+        backgroundColor: C.graphite, paddingHorizontal: 14, paddingVertical: 10,
+        fontSize: 13, color: C.white, height: 72,
         textAlignVertical: 'top', marginBottom: 10,
     },
-    actionRow:    { flexDirection: 'row', gap: 10, marginTop: 4 },
+
+    // ── Actions
+    actionRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
     splitBtn: {
         paddingVertical: 15, paddingHorizontal: 24,
-        borderRadius: radius.pill, borderWidth: 1.5,
-        borderColor: C.brassBorder, backgroundColor: C.brassLight, alignItems: 'center',
+        borderRadius: radius.pill, borderWidth: 1,
+        borderColor: C.border, backgroundColor: C.graphite, alignItems: 'center',
     },
-    splitBtnText:      { fontSize: 15, fontWeight: '800', color: C.brass },
+    splitBtnText:      { fontSize: 15, fontWeight: '800', color: C.offWhite },
     chargeBtn: {
-        flex: 1, backgroundColor: C.sage,
+        flex: 1, backgroundColor: C.orange,
         borderRadius: radius.pill, paddingVertical: 15, alignItems: 'center',
     },
     chargeBtnDisabled: { opacity: 0.4 },
-    chargeBtnText:     { fontSize: 15, fontWeight: '800', color: C.cream },
+    chargeBtnText:     { fontSize: 15, fontWeight: '800', color: C.white },
 
-    qrScreen: { padding: 24, alignItems: 'center', paddingBottom: 40 },
-    backRow:  { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginBottom: 20 },
-    backText: { fontSize: 14, fontWeight: '700', color: C.clay },
-    qrTitle:    { fontSize: 20, fontWeight: '900', color: C.espresso, marginBottom: 4 },
-    qrSubtitle: { fontSize: 13, color: C.clay, marginBottom: 24 },
+    // ── QR Screen
+    qrScreen:  { padding: 24, alignItems: 'center', paddingBottom: 40 },
+    backRow:   { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginBottom: 20 },
+    backText:  { fontSize: 14, fontWeight: '700', color: C.orange },
+    qrTitle:    { fontSize: 20, fontWeight: '900', color: C.white, marginBottom: 4 },
+    qrSubtitle: { fontSize: 13, color: C.muted, marginBottom: 24 },
     qrBox: {
-        backgroundColor: C.cream, borderRadius: radius.lg,
-        borderWidth: 2, borderColor: C.vellum,
+        backgroundColor: C.graphite, borderRadius: radius.lg,
+        borderWidth: 1, borderColor: C.border,
         padding: 24, marginBottom: 20,
-        shadowColor: C.espresso, shadowOpacity: 0.08,
-        shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
-        elevation: 4,
     },
     qrAmountBox: {
-        backgroundColor: C.espresso, borderRadius: radius.md,
+        backgroundColor: C.orangeTint, borderRadius: radius.md,
+        borderWidth: 1, borderColor: C.orangeDim,
         paddingHorizontal: 32, paddingVertical: 14,
         alignItems: 'center', marginBottom: 16, width: '100%',
     },
-    qrAmountLabel: { fontSize: 11, color: C.latte, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-    qrAmountValue: { fontSize: 28, fontWeight: '900', color: C.cream, marginTop: 4 },
-    qrInstruction: {
-        fontSize: 13, color: C.clay, textAlign: 'center',
-        fontWeight: '500', lineHeight: 20,
-    },
+    qrAmountLabel: { fontSize: 11, color: C.muted, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+    qrAmountValue: { fontSize: 28, fontWeight: '900', color: C.orange, marginTop: 4 },
+    qrInstruction: { fontSize: 13, color: C.dim, textAlign: 'center', fontWeight: '500', lineHeight: 20 },
 
-    splitHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
-    splitTitle:  { fontSize: 16, fontWeight: '900', color: C.espresso },
+    // ── Split Screen
+    splitHeader:    { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+    splitTitle:     { fontSize: 18, fontWeight: '900', color: C.white },
     splitTotalBox: {
-        backgroundColor: C.cream, borderRadius: radius.md,
-        borderWidth: 1, borderColor: C.vellum,
+        backgroundColor: C.card, borderRadius: radius.md,
+        borderWidth: 1, borderColor: C.border,
         padding: 14, marginBottom: 14,
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     },
-    splitTotalLabel: { fontSize: 13, color: C.clay, fontWeight: '600' },
-    splitTotalValue: { fontSize: 18, fontWeight: '900', color: C.espresso },
+    splitTotalLabel: { fontSize: 13, color: C.muted, fontWeight: '600' },
+    splitTotalValue: { fontSize: 18, fontWeight: '900', color: C.orange },
     splitRow:        { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-    splitPersonLabel:{ fontSize: 12, fontWeight: '700', color: C.clay, width: 64 },
+    splitPersonLabel:{ fontSize: 12, fontWeight: '700', color: C.dim, width: 64 },
     splitInput: {
-        flex: 1, borderWidth: 1.5, borderColor: C.vellum, borderRadius: radius.md,
+        flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: radius.md,
         paddingHorizontal: 12, paddingVertical: 9,
-        fontSize: 14, color: C.espresso, backgroundColor: C.cream,
+        fontSize: 14, color: C.white, backgroundColor: C.graphite,
     },
     splitRemove: {
         padding: 7, borderRadius: radius.xs,
-        backgroundColor: C.tcLight, borderWidth: 1, borderColor: C.tcBorder,
+        backgroundColor: C.errorBg, borderWidth: 1, borderColor: C.errorBorder,
     },
     splitRemainingRow: {
         flexDirection: 'row', justifyContent: 'space-between',
-        borderTopWidth: 1, borderTopColor: C.vellum,
+        borderTopWidth: 1, borderTopColor: C.border,
         paddingTop: 10, marginTop: 4, marginBottom: 14,
     },
-    splitRemainingLabel: { fontSize: 13, fontWeight: '700', color: C.clay },
-    splitRemainingValue: { fontSize: 14, fontWeight: '900', color: C.terracotta },
+    splitRemainingLabel: { fontSize: 13, fontWeight: '700', color: C.dim },
+    splitRemainingValue: { fontSize: 14, fontWeight: '900', color: C.error },
     addPersonBtn: {
         alignItems: 'center', paddingVertical: 10, borderRadius: radius.md,
-        borderWidth: 1.5, borderColor: C.brassBorder,
-        backgroundColor: C.brassLight, marginBottom: 14,
+        borderWidth: 1, borderColor: C.border,
+        backgroundColor: C.graphite, marginBottom: 14,
     },
-    addPersonText: { fontSize: 13, fontWeight: '700', color: C.brass },
+    addPersonText: { fontSize: 13, fontWeight: '700', color: C.orange },
 })

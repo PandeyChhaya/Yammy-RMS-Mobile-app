@@ -2,15 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Bell, CheckCircle, Clock, X } from 'lucide-react-native'
 import { useEffect, useRef, useState } from 'react'
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import { io as socketIO } from 'socket.io-client'
 
-const SOCKET_URL = 'http://192.168.1.4:5000'
+const SOCKET_URL = 'http://192.168.1.71:5000'
 
 const C = {
   espresso:    '#1C1008',

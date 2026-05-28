@@ -11,16 +11,22 @@ import { TableData } from '../types/tables'
 import TableCard from './tableCard'
 
 const C = {
-  espresso:  '#1C1008',
-  clay:      '#7A4528',
-  latte:     '#C8956A',
-  cream:     '#FDF6EC',
-  parchment: '#F5E9D4',
-  vellum:    '#EDD9BC',
-  brass:     '#B5822A',
-  sage:      '#3B6E52',
-  sageLight: '#EBF4EE',
-  sageBorder:'#9FCFB4',
+  background: '#0A0A0A',
+  surface: '#1A1A1A',
+  surfaceHighlight: '#2C2C2C',
+  primary: '#FF6B2C',
+  primaryDim: '#3D1C00',
+  textMain: '#FFFFFF',
+  textMuted: '#9CA3AF',
+  border: '#2C2C2C',
+  danger: '#EF4444',
+  dangerDim: '#450A0A',
+  success: '#10B981',
+  successDim: '#064E3B',
+  warning: '#F59E0B',
+  warningDim: '#3A2500',
+  info: '#3B82F6',
+  infoDim: '#1E1B4B',
 }
 const radius = { xs: 6, sm: 10, md: 14, pill: 100 }
 
@@ -71,16 +77,16 @@ export default function TablesSection({
 
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Table2 size={16} color={C.clay} />
+          <Table2 size={16} color={C.textMuted} />
           <Text style={styles.headerTitle}>Tables</Text>
-          {loading && <ActivityIndicator size="small" color={C.latte} />}
+          {loading && <ActivityIndicator size="small" color={C.primary} />}
         </View>
 
         <TouchableOpacity
           style={[styles.directSaleButton, isDirectSale && styles.directSaleButtonActive]}
           onPress={() => onTableSelect(null)}
         >
-          <Receipt size={13} color={isDirectSale ? C.cream : C.clay} />
+          <Receipt size={13} color={isDirectSale ? C.textMain : C.textMuted} />
           <Text style={[styles.directSaleText, isDirectSale && styles.directSaleTextActive]}>
             Direct Sale
           </Text>
@@ -89,7 +95,7 @@ export default function TablesSection({
 
       {tables.length === 0 ? (
         <View style={styles.emptyState}>
-          <Table2 size={24} color={C.vellum} />
+          <Table2 size={24} color={C.border} />
           <Text style={styles.emptyText}>No tables configured</Text>
         </View>
       ) : (
@@ -115,9 +121,9 @@ export default function TablesSection({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: C.parchment,
+    backgroundColor: C.surface,
     borderBottomWidth: 1.5,
-    borderBottomColor: C.vellum,
+    borderBottomColor: C.border,
   },
 
   header: {
@@ -127,7 +133,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: C.vellum,
+    borderBottomColor: C.border,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -137,7 +143,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: C.espresso,
+    color: C.textMain,
   },
 
   directSaleButton: {
@@ -147,21 +153,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: radius.pill,
-    backgroundColor: C.cream,
+    backgroundColor: C.background,
     borderWidth: 1.5,
-    borderColor: C.vellum,
+    borderColor: C.border,
   },
   directSaleButtonActive: {
-    backgroundColor: C.sage,
-    borderColor: C.sage,
+    backgroundColor: C.primary,
+    borderColor: C.primary,
   },
   directSaleText: {
     fontSize: 12,
     fontWeight: '700',
-    color: C.clay,
+    color: C.textMuted,
   },
   directSaleTextActive: {
-    color: C.cream,
+    color: C.textMain,
   },
 
   scrollContent: {
@@ -180,6 +186,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 12,
-    color: C.latte,
+    color: C.textMuted,
   },
 })

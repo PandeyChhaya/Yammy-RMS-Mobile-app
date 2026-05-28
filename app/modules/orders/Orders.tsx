@@ -1,7 +1,8 @@
 import { Order, OrderItem, OrderStatus } from '@/shared/types/orders'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle, ChefHat, Clock, Package, Trash2, Utensils } from 'lucide-react-native'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
     ActivityIndicator,
     Alert,
@@ -15,31 +16,47 @@ import {
 import { ordersService } from './services/orderService'
 
 const C = {
-  espresso:    '#1C1008',
-  roast:       '#3D2010',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  brassGlow:   '#B5822A40',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-  onDark:      '#FDF6EC',
+  black:      '#0A0A0A',
+  charcoal:   '#1A1A1A',
+  graphite:   '#2C2C2C',
+  steel:      '#3D3D3D',
+  muted:      '#6B6B6B',
+  border:     '#2E2E2E',
+  card:       '#1E1E1E',
+  orange:     '#FF6B2C',
+  orangeTint: '#2A1A10',
+  orangeDim:  '#7A3010',
+  white:      '#FFFFFF',
+  offWhite:   '#F0F0F0',
+  dim:        '#A0A0A0',
+  success:    '#22C55E',
+  successBg:  '#0D2818',
+  error:      '#EF4444',
+  errorBg:    '#2A0A0A',
+  pending:    '#F59E0B',
+  pendingBg:  '#1C1500',
+  cooking:    '#FF6B2C',
+  cookingBg:  '#2A1A10',
+  ready:      '#22C55E',
+  readyBg:    '#0D2818',
+  done:       '#6B6B6B',
+  doneBg:     '#1A1A1A',
 }
 
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
 export default function Orders() {
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+    const [canDelete, setCanDelete]         = useState(false)
+    const [canAdvance, setCanAdvance]       = useState(false)
     const queryClient = useQueryClient()
+
+    useEffect(() => {
+        AsyncStorage.getItem('@userRole').then(role => {
+            setCanDelete(role === 'Admin')
+            setCanAdvance(role === 'Admin' || role === 'Kitchen Staff' || role === 'Cashier')
+        })
+    }, [])
 
     const { data: orders = [], isLoading } = useQuery<Order[]>({
         queryKey: ['all-orders'],
@@ -68,21 +85,21 @@ export default function Orders() {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'pending':    return C.brass
-            case 'in_kitchen': return C.roast
-            case 'ready':      return C.sage
-            case 'completed':  return C.clay
-            default:           return C.latte
+            case 'pending':    return C.pending
+            case 'in_kitchen': return C.cooking
+            case 'ready':      return C.ready
+            case 'completed':  return C.done
+            default:           return C.muted
         }
     }
 
-    const getStatusBgColor = (status: string) => {
+    const getStatusBg = (status: string) => {
         switch (status) {
-            case 'pending':    return C.brassLight
-            case 'in_kitchen': return C.parchment
-            case 'ready':      return C.sageLight
-            case 'completed':  return C.vellum
-            default:           return C.cream
+            case 'pending':    return C.pendingBg
+            case 'in_kitchen': return C.cookingBg
+            case 'ready':      return C.readyBg
+            case 'completed':  return C.doneBg
+            default:           return C.graphite
         }
     }
 
@@ -112,9 +129,9 @@ export default function Orders() {
         return (
             <View style={styles.center}>
                 <View style={styles.loadingIcon}>
-                    <Utensils size={26} color={C.brass} />
+                    <Utensils size={26} color={C.orange} />
                 </View>
-                <ActivityIndicator size="large" color={C.brass} style={{ marginTop: 20 }} />
+                <ActivityIndicator size="large" color={C.orange} style={{ marginTop: 20 }} />
                 <Text style={styles.loadingTitle}>Loading Orders…</Text>
             </View>
         )
@@ -124,24 +141,22 @@ export default function Orders() {
         <View style={styles.container}>
 
             <View style={styles.header}>
-                <View style={styles.headerTop}>
-                    <View style={styles.brand}>
-                        <View style={styles.logoBadge}>
-                            <ChefHat size={18} color={C.cream} />
-                        </View>
-                        <View>
-                            <Text style={styles.headerTitle}>Kitchen Orders</Text>
-                            <Text style={styles.headerSub}>Live order management</Text>
-                        </View>
+                <View style={styles.brand}>
+                    <View style={styles.logoBadge}>
+                        <ChefHat size={18} color={C.white} />
+                    </View>
+                    <View>
+                        <Text style={styles.headerTitle}>Kitchen Orders</Text>
+                        <Text style={styles.headerSub}>Live order management</Text>
                     </View>
                 </View>
 
                 <View style={styles.statsRow}>
                     {[
-                        { num: activeOrders.filter((o: Order) => o.order_status === 'pending').length,    label: 'Pending', color: C.brass },
-                        { num: activeOrders.filter((o: Order) => o.order_status === 'in_kitchen').length, label: 'Cooking', color: C.latte },
-                        { num: activeOrders.filter((o: Order) => o.order_status === 'ready').length,      label: 'Ready',   color: C.sage  },
-                        { num: completedOrders.length,                                                    label: 'Done',    color: C.clay  },
+                        { num: activeOrders.filter((o: Order) => o.order_status === 'pending').length,    label: 'Pending', color: C.pending },
+                        { num: activeOrders.filter((o: Order) => o.order_status === 'in_kitchen').length, label: 'Cooking', color: C.cooking },
+                        { num: activeOrders.filter((o: Order) => o.order_status === 'ready').length,      label: 'Ready',   color: C.ready  },
+                        { num: completedOrders.length,                                                    label: 'Done',    color: C.done   },
                     ].map(({ num, label, color }) => (
                         <View key={label} style={styles.statCard}>
                             <Text style={[styles.statNumber, { color }]}>{num}</Text>
@@ -163,7 +178,7 @@ export default function Orders() {
                 {activeOrders.length === 0 ? (
                     <View style={styles.empty}>
                         <View style={styles.emptyIcon}>
-                            <Package size={32} color={C.latte} />
+                            <Package size={32} color={C.muted} />
                         </View>
                         <Text style={styles.emptyTitle}>No active orders</Text>
                         <Text style={styles.emptySub}>New orders will appear here</Text>
@@ -188,7 +203,7 @@ export default function Orders() {
                                 <View style={styles.orderHeader}>
                                     <View style={styles.orderHeaderLeft}>
                                         <Text style={styles.orderNumber}>#{order.order_id}</Text>
-                                        <View style={[styles.statusBadge, { backgroundColor: getStatusBgColor(order.order_status) }]}>
+                                        <View style={[styles.statusBadge, { backgroundColor: getStatusBg(order.order_status) }]}>
                                             <View style={[styles.statusDot, { backgroundColor: getStatusColor(order.order_status) }]} />
                                             <Text style={[styles.statusText, { color: getStatusColor(order.order_status) }]}>
                                                 {getStatusLabel(order.order_status)}
@@ -196,7 +211,7 @@ export default function Orders() {
                                         </View>
                                     </View>
                                     <View style={styles.orderHeaderRight}>
-                                        <Clock size={13} color={isUrgent ? C.terracotta : C.latte} />
+                                        <Clock size={13} color={isUrgent ? C.error : C.muted} />
                                         <Text style={[styles.timeText, isUrgent && styles.timeUrgent]}>{elapsed}</Text>
                                     </View>
                                 </View>
@@ -229,7 +244,7 @@ export default function Orders() {
                                         NPR {order.total_amount?.toFixed(2) ?? '—'}
                                     </Text>
                                     <View style={styles.actions}>
-                                        {nextStatus && (
+                                        {canAdvance && nextStatus && (
                                             <TouchableOpacity
                                                 style={[styles.actionBtn, { backgroundColor: getStatusColor(nextStatus) }]}
                                                 onPress={() => updateStatusMutation.mutate({
@@ -237,26 +252,28 @@ export default function Orders() {
                                                     status:  nextStatus,
                                                 })}
                                             >
-                                                <CheckCircle size={12} color={C.cream} />
+                                                <CheckCircle size={12} color={C.white} />
                                                 <Text style={styles.actionText}>
-                                                    {order.order_status === 'pending'    ? 'Start' :
-                                                     order.order_status === 'in_kitchen' ? 'Ready' : 'Done'}
+                                                    {order.order_status === 'pending'    ? 'Start'  :
+                                                     order.order_status === 'in_kitchen' ? 'Ready'  : 'Done'}
                                                 </Text>
                                             </TouchableOpacity>
                                         )}
-                                        <TouchableOpacity
-                                            style={styles.deleteBtn}
-                                            onPress={() => Alert.alert(
-                                                'Delete Order',
-                                                `Delete order #${order.order_id}?`,
-                                                [
-                                                    { text: 'Cancel', style: 'cancel' },
-                                                    { text: 'Delete', style: 'destructive', onPress: () => deleteOrderMutation.mutate(order.order_id) },
-                                                ]
-                                            )}
-                                        >
-                                            <Trash2 size={13} color={C.terracotta} />
-                                        </TouchableOpacity>
+                                        {canDelete && (
+                                            <TouchableOpacity
+                                                style={styles.deleteBtn}
+                                                onPress={() => Alert.alert(
+                                                    'Delete Order',
+                                                    `Delete order #${order.order_id}?`,
+                                                    [
+                                                        { text: 'Cancel', style: 'cancel' },
+                                                        { text: 'Delete', style: 'destructive', onPress: () => deleteOrderMutation.mutate(order.order_id) },
+                                                    ]
+                                                )}
+                                            >
+                                                <Trash2 size={13} color={C.error} />
+                                            </TouchableOpacity>
+                                        )}
                                     </View>
                                 </View>
                             </TouchableOpacity>
@@ -268,23 +285,23 @@ export default function Orders() {
                     <>
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionTitle}>Completed</Text>
-                            <View style={[styles.sectionBadge, { backgroundColor: C.vellum }]}>
-                                <Text style={[styles.sectionBadgeText, { color: C.clay }]}>{completedOrders.length}</Text>
+                            <View style={[styles.sectionBadge, { backgroundColor: C.graphite, borderColor: C.border }]}>
+                                <Text style={[styles.sectionBadgeText, { color: C.dim }]}>{completedOrders.length}</Text>
                             </View>
                         </View>
                         {completedOrders.map((order: Order) => (
                             <TouchableOpacity
                                 key={order.order_id}
-                                style={[styles.orderCard, styles.orderCardCompleted, { borderLeftColor: C.clay }]}
+                                style={[styles.orderCard, styles.orderCardCompleted, { borderLeftColor: C.muted }]}
                                 onPress={() => setSelectedOrder(order)}
                                 activeOpacity={0.82}
                             >
                                 <View style={styles.orderHeader}>
                                     <View style={styles.orderHeaderLeft}>
-                                        <Text style={[styles.orderNumber, { color: C.clay }]}>#{order.order_id}</Text>
-                                        <View style={[styles.statusBadge, { backgroundColor: C.vellum }]}>
-                                            <View style={[styles.statusDot, { backgroundColor: C.clay }]} />
-                                            <Text style={[styles.statusText, { color: C.clay }]}>Done</Text>
+                                        <Text style={[styles.orderNumber, { color: C.dim }]}>#{order.order_id}</Text>
+                                        <View style={[styles.statusBadge, { backgroundColor: C.doneBg }]}>
+                                            <View style={[styles.statusDot, { backgroundColor: C.done }]} />
+                                            <Text style={[styles.statusText, { color: C.done }]}>Done</Text>
                                         </View>
                                     </View>
                                     <Text style={styles.timeText}>{getElapsedTime(order.created_at)}</Text>
@@ -292,7 +309,7 @@ export default function Orders() {
                                 <Text style={styles.tableText}>
                                     {order.table_id ? `Table ${order.table_id}` : 'Takeaway'}
                                 </Text>
-                                <Text style={[styles.orderTotal, { color: C.clay, marginTop: 8 }]}>
+                                <Text style={[styles.orderTotal, { color: C.dim, marginTop: 8 }]}>
                                     NPR {order.total_amount?.toFixed(2) ?? '—'}
                                 </Text>
                             </TouchableOpacity>
@@ -307,10 +324,7 @@ export default function Orders() {
 
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>Order #{selectedOrder?.order_id}</Text>
-                            <TouchableOpacity
-                                style={styles.modalCloseBtn}
-                                onPress={() => setSelectedOrder(null)}
-                            >
+                            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setSelectedOrder(null)}>
                                 <Text style={styles.modalCloseText}>✕</Text>
                             </TouchableOpacity>
                         </View>
@@ -319,9 +333,9 @@ export default function Orders() {
                             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
 
                                 {[
-                                    { label: 'Table',  value: selectedOrder.table_id ? `Table ${selectedOrder.table_id}` : 'Takeaway' },
-                                    { label: 'Type',   value: selectedOrder.order_type },
-                                    { label: 'Time',   value: getElapsedTime(selectedOrder.created_at) },
+                                    { label: 'Table', value: selectedOrder.table_id ? `Table ${selectedOrder.table_id}` : 'Takeaway' },
+                                    { label: 'Type',  value: selectedOrder.order_type },
+                                    { label: 'Time',  value: getElapsedTime(selectedOrder.created_at) },
                                 ].map(({ label, value }) => (
                                     <View key={label} style={styles.detailRow}>
                                         <Text style={styles.detailLabel}>{label}</Text>
@@ -331,7 +345,7 @@ export default function Orders() {
 
                                 <View style={styles.detailRow}>
                                     <Text style={styles.detailLabel}>Status</Text>
-                                    <View style={[styles.statusBadge, { backgroundColor: getStatusBgColor(selectedOrder.order_status) }]}>
+                                    <View style={[styles.statusBadge, { backgroundColor: getStatusBg(selectedOrder.order_status) }]}>
                                         <View style={[styles.statusDot, { backgroundColor: getStatusColor(selectedOrder.order_status) }]} />
                                         <Text style={[styles.statusText, { color: getStatusColor(selectedOrder.order_status) }]}>
                                             {getStatusLabel(selectedOrder.order_status)}
@@ -374,7 +388,7 @@ export default function Orders() {
                                     <Text style={styles.totalValue}>NPR {selectedOrder.total_amount?.toFixed(2) ?? '—'}</Text>
                                 </View>
 
-                                {getNextStatus(selectedOrder.order_status) && (
+                                {canAdvance && getNextStatus(selectedOrder.order_status) && (
                                     <TouchableOpacity
                                         style={[styles.modalActionBtn, { backgroundColor: getStatusColor(getNextStatus(selectedOrder.order_status)!) }]}
                                         onPress={() => {
@@ -385,7 +399,7 @@ export default function Orders() {
                                             setSelectedOrder(null)
                                         }}
                                     >
-                                        <CheckCircle size={16} color={C.cream} />
+                                        <CheckCircle size={16} color={C.white} />
                                         <Text style={styles.modalActionText}>
                                             {selectedOrder.order_status === 'pending'    ? 'Send to Kitchen' :
                                              selectedOrder.order_status === 'in_kitchen' ? 'Mark as Ready'   : 'Mark as Done'}
@@ -393,20 +407,22 @@ export default function Orders() {
                                     </TouchableOpacity>
                                 )}
 
-                                <TouchableOpacity
-                                    style={styles.modalDeleteBtn}
-                                    onPress={() => Alert.alert(
-                                        'Delete Order',
-                                        `Delete order #${selectedOrder.order_id}?`,
-                                        [
-                                            { text: 'Cancel', style: 'cancel' },
-                                            { text: 'Delete', style: 'destructive', onPress: () => deleteOrderMutation.mutate(selectedOrder.order_id) },
-                                        ]
-                                    )}
-                                >
-                                    <Trash2 size={15} color={C.terracotta} />
-                                    <Text style={styles.modalDeleteText}>Delete Order</Text>
-                                </TouchableOpacity>
+                                {canDelete && (
+                                    <TouchableOpacity
+                                        style={styles.modalDeleteBtn}
+                                        onPress={() => Alert.alert(
+                                            'Delete Order',
+                                            `Delete order #${selectedOrder.order_id}?`,
+                                            [
+                                                { text: 'Cancel', style: 'cancel' },
+                                                { text: 'Delete', style: 'destructive', onPress: () => deleteOrderMutation.mutate(selectedOrder.order_id) },
+                                            ]
+                                        )}
+                                    >
+                                        <Trash2 size={15} color={C.error} />
+                                        <Text style={styles.modalDeleteText}>Delete Order</Text>
+                                    </TouchableOpacity>
+                                )}
 
                             </ScrollView>
                         )}
@@ -418,126 +434,123 @@ export default function Orders() {
 }
 
 const styles = StyleSheet.create({
-    container:    { flex: 1, backgroundColor: C.cream },
-    center:       { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.cream },
+    container:    { flex: 1, backgroundColor: C.black },
+    center:       { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.black },
     loadingIcon:  {
         width: 58, height: 58, borderRadius: radius.md,
-        backgroundColor: C.brassLight,
-        borderWidth: 1.5, borderColor: C.brassBorder,
+        backgroundColor: C.orangeTint,
+        borderWidth: 1.5, borderColor: C.orange,
         alignItems: 'center', justifyContent: 'center',
     },
-    loadingTitle: { fontSize: 15, fontWeight: '700', color: C.espresso, marginTop: 10 },
+    loadingTitle: { fontSize: 15, fontWeight: '700', color: C.offWhite, marginTop: 10 },
 
     header: {
-        backgroundColor: C.espresso,
-        paddingTop: 52, paddingHorizontal: 16, paddingBottom: 16,
-        shadowColor: C.espresso,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3, shadowRadius: 10, elevation: 8,
+        backgroundColor: C.charcoal,
+        paddingTop: 56, paddingHorizontal: 16, paddingBottom: 16,
+        borderBottomWidth: 1, borderBottomColor: C.border,
+        gap: 16,
     },
-    headerTop:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
-    brand:        { flexDirection: 'row', alignItems: 'center', gap: 11 },
+    brand:        { flexDirection: 'row', alignItems: 'center', gap: 12 },
     logoBadge:    {
-        width: 38, height: 38, borderRadius: radius.sm,
-        backgroundColor: C.brass,
+        width: 40, height: 40, borderRadius: radius.sm,
+        backgroundColor: C.orange,
         alignItems: 'center', justifyContent: 'center',
-        borderWidth: 1, borderColor: C.brassBorder,
     },
-    headerTitle:  { fontSize: 16, fontWeight: '900', color: C.cream, letterSpacing: 0.5 },
-    headerSub:    { fontSize: 10, color: C.latte, fontWeight: '500', letterSpacing: 0.6, marginTop: 1 },
+    headerTitle:  { fontSize: 16, fontWeight: '900', color: C.white, letterSpacing: 0.5 },
+    headerSub:    { fontSize: 10, color: C.muted, fontWeight: '500', letterSpacing: 0.6, marginTop: 1 },
 
-    statsRow: { flexDirection: 'row', gap: 10 },
+    statsRow: { flexDirection: 'row', gap: 8 },
     statCard: {
-        flex: 1, backgroundColor: '#2A1A05',
+        flex: 1, backgroundColor: C.graphite,
         borderRadius: radius.sm, padding: 10, alignItems: 'center',
-        borderWidth: 1, borderColor: '#3D2A10',
+        borderWidth: 1, borderColor: C.border,
     },
     statNumber: { fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
-    statLabel:  { fontSize: 9, color: C.latte, fontWeight: '600', marginTop: 2, letterSpacing: 0.5 },
+    statLabel:  { fontSize: 9, color: C.muted, fontWeight: '600', marginTop: 2, letterSpacing: 0.5 },
 
-    sectionHeader:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, marginTop: 4 },
-    sectionTitle:      { fontSize: 11, fontWeight: '800', color: C.clay, textTransform: 'uppercase', letterSpacing: 1.4 },
-    sectionBadge:      { backgroundColor: C.brassLight, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: C.brassBorder },
-    sectionBadgeText:  { fontSize: 11, fontWeight: '700', color: C.brass },
+    sectionHeader:    { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, marginTop: 4 },
+    sectionTitle:     { fontSize: 11, fontWeight: '800', color: C.muted, textTransform: 'uppercase', letterSpacing: 1.4 },
+    sectionBadge:     { backgroundColor: C.orangeTint, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: C.orangeDim },
+    sectionBadgeText: { fontSize: 11, fontWeight: '700', color: C.orange },
 
     scrollView:    { flex: 1 },
     scrollContent: { padding: 16, paddingBottom: 48 },
 
-    empty:     { alignItems: 'center', paddingVertical: 56, gap: 10 },
-    emptyIcon: { width: 72, height: 72, borderRadius: radius.lg, backgroundColor: C.brassLight, borderWidth: 1.5, borderColor: C.brassBorder, alignItems: 'center', justifyContent: 'center' },
-    emptyTitle: { fontSize: 16, fontWeight: '800', color: C.espresso },
-    emptySub:   { fontSize: 12, color: C.clay },
+    empty:      { alignItems: 'center', paddingVertical: 56, gap: 10 },
+    emptyIcon:  { width: 72, height: 72, borderRadius: radius.lg, backgroundColor: C.graphite, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
+    emptyTitle: { fontSize: 16, fontWeight: '800', color: C.offWhite },
+    emptySub:   { fontSize: 12, color: C.muted },
 
     orderCard: {
-        backgroundColor: C.parchment, borderRadius: radius.md,
-        padding: 14, marginBottom: 12, borderLeftWidth: 4,
-        borderWidth: 1.5, borderColor: C.vellum,
-        shadowColor: C.espresso, shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+        backgroundColor: C.card,
+        borderRadius: radius.md,
+        padding: 14, marginBottom: 12,
+        borderLeftWidth: 4,
+        borderWidth: 1, borderColor: C.border,
     },
-    orderCardUrgent:    { backgroundColor: C.tcLight, borderColor: C.tcBorder },
-    orderCardCompleted: { opacity: 0.7 },
+    orderCardUrgent:    { backgroundColor: C.errorBg, borderColor: '#7A1010' },
+    orderCardCompleted: { opacity: 0.5 },
 
     orderHeader:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
     orderHeaderLeft:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
     orderHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    orderNumber:      { fontSize: 15, fontWeight: '900', color: C.espresso },
+    orderNumber:      { fontSize: 15, fontWeight: '900', color: C.white },
 
     statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },
     statusDot:   { width: 5, height: 5, borderRadius: 3 },
     statusText:  { fontSize: 10, fontWeight: '700' },
 
-    timeText:   { fontSize: 11, color: C.latte, fontWeight: '600' },
-    timeUrgent: { color: C.terracotta },
+    timeText:   { fontSize: 11, color: C.muted, fontWeight: '600' },
+    timeUrgent: { color: C.error },
 
     orderMeta:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-    tableText:     { fontSize: 12, color: C.clay, fontWeight: '600' },
-    orderTypePill: { backgroundColor: C.brassLight, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: C.brassBorder },
-    orderTypeText: { fontSize: 10, fontWeight: '600', color: C.brass },
+    tableText:     { fontSize: 12, color: C.dim, fontWeight: '600' },
+    orderTypePill: { backgroundColor: C.orangeTint, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: C.orangeDim },
+    orderTypeText: { fontSize: 10, fontWeight: '600', color: C.orange },
 
     itemsPreview: { marginBottom: 12, gap: 3 },
-    itemText:     { fontSize: 12, color: C.clay },
-    itemMore:     { fontSize: 11, color: C.latte, fontStyle: 'italic' },
+    itemText:     { fontSize: 12, color: C.dim },
+    itemMore:     { fontSize: 11, color: C.muted, fontStyle: 'italic' },
 
-    orderFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTopWidth: 1, borderTopColor: C.vellum },
-    orderTotal:  { fontSize: 15, fontWeight: '900', color: C.brass },
+    orderFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTopWidth: 1, borderTopColor: C.border },
+    orderTotal:  { fontSize: 15, fontWeight: '900', color: C.orange },
 
-    actions:   { flexDirection: 'row', gap: 6 },
-    actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.sm },
-    actionText: { fontSize: 11, fontWeight: '700', color: C.cream },
-    deleteBtn:  { padding: 7, borderRadius: radius.xs, backgroundColor: C.tcLight, borderWidth: 1, borderColor: C.tcBorder, alignItems: 'center', justifyContent: 'center' },
+    actions:    { flexDirection: 'row', gap: 6 },
+    actionBtn:  { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.sm },
+    actionText: { fontSize: 11, fontWeight: '700', color: C.white },
+    deleteBtn:  { padding: 7, borderRadius: radius.xs, backgroundColor: C.errorBg, borderWidth: 1, borderColor: '#7A1010', alignItems: 'center', justifyContent: 'center' },
 
-    modalOverlay:   { flex: 1, backgroundColor: 'rgba(28,16,8,0.6)', justifyContent: 'flex-end' },
-    modalContainer: { backgroundColor: C.parchment, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, borderWidth: 1.5, borderColor: C.vellum, maxHeight: '88%' },
-    modalHeader:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1, borderBottomColor: C.vellum },
-    modalTitle:     { fontSize: 16, fontWeight: '900', color: C.espresso, letterSpacing: 0.3 },
-    modalCloseBtn:  { width: 30, height: 30, borderRadius: radius.xs, backgroundColor: C.vellum, alignItems: 'center', justifyContent: 'center' },
-    modalCloseText: { fontSize: 14, color: C.clay, fontWeight: '700' },
+    modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
+    modalContainer: { backgroundColor: C.charcoal, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, borderTopWidth: 1, borderColor: C.border, maxHeight: '88%' },
+    modalHeader:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 18, borderBottomWidth: 1, borderBottomColor: C.border },
+    modalTitle:     { fontSize: 18, fontWeight: '900', color: C.white, letterSpacing: 0.3 },
+    modalCloseBtn:  { width: 30, height: 30, borderRadius: radius.xs, backgroundColor: C.graphite, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
+    modalCloseText: { fontSize: 14, color: C.dim, fontWeight: '700' },
     modalScroll:    { padding: 18 },
 
-    detailRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.vellum },
-    detailLabel: { fontSize: 11, fontWeight: '800', color: C.clay, textTransform: 'uppercase', letterSpacing: 1 },
-    detailValue: { fontSize: 13, fontWeight: '600', color: C.espresso },
+    detailRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border },
+    detailLabel: { fontSize: 11, fontWeight: '800', color: C.muted, textTransform: 'uppercase', letterSpacing: 1 },
+    detailValue: { fontSize: 13, fontWeight: '600', color: C.offWhite },
 
-    notesBox:   { backgroundColor: C.brassLight, borderRadius: radius.md, borderWidth: 1, borderColor: C.brassBorder, padding: 12, marginTop: 12 },
-    notesLabel: { fontSize: 10, fontWeight: '800', color: C.brass, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
-    notesText:  { fontSize: 13, color: C.roast },
+    notesBox:   { backgroundColor: C.orangeTint, borderRadius: radius.md, borderWidth: 1, borderColor: C.orangeDim, padding: 12, marginTop: 12 },
+    notesLabel: { fontSize: 10, fontWeight: '800', color: C.orange, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+    notesText:  { fontSize: 13, color: C.offWhite },
 
-    itemsTitle:      { fontSize: 11, fontWeight: '800', color: C.clay, textTransform: 'uppercase', letterSpacing: 1.2, marginTop: 16, marginBottom: 8 },
-    itemDetail:      { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.vellum },
-    itemDetailName:  { fontSize: 13, fontWeight: '600', color: C.espresso },
-    itemSpecial:     { fontSize: 11, color: C.clay, fontStyle: 'italic', marginTop: 2 },
-    itemStatus:      { fontSize: 10, color: C.latte, marginTop: 2 },
-    itemDetailPrice: { fontSize: 13, fontWeight: '700', color: C.brass },
-    itemUnit:        { fontSize: 10, color: C.clay, marginTop: 2 },
+    itemsTitle:      { fontSize: 11, fontWeight: '800', color: C.muted, textTransform: 'uppercase', letterSpacing: 1.2, marginTop: 16, marginBottom: 8 },
+    itemDetail:      { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
+    itemDetailName:  { fontSize: 13, fontWeight: '600', color: C.offWhite },
+    itemSpecial:     { fontSize: 11, color: C.dim, fontStyle: 'italic', marginTop: 2 },
+    itemStatus:      { fontSize: 10, color: C.muted, marginTop: 2 },
+    itemDetailPrice: { fontSize: 13, fontWeight: '700', color: C.orange },
+    itemUnit:        { fontSize: 10, color: C.muted, marginTop: 2 },
 
-    totalRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 14, marginTop: 10, borderTopWidth: 2, borderTopColor: C.brassBorder, marginBottom: 16 },
-    totalLabel: { fontSize: 14, fontWeight: '800', color: C.espresso },
-    totalValue: { fontSize: 18, fontWeight: '900', color: C.brass },
+    totalRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 14, marginTop: 10, borderTopWidth: 1, borderTopColor: C.border, marginBottom: 16 },
+    totalLabel: { fontSize: 14, fontWeight: '800', color: C.offWhite },
+    totalValue: { fontSize: 20, fontWeight: '900', color: C.orange },
 
-    modalActionBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: radius.md, marginBottom: 10, shadowColor: C.brass, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3 },
-    modalActionText: { fontSize: 14, fontWeight: '800', color: C.cream, letterSpacing: 0.3 },
+    modalActionBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: radius.md, marginBottom: 10 },
+    modalActionText: { fontSize: 14, fontWeight: '800', color: C.white, letterSpacing: 0.3 },
 
-    modalDeleteBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: radius.md, backgroundColor: C.tcLight, borderWidth: 1.5, borderColor: C.tcBorder, marginBottom: 24 },
-    modalDeleteText: { fontSize: 13, fontWeight: '700', color: C.terracotta },
+    modalDeleteBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: radius.md, backgroundColor: C.errorBg, borderWidth: 1, borderColor: '#7A1010', marginBottom: 24 },
+    modalDeleteText: { fontSize: 13, fontWeight: '700', color: C.error },
 })

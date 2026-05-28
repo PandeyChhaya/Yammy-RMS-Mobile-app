@@ -2,26 +2,15 @@ import { Minus, Plus, Trash2 } from 'lucide-react-native'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 const C = {
-  espresso:    '#1C1008',
-  roast:       '#3D2010',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-  onDark:      '#FDF6EC',
+  surface:          '#1A1A1A', 
+  surfaceHighlight: '#2C2C2C', 
+  primary:          '#FF6B2C',
+  textMain:         '#FFFFFF', 
+  textMuted:        '#9CA3AF', 
+  danger:           '#EF4444', 
+  dangerDim:        '#450a0a',
 }
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
-
 
 interface CartItemDisplayProps {
   menu_item_id: string
@@ -63,7 +52,7 @@ export default function CartItem({
 
   const categoryColor = item.menu_item
     ? getCategoryColor(item.menu_item.category_id)
-    : C.latte
+    : C.surfaceHighlight
 
   return (
     <View style={styles.card}>
@@ -89,7 +78,7 @@ export default function CartItem({
           onPress={() => onRemove(item.menu_item_id)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Trash2 size={13} color={C.terracotta} />
+          <Trash2 size={14} color={C.danger} />
         </TouchableOpacity>
       </View>
 
@@ -101,7 +90,7 @@ export default function CartItem({
             onPress={() => onUpdateQuantity(item.menu_item_id, item.quantity - 1)}
             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           >
-            <Minus size={10} color={C.clay} />
+            <Minus size={12} color={C.textMain} />
           </TouchableOpacity>
 
           <View style={styles.qtyBadge}>
@@ -113,7 +102,7 @@ export default function CartItem({
             onPress={() => onUpdateQuantity(item.menu_item_id, item.quantity + 1)}
             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           >
-            <Plus size={10} color={C.clay} />
+            <Plus size={12} color={C.textMain} />
           </TouchableOpacity>
         </View>
 
@@ -143,10 +132,10 @@ export default function CartItem({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: C.parchment,
+    backgroundColor: C.surface,
     borderRadius: radius.md,
     borderWidth: 1.5,
-    borderColor: C.vellum,
+    borderColor: C.surfaceHighlight,
     padding: 12,
     marginBottom: 10,
   },
@@ -162,15 +151,15 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   itemName: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
-    color: C.espresso,
+    color: C.textMain,
     marginBottom: 3,
   },
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 6,
   },
   categoryDot: {
     width: 6,
@@ -179,14 +168,14 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 11,
-    color: C.clay,
+    color: C.textMuted,
   },
   deleteButton: {
-    padding: 5,
+    padding: 6,
     borderRadius: radius.xs,
-    backgroundColor: C.tcLight,
+    backgroundColor: C.dangerDim,
     borderWidth: 1,
-    borderColor: C.tcBorder,
+    borderColor: C.danger,
   },
 
   bottomRow: {
@@ -198,44 +187,44 @@ const styles = StyleSheet.create({
   qtyRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   qtyButton: {
-    width: 24,
-    height: 24,
+    width: 26,
+    height: 26,
     borderRadius: radius.xs,
-    backgroundColor: C.cream,
+    backgroundColor: C.surfaceHighlight,
     borderWidth: 1,
-    borderColor: C.vellum,
+    borderColor: C.surfaceHighlight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qtyBadge: {
-    width: 28,
-    height: 24,
+    width: 32,
+    height: 26,
     borderRadius: radius.xs,
-    backgroundColor: C.sage,
+    backgroundColor: C.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qtyText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
-    color: C.cream,
+    color: C.textMain,
   },
 
   priceBlock: {
     alignItems: 'flex-end',
   },
   unitPrice: {
-    fontSize: 10,
-    color: C.clay,
+    fontSize: 11,
+    color: C.textMuted,
     marginBottom: 2,
   },
   totalPrice: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
-    color: C.brass,
+    color: C.primary,
   },
 
   taxBlock: {
@@ -243,13 +232,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   taxLine: {
-    fontSize: 10,
-    color: C.clay,
+    fontSize: 11,
+    color: C.textMuted,
   },
   taxTotal: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    color: C.espresso,
-    marginTop: 1,
+    color: C.textMain,
+    marginTop: 2,
   },
 })

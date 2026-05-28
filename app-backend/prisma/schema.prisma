@@ -319,20 +319,23 @@ model tables {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model users {
-  user_id       Int          @id @default(autoincrement())
-  user_name     String       @db.VarChar(200)
-  user_password String       @db.VarChar(200)
-  user_email    String       @unique @db.VarChar(260)
-  user_role     String       @db.VarChar(50)
-  is_active     Boolean?     @default(true)
-  last_login    DateTime?    @db.Timestamp(6)
-  refresh_token String?
-  created_at    DateTime?    @default(now()) @db.Timestamp(6)
-  updated_at    DateTime?    @default(now()) @db.Timestamp(6)
-  audit_logs    audit_logs[]
-  orders        orders[]
-  shifts        shifts[]
-  minis minis[] 
+  user_id         Int          @id @default(autoincrement())
+  user_name       String       @db.VarChar(200)
+  user_password   String       @db.VarChar(200)
+  user_email      String       @unique @db.VarChar(260)
+  user_role       String       @db.VarChar(50)
+  is_active       Boolean?     @default(true)
+  last_login      DateTime?    @db.Timestamp(6)
+  refresh_token   String?
+  totp_secret     String?      @db.VarChar(200)
+  totp_enabled    Boolean      @default(false)
+  first_login     Boolean      @default(true)   // forces password reset
+  created_at      DateTime?    @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?    @default(now()) @db.Timestamp(6)
+  audit_logs      audit_logs[]
+  orders          orders[]
+  shifts          shifts[]
+  minis           minis[]
 }
 model loyalty_transactions {
   transaction_id   Int       @id @default(autoincrement())

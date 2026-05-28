@@ -18,100 +18,87 @@ import { authService } from './services/auth.service'
 const { height } = Dimensions.get('window')
 
 const C = {
-  espresso:    '#1C1008',
-  roast:       '#3D2010',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-  onDark:      '#FDF6EC',
+  bg:        '#0A0A0A',
+  card:      '#1A1A1A',
+  inner:     '#2C2C2C',
+  border:    '#2E2E2E',
+  accent:    '#FF6B2C',
+  success:   '#22C55E',
+  white:     '#FFFFFF',
+  muted:     '#777777',
+  mutedDark: '#444444',
+  label:     '#999999',
 }
 
-const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
-
+const R = { md: 14, lg: 18, xl: 24 }
 
 export default function Login() {
   const router = useRouter()
 
-  const [emailText, setEmailText]           = useState('')
-  const [passwordText, setPasswordText]     = useState('')
+  const [emailText, setEmailText]             = useState('')
+  const [passwordText, setPasswordText]       = useState('')
   const [showingPassword, setShowingPassword] = useState(false)
-  const [isProcessing, setIsProcessing]     = useState(false)
+  const [isProcessing, setIsProcessing]       = useState(false)
+  const [emailFocused, setEmailFocused]       = useState(false)
+  const [passFocused, setPassFocused]         = useState(false)
 
   const doLogin = async () => {
-  if (!emailText.trim() || !passwordText.trim()) {
-    Alert.alert('Oops', 'Fill in your email and password first')
-    return
+    if (!emailText.trim() || !passwordText.trim()) {
+      Alert.alert('Oops', 'Fill in your email and password first')
+      return
+    }
+    setIsProcessing(true)
+    try {
+      const result = await authService.login(
+        emailText.trim(),
+        passwordText.trim(),
+      )
+      await AsyncStorage.setItem('@userName', result.user_name)
+      await AsyncStorage.setItem('@userEmail', result.user_email)
+      await AsyncStorage.setItem('@userRole', result.user_role)
+      await AsyncStorage.setItem('@userId', String(result.user_id))
+
+      if (result.force_password_reset) {
+        router.replace('/modules/auth/forcePasswordReset')
+      } else if (result.needs_2fa_setup) {
+        await AsyncStorage.setItem('@needs2faSetup', 'true')
+        router.replace('/modules/auth/twoFactorSetup')
+      } else if (result.two_fa_enabled) {
+        router.replace('/modules/auth/twoFactorVerify')
+      } else if (result.user_role === 'Customer') {
+        router.replace('/modules/customer/customer_Dashboard')
+      } else if (result.user_role === 'Super Admin') {
+        router.replace('/superAdmin/superAdmin')
+      } else {
+        router.replace('/modules/Dashboard')
+      }
+    } catch (err: any) {
+      Alert.alert('Could not log in', err.message || 'Wrong email or password maybe?')
+    } finally {
+      setIsProcessing(false)
+    }
   }
-
-  setIsProcessing(true)
-
-  try {
-    const result = await authService.login(
-      emailText.trim(),
-      passwordText.trim(),
-    )
-    // authService.login already saves @accessToken and @refreshToken for you
-
-    await AsyncStorage.setItem('@userName', result.user_name)
-    await AsyncStorage.setItem('@userRole', result.user_role)
-
-if (result.user_role === 'Customer') {
-  router.replace('/modules/customer/customer_Dashboard')
-}
-else if (result.user_role === 'Super Admin'){
-  router.replace('/superAdmin/superAdmin')
-}
-else {
-  router.replace('/modules/Dashboard')
-}
-
-  } catch (err: any) {
-    Alert.alert('Could not log in', err.message || 'Wrong email or password maybe?')
-  } finally {
-    setIsProcessing(false)
-  }
-}
 
   return (
     <View style={styles.container}>
+      <View style={styles.blobTR} />
+      <View style={styles.blobBL} />
 
-      {/* Top Zone */}
       <View style={styles.topZone}>
-        <View style={styles.patternOverlay}>
-          {Array.from({ length: 40 }).map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                {
-                  left: `${(i % 8) * 12.5}%`,
-                  top:  `${Math.floor(i / 8) * 20}%`,
-                },
-              ]}
-            />
-          ))}
+        <View style={styles.iconBox}>
+          <Image
+            source={require('../../../assets/images/yammy.png')}
+            style={styles.logoImg}
+            resizeMode="contain"
+          />
         </View>
-
-        <View>
-        <Image source={require('../../../assets/images/yammy.png')} style={{ width: 200, height: 70 }} />
+        <Text style={styles.brand}>YAMMY</Text>
+        <View style={styles.statusPill}>
+          <View style={styles.greenDot} />
+          <Text style={styles.statusTxt}>All systems operational</Text>
         </View>
-
-   
-        <Text style={styles.appSub}>Login using your credentials</Text>
       </View>
 
-      {/* Login Card */}
       <View style={styles.loginCard}>
         <ScrollView
           style={styles.scrollArea}
@@ -119,61 +106,66 @@ else {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-
           <View style={styles.headingArea}>
-            <Text style={styles.welcomeText}>Welcome Back!!</Text>
+            <Text style={styles.welcomeText}>Welcome Back</Text>
             <Text style={styles.welcomeSub}>Sign in to your account</Text>
           </View>
 
-          {/* Email */}
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <View style={styles.inputWrapper}>
-              <Mail size={18} color={C.latte} style={styles.inputIcon} />
+            <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
+            <View style={[styles.inputWrapper, emailFocused && styles.inputFocused]}>
+              <View style={styles.iconPrefix}>
+                <Mail size={15} color={emailFocused ? C.accent : C.muted} />
+              </View>
+              <View style={styles.inputDivider} />
               <TextInput
                 style={styles.input}
                 placeholder="user@restaurant.com"
-                placeholderTextColor={C.latte}
+                placeholderTextColor={C.mutedDark}
                 value={emailText}
                 onChangeText={setEmailText}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
               />
             </View>
           </View>
 
-          {/* Password */}
           <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <View style={styles.inputWrapper}>
-              <Lock size={18} color={C.latte} style={styles.inputIcon} />
+            <Text style={styles.inputLabel}>PASSWORD</Text>
+            <View style={[styles.inputWrapper, passFocused && styles.inputFocused]}>
+              <View style={styles.iconPrefix}>
+                <Lock size={15} color={passFocused ? C.accent : C.muted} />
+              </View>
+              <View style={styles.inputDivider} />
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor={C.latte}
+                placeholderTextColor={C.mutedDark}
                 value={passwordText}
                 onChangeText={setPasswordText}
                 secureTextEntry={!showingPassword}
                 autoComplete="password"
+                onFocus={() => setPassFocused(true)}
+                onBlur={() => setPassFocused(false)}
               />
               <TouchableOpacity
                 onPress={() => setShowingPassword(!showingPassword)}
                 style={styles.eyeButton}
               >
                 {showingPassword
-                  ? <EyeOff size={18} color={C.latte} />
-                  : <Eye    size={18} color={C.latte} />}
+                  ? <EyeOff size={15} color={C.muted} />
+                  : <Eye    size={15} color={C.muted} />}
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Forgot */}
           <TouchableOpacity style={styles.forgotBtn}>
             <Text style={styles.forgotText}>Forgot Password?</Text>
           </TouchableOpacity>
 
-          {/* Sign In */}
           <TouchableOpacity
             style={[styles.signInBtn, isProcessing && { opacity: 0.6 }]}
             onPress={doLogin}
@@ -185,14 +177,12 @@ else {
             </Text>
           </TouchableOpacity>
 
-          {/* Divider */}
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>or</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Create Account */}
           <TouchableOpacity
             style={styles.guestBtn}
             onPress={() => router.push('/modules/auth/signup')}
@@ -203,7 +193,7 @@ else {
         </ScrollView>
       </View>
 
-      <Text style={styles.versionText} />
+      <Text style={styles.versionText}>Powered by YAMMY · Restaurant OS</Text>
     </View>
   )
 }
@@ -211,218 +201,108 @@ else {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.cream,
+    backgroundColor: C.bg,
   },
 
-  // Top zone
+  blobTR: {
+    position: 'absolute', top: -70, right: -70,
+    width: 200, height: 200, borderRadius: 100,
+    backgroundColor: C.accent, opacity: 0.07,
+  },
+  blobBL: {
+    position: 'absolute', bottom: 100, left: -90,
+    width: 240, height: 240, borderRadius: 120,
+    backgroundColor: C.accent, opacity: 0.05,
+  },
+
   topZone: {
     height: height * 0.30,
-    backgroundColor: C.espresso,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
   },
-  patternOverlay: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    opacity: 0.06,
-  },
-  dot: {
-    position: 'absolute',
-    width: 3, height: 3,
-    borderRadius: 2,
-    backgroundColor: C.cream,
-  },
-  logoBadge: {
+  iconBox: {
     width: 72, height: 72,
-    borderRadius: radius.md,
-    backgroundColor: C.brass,
+    borderRadius: 18,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
-    borderWidth: 1.5,
-    borderColor: C.brassBorder,
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 4,
   },
-  appTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: C.cream,
-    letterSpacing: 0.6,
+  logoImg: { width: 52, height: 52 },
+  brand: {
+    fontSize: 28, fontWeight: '900', color: C.white,
+    letterSpacing: 10, marginBottom: 10,
   },
-  appSub: {
-    fontSize: 11,
-    color: C.latte,
-    fontWeight: '500',
-    letterSpacing: 0.8,
-    marginTop: 3,
+  statusPill: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.card, borderWidth: 1, borderColor: C.border,
+    borderRadius: 100, paddingHorizontal: 12, paddingVertical: 5, gap: 6,
   },
+  greenDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.success },
+  statusTxt: { fontSize: 11, color: C.muted, letterSpacing: 0.3 },
 
-  // Login card
   loginCard: {
     flex: 1,
-    backgroundColor: C.parchment,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
+    backgroundColor: C.card,
+    borderTopLeftRadius: R.xl,
+    borderTopRightRadius: R.xl,
     marginTop: -20,
-    marginHorizontal: 12,
-    borderWidth: 1.5,
-    borderColor: C.vellum,
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 8,
+    borderWidth: 1,
+    borderColor: C.border,
   },
-  scrollArea: {
-    flex: 1,
-  },
-  cardContent: {
-    padding: 24,
-    paddingTop: 36,
-    paddingBottom: 40,
-  },
+  scrollArea: { flex: 1 },
+  cardContent: { padding: 24, paddingTop: 32, paddingBottom: 40 },
 
-  
-  headingArea: {
-    marginBottom: 28,
-  },
+  headingArea: { marginBottom: 28 },
   welcomeText: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: C.espresso,
-    marginBottom: 5,
-    letterSpacing: 0.3,
+    fontSize: 24, fontWeight: '900', color: C.white,
+    marginBottom: 4, letterSpacing: 0.3,
   },
-  welcomeSub: {
-    fontSize: 14,
-    color: C.clay,
-    fontWeight: '500',
-    letterSpacing: 0.2,
-  },
+  welcomeSub: { fontSize: 13, color: C.muted },
 
- 
-
-  inputContainer: {
-    marginBottom: 18,
-  },
+  inputContainer: { marginBottom: 18 },
   inputLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: C.clay,
-    marginBottom: 8,
-    marginLeft: 2,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    fontSize: 10, fontWeight: '800', color: C.label,
+    marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1.5,
   },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.cream,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: C.vellum,
-    paddingHorizontal: 14,
-    height: 52,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.inner, borderRadius: R.md,
+    borderWidth: 1, borderColor: C.border, height: 50, overflow: 'hidden',
   },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: C.espresso,
-  },
-  eyeButton: {
-    padding: 4,
-  },
+  inputFocused: { borderColor: C.accent },
+  iconPrefix: { width: 44, alignItems: 'center', justifyContent: 'center' },
+  inputDivider: { width: 1, height: 20, backgroundColor: C.border, marginRight: 12 },
+  input: { flex: 1, fontSize: 14, color: C.white, paddingRight: 12 },
+  eyeButton: { paddingHorizontal: 14 },
 
-  
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-    marginTop: -6,
-  },
-  forgotText: {
-    fontSize: 12,
-    color: C.brass,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
+  forgotBtn: { alignSelf: 'flex-end', marginBottom: 24, marginTop: -6 },
+  forgotText: { fontSize: 12, color: C.accent, fontWeight: '700' },
 
-  
   signInBtn: {
-    backgroundColor: C.brass,
-    height: 52,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '75%',
-    alignSelf: 'center',
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 4,
+    backgroundColor: C.accent,
+    height: 50, borderRadius: R.md,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: C.accent, shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.35, shadowRadius: 10, elevation: 4,
   },
-  signInText: {
-    color: C.cream,
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
+  signInText: { color: '#fff', fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
 
-  
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 22,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: C.vellum,
-  },
-  dividerText: {
-    marginHorizontal: 14,
-    fontSize: 12,
-    color: C.latte,
-    fontWeight: '500',
-  },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 22 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: C.border },
+  dividerText: { marginHorizontal: 14, fontSize: 12, color: C.mutedDark },
 
-  
   guestBtn: {
-    height: 52,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: C.brassBorder,
-    backgroundColor: C.brassLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '75%',
-    alignSelf: 'center',
+    height: 50, borderRadius: R.md,
+    borderWidth: 1, borderColor: C.border,
+    alignItems: 'center', justifyContent: 'center',
   },
-  guestText: {
-    fontSize: 14,
-    color: C.roast,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
+  guestText: { fontSize: 14, color: C.label, fontWeight: '700' },
 
   versionText: {
-    textAlign: 'center',
-    fontSize: 11,
-    color: C.latte,
-    paddingVertical: 14,
+    textAlign: 'center', fontSize: 10,
+    color: C.mutedDark, letterSpacing: 0.8, paddingVertical: 14,
   },
 })

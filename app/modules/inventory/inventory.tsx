@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
     AlertTriangle,
     Package,
@@ -5,7 +6,7 @@ import {
     Search,
     Warehouse,
 } from 'lucide-react-native'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
     ActivityIndicator,
     ScrollView,
@@ -44,6 +45,11 @@ const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 type Tab = 'ingredients' | 'alerts'
 
 export default function Inventory() {
+    const [role, setRole] = useState('')
+    useEffect(() => {
+        AsyncStorage.getItem('@userRole').then(r => setRole(r ?? ''))
+    }, [])
+
     const [activeTab,       setActiveTab]       = useState<Tab>('ingredients')
     const [searchTerm,      setSearchTerm]      = useState('')
     const [filterCategory,  setFilterCategory]  = useState('all')
@@ -56,12 +62,11 @@ export default function Inventory() {
         refetch: refetchIngredients,
     } = useIngredients()
 
-   const {
-    alerts,
-    refreshData: refetchAlerts,   
-    markAlertAsRead: markAsRead,  
-} = useStockLevels()
-
+    const {
+        alerts,
+        refreshData: refetchAlerts,
+        markAlertAsRead: markAsRead,
+    } = useStockLevels()
 
     const categories = useMemo(
         () => ['all', ...Array.from(new Set(ingredients.map(i => i.category)))],
@@ -85,18 +90,17 @@ export default function Inventory() {
         [alerts]
     )
 
-
     const handleRefresh = () => {
         refetchIngredients()
         refetchAlerts()
     }
-
 
     const tabs = [
         { id: 'ingredients' as Tab, label: 'Ingredients', icon: Package },
         { id: 'alerts'      as Tab, label: 'Alerts',      icon: AlertTriangle },
     ]
 
+    if (role !== 'Admin') return null
 
     const renderIngredientsContent = () => {
         if (ingredientsLoading) {
@@ -119,15 +123,14 @@ export default function Inventory() {
         }
 
         return (
-           <IngredientList
-    ingredients={filteredIngredients}
-    onRefresh={handleRefresh}
-    loading={false}        
-    error={null}          
-/>
+            <IngredientList
+                ingredients={filteredIngredients}
+                onRefresh={handleRefresh}
+                loading={false}
+                error={null}
+            />
         )
     }
-
 
     return (
         <View style={styles.container}>

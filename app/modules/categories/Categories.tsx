@@ -14,28 +14,33 @@ import {
 } from 'react-native';
 import categoriesService from './services/categoriesService';
 
+// ─── Design Tokens ────────────────────────────────────────────────────────────
 const C = {
-  espresso:    '#1C1008',
-  roast:       '#3D2010',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  brassGlow:   '#B5822A40',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-  onDark:      '#FDF6EC',
+  bg:          '#0A0A0A',
+  surface:     '#1A1A1A',
+  card:        '#1E1E1E',
+  cardBorder:  '#2E2E2E',
+  elevated:    '#2C2C2C',
+  inputBg:     '#141414',
+  accent:      '#FF6B2C',
+  accentDim:   '#FF6B2C22',
+  accentBorder:'#FF6B2C55',
+  success:     '#22C55E',
+  successDim:  '#22C55E18',
+  successBdr:  '#22C55E44',
+  danger:      '#EF4444',
+  dangerDim:   '#EF444418',
+  dangerBdr:   '#EF444444',
+  textPrimary: '#F5F5F5',
+  textSub:     '#A0A0A0',
+  textMuted:   '#5A5A5A',
+  placeholder: '#3A3A3A',
 }
 
-const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
+const R = { xs: 8, sm: 12, md: 14, lg: 18, xl: 24, pill: 100 }
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+type UserRole = 'super_admin' | 'admin' | 'cashier' | 'waiter' | 'kitchen' | 'customer'
 
 interface Category {
   category_id:          number
@@ -56,7 +61,18 @@ const DEFAULT_FORM: CategoryFormData = {
   is_active:            true,
 }
 
-export default function Categories() {
+// ─── Role Permissions ─────────────────────────────────────────────────────────
+const canManage = (role: UserRole) =>
+  role === 'super_admin' || role === 'admin'
+
+// ─── Component ────────────────────────────────────────────────────────────────
+interface CategoriesProps {
+  userRole?: UserRole
+}
+
+export default function Categories({ userRole = 'admin' }: CategoriesProps) {
+  const canEdit = canManage(userRole)
+
   const [showAddModal,       setShowAddModal]       = useState(false)
   const [showEditModal,      setShowEditModal]      = useState(false)
   const [editingCategory,    setEditingCategory]    = useState<Category | null>(null)
@@ -64,11 +80,10 @@ export default function Categories() {
   const [editForm,           setEditForm]           = useState<CategoryFormData>(DEFAULT_FORM)
   const [addErrors,          setAddErrors]          = useState<Partial<CategoryFormData>>({})
   const [editErrors,         setEditErrors]         = useState<Partial<CategoryFormData>>({})
-  const [showSuccessMessage, setShowSuccessMessage] = useState<string | null>(null)
-  const [showErrorMessage,   setShowErrorMessage]   = useState<string | null>(null)
+  const [successMsg,         setSuccessMsg]         = useState<string | null>(null)
+  const [errorMsg,           setErrorMsg]           = useState<string | null>(null)
 
   const queryClient = useQueryClient()
-
 
   const { data: categories, isLoading, error } = useQuery<Category[]>({
     queryKey: ['categories'],
@@ -76,56 +91,53 @@ export default function Categories() {
     retry: 3,
   })
 
-
-  const createCategoryMutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: (data: CategoryFormData) => categoriesService.postCategory(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       setShowAddModal(false)
       setAddForm(DEFAULT_FORM)
-      showSuccess('Category created successfully!')
+      flash('success', 'Category created successfully!')
     },
-    onError: (err) => showError('Error creating category: ' + err),
+    onError: (err) => flash('error', 'Error creating category: ' + err),
   })
 
-  const updateCategoryMutation = useMutation({
+  const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: CategoryFormData }) =>
       categoriesService.putCategory(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
       setShowEditModal(false)
       setEditingCategory(null)
-      showSuccess('Category updated successfully!')
+      flash('success', 'Category updated!')
     },
-    onError: (err) => showError('Error updating category: ' + err),
+    onError: (err) => flash('error', 'Error updating category: ' + err),
   })
 
-  const deleteCategoryMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: (id: number) => categoriesService.deleteCategory(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] })
-      showSuccess('Category deleted successfully!')
+      flash('success', 'Category deleted.')
     },
-    onError: (err) => showError('Error deleting category: ' + err),
+    onError: (err) => flash('error', 'Error deleting: ' + err),
   })
 
-
-  const showSuccess = (msg: string) => {
-    setShowSuccessMessage(msg)
-    setTimeout(() => setShowSuccessMessage(null), 3000)
+  const flash = (type: 'success' | 'error', msg: string) => {
+    if (type === 'success') {
+      setSuccessMsg(msg)
+      setTimeout(() => setSuccessMsg(null), 3000)
+    } else {
+      setErrorMsg(msg)
+      setTimeout(() => setErrorMsg(null), 5000)
+    }
   }
 
-  const showError = (msg: string) => {
-    setShowErrorMessage(msg)
-    setTimeout(() => setShowErrorMessage(null), 5000)
-  }
-
-  const validateForm = (form: CategoryFormData): Partial<CategoryFormData> => {
+  const validate = (form: CategoryFormData): Partial<CategoryFormData> => {
     const errs: Partial<CategoryFormData> = {}
     if (!form.category_name.trim()) errs.category_name = 'Name is required'
     return errs
   }
-
 
   const handleAddNew = () => {
     setAddForm(DEFAULT_FORM)
@@ -134,50 +146,50 @@ export default function Categories() {
   }
 
   const handleAddSubmit = () => {
-    const errs = validateForm(addForm)
+    const errs = validate(addForm)
     if (Object.keys(errs).length > 0) { setAddErrors(errs); return }
-    createCategoryMutation.mutate(addForm)
+    createMutation.mutate(addForm)
   }
 
-  const handleEdit = (category: Category) => {
-    setEditingCategory(category)
+  const handleEdit = (cat: Category) => {
+    setEditingCategory(cat)
     setEditForm({
-      category_name:        category.category_name,
-      category_description: category.category_description || '',
-      is_active:            category.is_active,
+      category_name:        cat.category_name,
+      category_description: cat.category_description || '',
+      is_active:            cat.is_active,
     })
     setEditErrors({})
     setShowEditModal(true)
   }
 
   const handleEditSubmit = () => {
-    const errs = validateForm(editForm)
+    const errs = validate(editForm)
     if (Object.keys(errs).length > 0) { setEditErrors(errs); return }
     if (editingCategory) {
-      updateCategoryMutation.mutate({ id: String(editingCategory.category_id), data: editForm })
+      updateMutation.mutate({ id: String(editingCategory.category_id), data: editForm })
     }
   }
 
   const handleDelete = (id: number, name: string) => {
     Alert.alert(
       'Delete Category',
-      `Are you sure you want to delete "${name}"?`,
+      `Remove "${name}" permanently?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => deleteCategoryMutation.mutate(id) },
+        { text: 'Delete', style: 'destructive', onPress: () => deleteMutation.mutate(id) },
       ]
     )
   }
 
-
+  // ─── Loading ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <View style={styles.centered}>
         <View style={styles.loadingIcon}>
-          <Utensils size={26} color={C.brass} />
+          <Utensils size={24} color={C.accent} />
         </View>
-        <ActivityIndicator size="large" color={C.brass} style={{ marginTop: 20 }} />
-        <Text style={styles.loadingTitle}>Loading Categories…</Text>
+        <ActivityIndicator size="large" color={C.accent} style={{ marginTop: 16 }} />
+        <Text style={styles.loadingText}>Loading Categories…</Text>
       </View>
     )
   }
@@ -185,14 +197,14 @@ export default function Categories() {
   if (error) {
     return (
       <View style={styles.centered}>
-        <AlertCircle size={48} color={C.terracotta} />
-        <Text style={styles.errorTitle}>Error loading categories</Text>
+        <AlertCircle size={44} color={C.danger} />
+        <Text style={styles.errorTitle}>Failed to load</Text>
         <Text style={styles.errorSub}>{String(error)}</Text>
       </View>
     )
   }
 
-
+  // ─── Form renderer ─────────────────────────────────────────────────────────
   const renderForm = (
     form: CategoryFormData,
     setForm: (f: CategoryFormData) => void,
@@ -205,33 +217,49 @@ export default function Categories() {
   ) => (
     <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
 
-      <Text style={styles.label}>Name *</Text>
+      <Text style={styles.label}>Category Name *</Text>
       <TextInput
         style={[styles.input, errors.category_name ? styles.inputError : null]}
-        placeholder="Category name"
-        placeholderTextColor={C.latte}
+        placeholder="e.g. Starters, Mains, Desserts"
+        placeholderTextColor={C.textMuted}
         value={form.category_name}
-        onChangeText={text => setForm({ ...form, category_name: text })}
+        onChangeText={t => setForm({ ...form, category_name: t })}
       />
-      {errors.category_name && <Text style={styles.fieldError}>{errors.category_name}</Text>}
+      {errors.category_name && (
+        <Text style={styles.fieldError}>{errors.category_name}</Text>
+      )}
 
       <Text style={styles.label}>Description</Text>
       <TextInput
         style={[styles.input, styles.textArea]}
-        placeholder="Optional description"
-        placeholderTextColor={C.latte}
+        placeholder="Short description (optional)"
+        placeholderTextColor={C.textMuted}
         value={form.category_description}
-        onChangeText={text => setForm({ ...form, category_description: text })}
+        onChangeText={t => setForm({ ...form, category_description: t })}
         multiline
         numberOfLines={3}
       />
+
+      {/* Active Toggle */}
+      <View style={styles.toggleRow}>
+        <View>
+          <Text style={styles.toggleLabel}>Active</Text>
+          <Text style={styles.toggleSub}>Visible to customers & staff</Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.toggle, form.is_active && styles.toggleOn]}
+          onPress={() => setForm({ ...form, is_active: !form.is_active })}
+        >
+          <View style={[styles.toggleThumb, form.is_active && styles.toggleThumbOn]} />
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.modalButtons}>
         <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.submitButton, isPending && styles.submitButtonDisabled]}
+          style={[styles.submitButton, isPending && { opacity: 0.5 }]}
           onPress={onSubmit}
           disabled={isPending}
         >
@@ -243,92 +271,119 @@ export default function Categories() {
     </ScrollView>
   )
 
-
+  // ─── Main Render ───────────────────────────────────────────────────────────
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
+        {/* Header */}
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>Categories</Text>
-            <Text style={styles.subtitle}>Manage your product categories</Text>
+            <Text style={styles.subtitle}>
+              {canEdit ? 'Manage your menu categories' : 'Browse all categories'}
+            </Text>
           </View>
-          <TouchableOpacity style={styles.addButton} onPress={handleAddNew}>
-            <Plus size={16} color={C.cream} />
-            <Text style={styles.addButtonText}>New Category</Text>
-          </TouchableOpacity>
+          {canEdit && (
+            <TouchableOpacity style={styles.addButton} onPress={handleAddNew}>
+              <Plus size={15} color="#fff" />
+              <Text style={styles.addButtonText}>New</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {showSuccessMessage && (
+        {/* Role pill */}
+        <View style={styles.rolePill}>
+          <View style={[styles.roleDot, { backgroundColor: canEdit ? C.accent : C.success }]} />
+          <Text style={styles.roleText}>
+            {userRole.replace('_', ' ').toUpperCase()} — {canEdit ? 'Full Access' : 'View Only'}
+          </Text>
+        </View>
+
+        {/* Banners */}
+        {successMsg && (
           <View style={styles.successBanner}>
-            <CheckCircle size={16} color={C.sage} />
-            <Text style={styles.successText}>{showSuccessMessage}</Text>
+            <CheckCircle size={14} color={C.success} />
+            <Text style={styles.successText}>{successMsg}</Text>
           </View>
         )}
-
-        {showErrorMessage && (
+        {errorMsg && (
           <View style={styles.errorBanner}>
-            <AlertCircle size={16} color={C.terracotta} />
-            <Text style={styles.errorBannerText}>{showErrorMessage}</Text>
+            <AlertCircle size={14} color={C.danger} />
+            <Text style={styles.errorBannerText}>{errorMsg}</Text>
           </View>
         )}
 
+        {/* Empty state */}
         {categories?.length === 0 && (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
-              <Tags size={32} color={C.brass} />
+              <Tags size={28} color={C.accent} />
             </View>
             <Text style={styles.emptyTitle}>No categories yet</Text>
-            <Text style={styles.emptySubtitle}>Start by creating your first category</Text>
-            <TouchableOpacity style={styles.addButton} onPress={handleAddNew}>
-              <Plus size={14} color={C.cream} />
-              <Text style={styles.addButtonText}>Create a category</Text>
-            </TouchableOpacity>
+            <Text style={styles.emptySub}>
+              {canEdit ? 'Create your first category to get started' : 'No categories have been added'}
+            </Text>
+            {canEdit && (
+              <TouchableOpacity style={styles.addButton} onPress={handleAddNew}>
+                <Plus size={14} color="#fff" />
+                <Text style={styles.addButtonText}>Create Category</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
-        {categories?.map((category: Category) => (
-          <View key={category.category_id} style={styles.card}>
+        {/* Category Cards */}
+        {categories?.map((cat: Category) => (
+          <View key={cat.category_id} style={styles.card}>
+            {/* Orange left accent bar */}
+            <View style={styles.cardAccentBar} />
 
-            <View style={styles.cardHeader}>
-              <View style={styles.cardTitleRow}>
-                <Text style={styles.cardTitle}>{category.category_name}</Text>
+            <View style={styles.cardInner}>
+              <View style={styles.cardHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardTitle}>{cat.category_name}</Text>
+                  {cat.category_description ? (
+                    <Text style={styles.cardDesc} numberOfLines={2}>
+                      {cat.category_description}
+                    </Text>
+                  ) : null}
+                </View>
+
+                {canEdit && (
+                  <View style={styles.cardActions}>
+                    <TouchableOpacity
+                      style={styles.iconBtn}
+                      onPress={() => handleEdit(cat)}
+                    >
+                      <Edit size={14} color={C.accent} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.iconBtn, styles.iconBtnDanger]}
+                      onPress={() => handleDelete(cat.category_id, cat.category_name)}
+                    >
+                      <Trash2 size={14} color={C.danger} />
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
-              <View style={styles.cardActions}>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => handleEdit(category)}
-                >
-                  <Edit size={15} color={C.brass} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.iconButton, styles.iconButtonDelete]}
-                  onPress={() => handleDelete(category.category_id, category.category_name)}
-                >
-                  <Trash2 size={15} color={C.terracotta} />
-                </TouchableOpacity>
-              </View>
-            </View>
 
-            {category.category_description && (
-              <Text style={styles.cardDescription}>{category.category_description}</Text>
-            )}
-
-            <View style={styles.cardFooter}>
-              <View style={[
-                styles.statusBadge,
-                category.is_active ? styles.statusActive : styles.statusInactive,
-              ]}>
+              <View style={styles.cardFooter}>
                 <View style={[
-                  styles.statusDot,
-                  { backgroundColor: category.is_active ? C.sage : C.clay },
-                ]} />
-                <Text style={[
-                  styles.statusText,
-                  category.is_active ? styles.statusActiveText : styles.statusInactiveText,
+                  styles.statusBadge,
+                  cat.is_active ? styles.statusActive : styles.statusInactive,
                 ]}>
-                  {category.is_active ? 'Active' : 'Inactive'}
-                </Text>
+                  <View style={[
+                    styles.statusDot,
+                    { backgroundColor: cat.is_active ? C.success : C.textMuted },
+                  ]} />
+                  <Text style={[
+                    styles.statusText,
+                    { color: cat.is_active ? C.success : C.textMuted },
+                  ]}>
+                    {cat.is_active ? 'Active' : 'Inactive'}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -336,31 +391,35 @@ export default function Categories() {
 
       </ScrollView>
 
+      {/* Add Modal */}
       <Modal visible={showAddModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>New Category</Text>
             {renderForm(
               addForm, setAddForm, addErrors,
               handleAddSubmit,
               () => setShowAddModal(false),
-              createCategoryMutation.isPending,
-              'Create', 'Creating...',
+              createMutation.isPending,
+              'Create Category', 'Creating…',
             )}
           </View>
         </View>
       </Modal>
 
+      {/* Edit Modal */}
       <Modal visible={showEditModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Edit Category</Text>
             {renderForm(
               editForm, setEditForm, editErrors,
               handleEditSubmit,
               () => { setShowEditModal(false); setEditingCategory(null) },
-              updateCategoryMutation.isPending,
-              'Update', 'Updating...',
+              updateMutation.isPending,
+              'Save Changes', 'Saving…',
             )}
           </View>
         </View>
@@ -369,237 +428,316 @@ export default function Categories() {
   )
 }
 
-
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.cream,
+    backgroundColor: C.bg,
   },
   content: {
     padding: 16,
-    paddingTop: 52,
-    paddingBottom: 32,
+    paddingTop: 56,
+    paddingBottom: 40,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: C.cream,
+    backgroundColor: C.bg,
     gap: 12,
   },
   loadingIcon: {
-    width: 58, height: 58,
-    borderRadius: radius.md,
-    backgroundColor: C.brassLight,
-    borderWidth: 1.5, borderColor: C.brassBorder,
+    width: 56, height: 56,
+    borderRadius: R.md,
+    backgroundColor: C.accentDim,
+    borderWidth: 1.5, borderColor: C.accentBorder,
     alignItems: 'center', justifyContent: 'center',
   },
-  loadingTitle: {
-    fontSize: 15, fontWeight: '700',
-    color: C.espresso, marginTop: 8,
+  loadingText: {
+    fontSize: 14, fontWeight: '700',
+    color: C.textSub, marginTop: 8,
   },
   errorTitle: {
-    fontSize: 16, fontWeight: '700',
-    color: C.terracotta,
+    fontSize: 16, fontWeight: '800',
+    color: C.danger,
   },
   errorSub: {
-    fontSize: 13,
-    color: C.clay,
+    fontSize: 12, color: C.textMuted,
   },
 
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 22, fontWeight: '900',
-    color: C.espresso, letterSpacing: 0.3,
+    fontSize: 26, fontWeight: '900',
+    color: C.textPrimary, letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 13, color: C.clay,
-    marginTop: 3, fontWeight: '500',
+    fontSize: 12, color: C.textMuted,
+    marginTop: 2, fontWeight: '500',
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.brass,
-    borderRadius: radius.pill,
-    paddingHorizontal: 14, paddingVertical: 9,
+    backgroundColor: C.accent,
+    borderRadius: R.pill,
+    paddingHorizontal: 16, paddingVertical: 10,
     gap: 6,
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowColor: C.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   addButtonText: {
-    color: C.cream, fontWeight: '700',
-    fontSize: 13, letterSpacing: 0.2,
+    color: '#fff', fontWeight: '800',
+    fontSize: 13, letterSpacing: 0.3,
   },
 
+  // Role pill
+  rolePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: C.surface,
+    borderWidth: 1, borderColor: C.cardBorder,
+    borderRadius: R.pill,
+    paddingHorizontal: 10, paddingVertical: 5,
+    marginBottom: 20, gap: 6,
+  },
+  roleDot: {
+    width: 6, height: 6, borderRadius: 3,
+  },
+  roleText: {
+    fontSize: 10, fontWeight: '700',
+    color: C.textSub, letterSpacing: 0.8,
+  },
+
+  // Banners
   successBanner: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: C.sageLight,
-    borderWidth: 1, borderColor: C.sageBorder,
-    borderRadius: radius.md,
-    padding: 12, marginBottom: 16, gap: 8,
+    backgroundColor: C.successDim,
+    borderWidth: 1, borderColor: C.successBdr,
+    borderRadius: R.md,
+    padding: 12, marginBottom: 14, gap: 8,
   },
   successText: {
-    color: C.sage, fontSize: 13, fontWeight: '600',
+    color: C.success, fontSize: 13, fontWeight: '600',
   },
   errorBanner: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: C.tcLight,
-    borderWidth: 1, borderColor: C.tcBorder,
-    borderRadius: radius.md,
-    padding: 12, marginBottom: 16, gap: 8,
+    backgroundColor: C.dangerDim,
+    borderWidth: 1, borderColor: C.dangerBdr,
+    borderRadius: R.md,
+    padding: 12, marginBottom: 14, gap: 8,
   },
   errorBannerText: {
-    color: C.terracotta, fontSize: 13, fontWeight: '600',
+    color: C.danger, fontSize: 13, fontWeight: '600',
   },
 
+  // Empty state
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 56, gap: 12,
+    paddingVertical: 60, gap: 12,
   },
   emptyIcon: {
-    width: 72, height: 72,
-    borderRadius: radius.lg,
-    backgroundColor: C.brassLight,
-    borderWidth: 1.5, borderColor: C.brassBorder,
+    width: 68, height: 68,
+    borderRadius: R.lg,
+    backgroundColor: C.accentDim,
+    borderWidth: 1.5, borderColor: C.accentBorder,
     alignItems: 'center', justifyContent: 'center',
   },
   emptyTitle: {
     fontSize: 17, fontWeight: '800',
-    color: C.espresso,
+    color: C.textPrimary,
   },
-  emptySubtitle: {
-    fontSize: 13, color: C.clay,
+  emptySub: {
+    fontSize: 13, color: C.textMuted,
+    textAlign: 'center', paddingHorizontal: 32,
   },
 
+  // Card
   card: {
-    backgroundColor: C.parchment,
-    borderRadius: radius.md,
-    borderWidth: 1.5, borderColor: C.vellum,
-    padding: 14, marginBottom: 12,
-    shadowColor: C.espresso,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    flexDirection: 'row',
+    backgroundColor: C.card,
+    borderRadius: R.md,
+    borderWidth: 1, borderColor: C.cardBorder,
+    marginBottom: 10,
+    overflow: 'hidden',
+  },
+  cardAccentBar: {
+    width: 3,
+    backgroundColor: C.accent,
+    borderTopLeftRadius: R.md,
+    borderBottomLeftRadius: R.md,
+  },
+  cardInner: {
+    flex: 1,
+    padding: 14,
   },
   cardHeader: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 8,
-  },
-  cardTitleRow: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 8, flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   cardTitle: {
-    fontSize: 15, fontWeight: '700',
-    color: C.espresso,
+    fontSize: 15, fontWeight: '800',
+    color: C.textPrimary, letterSpacing: 0.2,
+  },
+  cardDesc: {
+    fontSize: 12, color: C.textSub,
+    marginTop: 3, lineHeight: 17,
   },
   cardActions: {
-    flexDirection: 'row', gap: 6,
+    flexDirection: 'row', gap: 6, marginLeft: 10,
   },
-  iconButton: {
-    padding: 7, borderRadius: radius.xs,
-    backgroundColor: C.brassLight,
-    borderWidth: 1, borderColor: C.brassBorder,
+  iconBtn: {
+    padding: 7, borderRadius: R.xs,
+    backgroundColor: C.accentDim,
+    borderWidth: 1, borderColor: C.accentBorder,
   },
-  iconButtonDelete: {
-    backgroundColor: C.tcLight,
-    borderColor: C.tcBorder,
-  },
-  cardDescription: {
-    fontSize: 12, color: C.clay, marginBottom: 10,
+  iconBtnDanger: {
+    backgroundColor: C.dangerDim,
+    borderColor: C.dangerBdr,
   },
   cardFooter: {
     flexDirection: 'row', alignItems: 'center',
-    marginTop: 8,
   },
   statusBadge: {
     flexDirection: 'row', alignItems: 'center',
-    gap: 5, borderRadius: radius.pill,
-    paddingHorizontal: 10, paddingVertical: 4,
+    gap: 5, borderRadius: R.pill,
+    paddingHorizontal: 9, paddingVertical: 4,
   },
+  statusActive:   { backgroundColor: C.successDim },
+  statusInactive: { backgroundColor: C.elevated },
   statusDot: {
     width: 5, height: 5, borderRadius: 3,
   },
-  statusActive:   { backgroundColor: C.sageLight },
-  statusInactive: { backgroundColor: C.vellum },
-  statusText:     { fontSize: 10, fontWeight: '700' },
-  statusActiveText:   { color: C.sage },
-  statusInactiveText: { color: C.clay },
+  statusText: {
+    fontSize: 10, fontWeight: '700', letterSpacing: 0.5,
+  },
 
+  // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(28,16,8,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: C.parchment,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    borderWidth: 1.5, borderColor: C.vellum,
+    backgroundColor: C.surface,
+    borderTopLeftRadius: R.xl,
+    borderTopRightRadius: R.xl,
+    borderWidth: 1, borderColor: C.cardBorder,
     padding: 24, maxHeight: '90%',
   },
-  modalTitle: {
-    fontSize: 16, fontWeight: '900',
-    color: C.espresso, letterSpacing: 0.3,
+  modalHandle: {
+    width: 36, height: 4,
+    borderRadius: R.pill,
+    backgroundColor: C.elevated,
+    alignSelf: 'center',
     marginBottom: 20,
   },
+  modalTitle: {
+    fontSize: 18, fontWeight: '900',
+    color: C.textPrimary, letterSpacing: 0.4,
+    marginBottom: 4,
+  },
   modalScroll: { flexGrow: 0 },
+
+  // Form
   label: {
-    fontSize: 11, fontWeight: '800',
-    color: C.clay, marginBottom: 6, marginTop: 14,
-    textTransform: 'uppercase', letterSpacing: 1.2,
+    fontSize: 10, fontWeight: '800',
+    color: C.textMuted, marginBottom: 6, marginTop: 16,
+    textTransform: 'uppercase', letterSpacing: 1.4,
   },
   input: {
-    borderWidth: 1.5, borderColor: C.vellum,
-    borderRadius: radius.md,
-    paddingHorizontal: 14, paddingVertical: 10,
-    fontSize: 14, color: C.espresso,
-    backgroundColor: C.cream,
+    borderWidth: 1.5, borderColor: C.cardBorder,
+    borderRadius: R.md,
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 14, color: C.textPrimary,
+    backgroundColor: C.inputBg,
   },
-  inputError: { borderColor: C.tcBorder },
-  textArea:   { height: 80, textAlignVertical: 'top' },
+  inputError: { borderColor: C.danger },
+  textArea: { height: 80, textAlignVertical: 'top' },
   fieldError: {
-    fontSize: 11, color: C.terracotta,
+    fontSize: 11, color: C.danger,
     marginTop: 4, fontWeight: '600',
   },
 
+  // Toggle
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    padding: 14,
+    backgroundColor: C.card,
+    borderRadius: R.md,
+    borderWidth: 1, borderColor: C.cardBorder,
+  },
+  toggleLabel: {
+    fontSize: 14, fontWeight: '700',
+    color: C.textPrimary,
+  },
+  toggleSub: {
+    fontSize: 11, color: C.textMuted, marginTop: 2,
+  },
+  toggle: {
+    width: 44, height: 26,
+    borderRadius: R.pill,
+    backgroundColor: C.elevated,
+    borderWidth: 1, borderColor: C.cardBorder,
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  toggleOn: {
+    backgroundColor: C.accent,
+    borderColor: C.accent,
+  },
+  toggleThumb: {
+    width: 18, height: 18,
+    borderRadius: R.pill,
+    backgroundColor: C.textMuted,
+    alignSelf: 'flex-start',
+  },
+  toggleThumbOn: {
+    backgroundColor: '#fff',
+    alignSelf: 'flex-end',
+  },
+
+  // Modal buttons
   modalButtons: {
     flexDirection: 'row', gap: 12,
     marginTop: 24, marginBottom: 8,
   },
   cancelButton: {
     flex: 1,
-    borderWidth: 1.5, borderColor: C.vellum,
-    borderRadius: radius.pill,
-    paddingVertical: 12, alignItems: 'center',
-    backgroundColor: C.cream,
+    borderWidth: 1.5, borderColor: C.cardBorder,
+    borderRadius: R.pill,
+    paddingVertical: 13, alignItems: 'center',
+    backgroundColor: C.elevated,
   },
   cancelButtonText: {
-    fontSize: 14, color: C.clay, fontWeight: '700',
+    fontSize: 14, color: C.textSub, fontWeight: '700',
   },
   submitButton: {
-    flex: 1,
-    backgroundColor: C.brass,
-    borderRadius: radius.pill,
-    paddingVertical: 12, alignItems: 'center',
-    shadowColor: C.brass,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 3,
+    flex: 2,
+    backgroundColor: C.accent,
+    borderRadius: R.pill,
+    paddingVertical: 13, alignItems: 'center',
+    shadowColor: C.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  submitButtonDisabled: { opacity: 0.5 },
   submitButtonText: {
-    fontSize: 14, color: C.cream,
-    fontWeight: '800', letterSpacing: 0.2,
+    fontSize: 14, color: '#fff',
+    fontWeight: '800', letterSpacing: 0.3,
   },
 })
