@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { protect } from '../../middleware/auth.middleware.js';
 import {
     deletePaymentController,
     esewaFailureCallback,
@@ -14,14 +13,14 @@ import {
 
 const router = Router();
 
-router.post('/', protect, postPaymentController);
-router.get('/', protect, getAllPaymentsController);
-router.put('/:id', protect, putPaymentController);
-router.delete('/:id', protect, deletePaymentController);
-router.get('/:id', protect, getPaymentController);
+router.post('/',  postPaymentController);
+router.get('/', getAllPaymentsController);
+router.put('/:id',  putPaymentController);
+router.delete('/:id',  deletePaymentController);
+router.get('/:id',  getPaymentController);
 
-router.post('/esewa/initiate', protect, initiateEsewaController);
-router.post('/esewa/verify', protect, verifyEsewaController);
+router.post('/esewa/initiate',  initiateEsewaController);
+router.post('/esewa/verify',  verifyEsewaController);
 router.get('/esewa/callback/success', esewaSuccessCallback);
 router.get('/esewa/callback/failure', esewaFailureCallback);
 

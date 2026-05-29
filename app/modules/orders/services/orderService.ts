@@ -1,7 +1,7 @@
 import { Order, OrderStatus } from "@/shared/types/orders";
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http://192.168.1.71:5000/api/orders';
+const BASE_URL= 'http://10.78.34.24:5000/api/orders';
 
 
 

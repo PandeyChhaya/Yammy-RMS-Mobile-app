@@ -15,7 +15,7 @@ import type {
     UpdateSupplierRequest,
 } from "../types/inventory";
 
-const BASE_URL = 'http://192.168.1.71:5000/api/inventory';
+const BASE_URL = 'http://10.78.34.24:5000/api/inventory';
 
 const auth_headers = async () => {
     const token = await authService.getToken();
@@ -25,15 +25,12 @@ const auth_headers = async () => {
     };
 };
 
-
 const postIngredient = async (item: CreateIngredientRequest): Promise<Ingredient> => {
     const response = await fetch(`${BASE_URL}/ingredients`, {
         method: 'POST',
         headers: await auth_headers(),
         body: JSON.stringify(item),
     });
-     const text = await response.text();
-    console.log('RAW RESPONSE:', text);
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || 'Failed to create ingredient');
     return data;
@@ -83,7 +80,6 @@ const deleteIngredient = async (id: string): Promise<{ message: string }> => {
     if (!response.ok) throw new Error(data.message || 'Failed to delete ingredient');
     return data;
 };
-
 
 const postSupplier = async (supplier: CreateSupplierRequest): Promise<Supplier> => {
     const response = await fetch(`${BASE_URL}/suppliers`, {
@@ -141,7 +137,6 @@ const deleteSupplier = async (id: string): Promise<{ message: string }> => {
     return data;
 };
 
-
 const getAllInvoices = async (): Promise<Invoice[]> => {
     const response = await fetch(`${BASE_URL}/invoices`, {
         method: 'GET',
@@ -195,7 +190,6 @@ const deleteInvoice = async (id: string): Promise<{ message: string }> => {
     return data;
 };
 
-
 const getStockMovements = async (ingredient_id?: string): Promise<StockMovement[]> => {
     const url = ingredient_id
         ? `${BASE_URL}/movements?ingredient_id=${ingredient_id}`
@@ -209,7 +203,6 @@ const getStockMovements = async (ingredient_id?: string): Promise<StockMovement[
     if (!Array.isArray(data)) throw new Error('Unexpected response format');
     return data;
 };
-
 
 const getStockAlerts = async (): Promise<StockAlert[]> => {
     const response = await fetch(`${BASE_URL}/alerts`, {
@@ -232,7 +225,6 @@ const markAlertAsRead = async (alert_id: string): Promise<{ message: string }> =
     return data;
 };
 
-
 const getDashboardData = async (): Promise<StockDashboardData> => {
     const response = await fetch(`${BASE_URL}/dashboard`, {
         method: 'GET',
@@ -242,7 +234,6 @@ const getDashboardData = async (): Promise<StockDashboardData> => {
     if (!response.ok) throw new Error(data.message || 'Failed to load dashboard data');
     return data;
 };
-
 
 const inventoryService = {
     postIngredient,

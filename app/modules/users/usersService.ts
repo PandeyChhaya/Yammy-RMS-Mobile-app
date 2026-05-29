@@ -1,6 +1,6 @@
 import { authService } from "../auth/services/auth.service";
 
-const BASE_URL = 'http://192.168.1.71:5000/api/users';
+const BASE_URL = 'http://10.78.34.24:5000/api/users';
 
 export interface User {
   user_id: number

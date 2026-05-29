@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { protect } from '../../middleware/auth.middleware.js';
 import {
     deleteTransactionController,
     getAllTransactionsController,
@@ -10,14 +9,14 @@ import {
 
 const loyaltyRouter = Router();
 
-loyaltyRouter.post('/earn', protect, postEarnPointsController);
+loyaltyRouter.post('/earn',  postEarnPointsController);
 
-loyaltyRouter.post('/redeem', protect, postRedeemPointsController);
+loyaltyRouter.post('/redeem',  postRedeemPointsController);
 
-loyaltyRouter.get('/balance/:id', protect, getLoyaltyBalanceController);
+loyaltyRouter.get('/balance/:id', getLoyaltyBalanceController);
 
-loyaltyRouter.get('/transactions/:id', protect, getAllTransactionsController);
+loyaltyRouter.get('/transactions/:id',  getAllTransactionsController);
 
-loyaltyRouter.delete('/transactions/:id', protect, deleteTransactionController);
+loyaltyRouter.delete('/transactions/:id',  deleteTransactionController);
 
 export default loyaltyRouter;

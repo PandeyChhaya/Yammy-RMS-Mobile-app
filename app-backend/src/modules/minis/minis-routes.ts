@@ -2,15 +2,14 @@ import { v2 as cloudinary } from 'cloudinary';
 import { Router } from 'express';
 import multer from 'multer';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import { protect } from '../../middleware/auth.middleware.js';
 import {
-    deleteMiniController,
-    getAllMinisController,
-    getApprovedMinisController,
-    getMyMinisController,
-    incrementViewController,
-    updateMiniStatusController,
-    uploadMiniController,
+  deleteMiniController,
+  getAllMinisController,
+  getApprovedMinisController,
+  getMyMinisController,
+  incrementViewController,
+  updateMiniStatusController,
+  uploadMiniController,
 } from './minis-controller.js';
 
 const storage = new CloudinaryStorage({
@@ -26,12 +25,12 @@ const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
 const router = Router();
 
-router.get('/', protect, getApprovedMinisController);
-router.get('/my', protect, getMyMinisController);
-router.get('/all', protect, getAllMinisController);
-router.post('/', protect, upload.single('video'), uploadMiniController);
-router.patch('/:id/status', protect, updateMiniStatusController);
-router.delete('/:id', protect, deleteMiniController);
+router.get('/',  getApprovedMinisController);
+router.get('/my', getMyMinisController);
+router.get('/all',  getAllMinisController);
+router.post('/',  upload.single('video'), uploadMiniController);
+router.patch('/:id/status', updateMiniStatusController);
+router.delete('/:id', deleteMiniController);
 router.patch('/:id/view', incrementViewController);                                        
 
 export default router;

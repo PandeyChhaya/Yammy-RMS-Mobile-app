@@ -1,5 +1,4 @@
 import { Router } from 'express'
-import { protect } from '../../middleware/auth.middleware.js'
 import {
     deleteIngredientController,
     deleteInvoiceController,
@@ -22,26 +21,26 @@ import {
 
 const router = Router()
 
-router.post('/ingredients',          protect, postIngredientController)
-router.get('/ingredients',           protect, getAllIngredientsController)
-router.get('/ingredients/:id',       protect, getIngredientController)
-router.put('/ingredients/:id',       protect, putIngredientController)
-router.delete('/ingredients/:id',    protect, deleteIngredientController)
+router.post('/ingredients',           postIngredientController)
+router.get('/ingredients',            getAllIngredientsController)
+router.get('/ingredients/:id',        getIngredientController)
+router.put('/ingredients/:id',        putIngredientController)
+router.delete('/ingredients/:id',     deleteIngredientController)
 
-router.post('/suppliers',            protect, postSupplierController)
-router.get('/suppliers',             protect, getAllSuppliersController)
-router.get('/suppliers/:id',         protect, getSupplierController)
-router.put('/suppliers/:id',         protect, putSupplierController)
-router.delete('/suppliers/:id',      protect, deleteSupplierController)
+router.post('/suppliers',             postSupplierController)
+router.get('/suppliers',              getAllSuppliersController)
+router.get('/suppliers/:id',          getSupplierController)
+router.put('/suppliers/:id',          putSupplierController)
+router.delete('/suppliers/:id',       deleteSupplierController)
 
-router.get('/invoices',              protect, getAllInvoicesController)
-router.get('/invoices/:id',          protect, getInvoiceController)
-router.get('/invoices/:id/items',    protect, getInvoiceItemsController)
-router.delete('/invoices/:id',       protect, deleteInvoiceController)
+router.get('/invoices',               getAllInvoicesController)
+router.get('/invoices/:id',           getInvoiceController)
+router.get('/invoices/:id/items',     getInvoiceItemsController)
+router.delete('/invoices/:id',        deleteInvoiceController)
 
-router.get('/movements',             protect, getStockMovementsController)
-router.get('/alerts',                protect, getStockAlertsController)
-router.put('/alerts/:id/read',       protect, markAlertAsReadController)
-router.get('/dashboard',             protect, getDashboardController)
+router.get('/movements',              getStockMovementsController)
+router.get('/alerts',                getStockAlertsController)
+router.put('/alerts/:id/read',        markAlertAsReadController)
+router.get('/dashboard',              getDashboardController)
 
 export default router

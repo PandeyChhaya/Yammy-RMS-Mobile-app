@@ -77,7 +77,7 @@ export default function MenuItemsSection({
 
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <Star size={15} color={C.primary} />
+          <Star size={14} color={C.primary} />
           <Text style={styles.headerTitle}>Menu</Text>
           <View style={styles.countBadge}>
             <Text style={styles.countText}>{filtered.length}</Text>
@@ -108,7 +108,7 @@ export default function MenuItemsSection({
         >
           <View style={[styles.tabDot, { backgroundColor: C.textMuted }]} />
           <Text style={[styles.tabText, selectedCategory === 'all' && styles.tabTextActive]}>
-            ⭐ All
+            All
           </Text>
         </TouchableOpacity>
 
@@ -138,14 +138,14 @@ export default function MenuItemsSection({
       ) : (
         <FlatList
           data={filtered}
-          key={numColumns}                         
+          key={numColumns}
           keyExtractor={(item) => String(item.menu_items_id)}
           numColumns={numColumns}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={numColumns > 1 ? styles.gridRow : undefined}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <View style={{ width: cardSize, marginBottom: 8 }}>
+            <View style={{ width: cardSize, marginBottom: 6 }}>
               <MenuItemCard
                 item={item}
                 onSelect={onItemSelect}
@@ -167,32 +167,32 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 10,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: C.border,
     backgroundColor: C.surface,
-    gap: 10,
+    gap: 8,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 7,
   },
   headerTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
     color: C.textMain,
   },
   countBadge: {
     backgroundColor: C.primary,
     borderRadius: radius.pill,
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 2,
   },
   countText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     color: C.textMain,
   },
@@ -205,8 +205,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: C.border,
     borderRadius: radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   searchInput: {
     flex: 1,
@@ -223,16 +223,16 @@ const styles = StyleSheet.create({
   },
   tabsContent: {
     flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    gap: 6,
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: radius.pill,
     backgroundColor: C.background,
     borderWidth: 1.5,
@@ -243,12 +243,12 @@ const styles = StyleSheet.create({
     borderColor: C.primary,
   },
   tabDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   tabText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: C.textMuted,
   },
@@ -256,16 +256,16 @@ const styles = StyleSheet.create({
     color: C.primary,
   },
 
-  grid:    { padding: 14 },
-  gridRow: { gap: 8 },
+  grid:    { padding: 10 },
+  gridRow: { gap: 6 },
 
   emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 60,
+    gap: 6,
+    paddingVertical: 40,
   },
-  emptyTitle:    { fontSize: 15, fontWeight: '800', color: C.textMain },
+  emptyTitle:    { fontSize: 14, fontWeight: '800', color: C.textMain },
   emptySubtitle: { fontSize: 12, color: C.textMuted },
 })

@@ -10,7 +10,7 @@ import {
 } from 'react-native'
 import { io as socketIO } from 'socket.io-client'
 
-const SOCKET_URL = 'http://10.115.151.24:5000'
+const SOCKET_URL = 'http://10.78.34.24:5000'
 
 const C = {
   espresso:    '#1C1008',

@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { protect } from '../../middleware/auth.middleware.js';
 import {
     deleteTableController,
     getAllTablesController,
@@ -10,10 +9,10 @@ import {
 
 const router = Router();
 
-router.post('/',     protect, postTableController);
-router.get('/',      protect, getAllTablesController);
-router.get('/:id',   protect, getTableController);
-router.put('/:id',   protect, putTableController);
-router.delete('/:id',protect, deleteTableController);
+router.post('/',     postTableController);
+router.get('/',       getAllTablesController);
+router.get('/:id',    getTableController);
+router.put('/:id',    putTableController);
+router.delete('/:id', deleteTableController);
 
 export default router;

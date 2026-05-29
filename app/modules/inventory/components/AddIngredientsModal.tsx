@@ -1,394 +1,277 @@
-import { Package, Save, X } from 'lucide-react-native'
+import { X } from 'lucide-react-native'
 import { useState } from 'react'
 import {
-  ActivityIndicator,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+  Alert, Modal, ScrollView, StyleSheet,
+  Text, TextInput, TouchableOpacity, View,
 } from 'react-native'
 import inventoryService from '../services/inventory'
-import { CreateIngredientRequest } from '../types/inventory'
 
 const C = {
-  bg:          '#0F172A',
-  surface:     '#1E293B',
-  card:        '#1E293B',
-  cardBorder:  '#334155',
-  elevated:    '#334155',
-  inputBg:     '#0F172A',
-  accent:      '#6366F1',
-  accentDim:   '#6366F122',
-  accentBorder:'#6366F155',
-  danger:      '#EF4444',
-  dangerDim:   '#EF444418',
-  dangerBdr:   '#EF444444',
-  textPrimary: '#F1F5F9',
-  textSub:     '#94A3B8',
-  textMuted:   '#475569',
+  black:      '#0A0A0A',
+  charcoal:   '#1A1A1A',
+  graphite:   '#2C2C2C',
+  muted:      '#6B6B6B',
+  border:     '#2E2E2E',
+  orange:     '#FF6B2C',
+  orangeTint: '#2A1A10',
+  orangeDim:  '#7A3010',
+  white:      '#FFFFFF',
+  error:      '#EF4444',
+  success:    '#22C55E',
 }
-
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
-interface AddIngredientModalProps {
+interface Props {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
 }
 
-const UNITS = ['kg', 'g', 'L', 'ml', 'piece', 'box', 'bag', 'bottle']
+const CATEGORIES = ['Vegetables', 'Meat', 'Dairy', 'Grains', 'Spices', 'Beverages', 'Other']
+const UNITS      = ['kg', 'g', 'L', 'ml', 'pcs', 'dozen', 'box']
 
-const DEFAULT_FORM: CreateIngredientRequest = {
-  name: '',
-  category: 'Imported',
-  unit: 'kg',
-  min_stock: 0,
-  max_stock: 100,
-  cost_per_unit: 0,
-  description: '',
-  supplier_id: undefined,
-  expiration_date: undefined,
+const DEFAULT = {
+  name: '', category: 'Vegetables', unit: 'kg',
+  current_stock: '', min_stock: '', max_stock: '',
+  cost_per_unit: '', expiration_date: '',
 }
 
-export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIngredientModalProps) {
-  const [formData, setFormData]     = useState<CreateIngredientRequest>(DEFAULT_FORM)
-  const [loading, setLoading]       = useState(false)
-  const [error, setError]           = useState<string | null>(null)
-  const [unitOpen, setUnitOpen]     = useState(false)
+export default function AddIngredientModal({ isOpen, onClose, onSuccess }: Props) {
+  const [form,    setForm]    = useState(DEFAULT)
+  const [errors,  setErrors]  = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(false)
+  const [focused, setFocused] = useState<string | null>(null)
 
-  const handleInputChange = (field: keyof CreateIngredientRequest, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+  const set = (key: string, val: string) => {
+    setForm(f => ({ ...f, [key]: val }))
+    setErrors(e => ({ ...e, [key]: '' }))
+  }
+
+  const validate = () => {
+    const e: Record<string, string> = {}
+    if (!form.name.trim())       e.name         = 'Name is required'
+    if (!form.current_stock)     e.current_stock = 'Current stock is required'
+    if (!form.min_stock)         e.min_stock     = 'Min stock is required'
+    if (!form.max_stock)         e.max_stock     = 'Max stock is required'
+    if (!form.cost_per_unit)     e.cost_per_unit = 'Cost per unit is required'
+    if (parseFloat(form.min_stock) >= parseFloat(form.max_stock))
+      e.max_stock = 'Max must be greater than min'
+    return e
   }
 
   const handleSubmit = async () => {
+    const e = validate()
+    if (Object.keys(e).length > 0) { setErrors(e); return }
     setLoading(true)
-    setError(null)
     try {
-      if (!formData.name.trim())                    throw new Error('Name is required')
-      if (formData.min_stock < 0 || formData.max_stock < 0) throw new Error('Stock values must be positive')
-      if (formData.min_stock >= formData.max_stock) throw new Error('Min stock must be less than max stock')
-      if (formData.cost_per_unit < 0)               throw new Error('Cost must be positive')
-
-      await inventoryService.postIngredient(formData)
+      await inventoryService.postIngredient({
+        name:           form.name.trim(),
+        category:       form.category,
+        unit:           form.unit,
+        min_stock:      parseFloat(form.min_stock),
+        max_stock:      parseFloat(form.max_stock),
+        cost_per_unit:  parseFloat(form.cost_per_unit),
+        expiration_date: form.expiration_date || undefined,
+      })
+      setForm(DEFAULT)
+      setErrors({})
       onSuccess()
       onClose()
-      setFormData(DEFAULT_FORM)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error creating ingredient')
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to add ingredient')
     } finally {
       setLoading(false)
     }
   }
 
+  const handleClose = () => { setForm(DEFAULT); setErrors({}); onClose() }
+
+  const inputStyle = (key: string) => [
+    s.input,
+    focused === key && s.inputFocused,
+    errors[key]     && s.inputError,
+  ]
+
   return (
     <Modal visible={isOpen} animationType="slide" transparent>
-      <View style={styles.overlay}>
-        <View style={styles.container}>
+      <View style={s.overlay}>
+        <View style={s.container}>
+          <View style={s.handle} />
 
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <View style={styles.headerIcon}>
-                <Package size={20} color={C.textPrimary} />
-              </View>
-              <View>
-                <Text style={styles.headerTitle}>Add New Ingredient</Text>
-                <Text style={styles.headerSubtitle}>Create a new ingredient manually</Text>
-              </View>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={20} color={C.textSub} />
+          <View style={s.header}>
+            <Text style={s.title}>Add Ingredient</Text>
+            <TouchableOpacity style={s.closeBtn} onPress={handleClose}>
+              <X size={16} color={C.muted} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {error && (
-              <View style={styles.errorBanner}>
-                <Text style={styles.errorBannerText}>{error}</Text>
-              </View>
-            )}
+          <ScrollView showsVerticalScrollIndicator={false}>
 
-            <Text style={styles.label}>Name *</Text>
+            {/* Name */}
+            <Text style={s.label}>NAME *</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Enter ingredient name"
-              placeholderTextColor={C.textMuted}
-              value={formData.name}
-              onChangeText={t => handleInputChange('name', t)}
+              style={inputStyle('name')}
+              placeholder="e.g. Tomatoes"
+              placeholderTextColor={C.muted}
+              value={form.name}
+              onChangeText={t => set('name', t)}
+              onFocus={() => setFocused('name')}
+              onBlur={() => setFocused(null)}
             />
+            {errors.name && <Text style={s.fieldError}>{errors.name}</Text>}
 
-            <Text style={styles.label}>Unit</Text>
-            <TouchableOpacity style={styles.picker} onPress={() => setUnitOpen(true)}>
-              <Text style={styles.pickerText}>{formData.unit}</Text>
-            </TouchableOpacity>
-
-            <View style={styles.row}>
-              <View style={styles.half}>
-                <Text style={styles.label}>Min Stock</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={String(formData.min_stock)}
-                  onChangeText={t => handleInputChange('min_stock', parseFloat(t) || 0)}
-                  placeholderTextColor={C.textMuted}
-                />
-              </View>
-              <View style={styles.half}>
-                <Text style={styles.label}>Max Stock</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={String(formData.max_stock)}
-                  onChangeText={t => handleInputChange('max_stock', parseFloat(t) || 0)}
-                  placeholderTextColor={C.textMuted}
-                />
-              </View>
+            {/* Category */}
+            <Text style={s.label}>CATEGORY *</Text>
+            <View style={s.chipRow}>
+              {CATEGORIES.map(cat => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[s.chip, form.category === cat && s.chipActive]}
+                  onPress={() => set('category', cat)}
+                >
+                  <Text style={[s.chipText, form.category === cat && s.chipTextActive]}>{cat}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
-            <View style={styles.row}>
-              <View style={styles.half}>
-                <Text style={styles.label}>Cost per Unit ($)</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={String(formData.cost_per_unit)}
-                  onChangeText={t => handleInputChange('cost_per_unit', parseFloat(t) || 0)}
-                  placeholderTextColor={C.textMuted}
-                />
-              </View>
-              <View style={styles.half}>
-                <Text style={styles.label}>Initial Stock</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={String(formData.min_stock)}
-                  onChangeText={t => handleInputChange('min_stock', parseFloat(t) || 0)}
-                  placeholderTextColor={C.textMuted}
-                />
-              </View>
-            </View>
-
-            <Text style={styles.label}>Description (Optional)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Enter description..."
-              placeholderTextColor={C.textMuted}
-              value={formData.description || ''}
-              onChangeText={t => handleInputChange('description', t)}
-              multiline
-              numberOfLines={3}
-            />
-
-            <Text style={styles.label}>Expiration Date (Optional)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={C.textMuted}
-              value={
-                formData.expiration_date
-                  ? new Date(formData.expiration_date).toISOString().split('T')[0]
-                  : ''
-              }
-              onChangeText={t =>
-                handleInputChange('expiration_date', t ? new Date(t).toISOString() : undefined)
-              }
-            />
-
-            <View style={styles.actions}>
-              <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-                onPress={handleSubmit}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator size="small" color={C.textPrimary} />
-                ) : (
-                  <>
-                    <Save size={15} color={C.textPrimary} />
-                    <Text style={styles.submitButtonText}>Create Ingredient</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-
-        <Modal visible={unitOpen} transparent animationType="slide">
-          <View style={styles.overlay}>
-            <View style={styles.pickerModal}>
-              <Text style={styles.pickerModalTitle}>Select Unit</Text>
+            {/* Unit */}
+            <Text style={s.label}>UNIT *</Text>
+            <View style={s.chipRow}>
               {UNITS.map(unit => (
                 <TouchableOpacity
                   key={unit}
-                  style={[styles.pickerOption, formData.unit === unit && styles.pickerOptionActive]}
-                  onPress={() => { handleInputChange('unit', unit); setUnitOpen(false) }}
+                  style={[s.chip, form.unit === unit && s.chipActive]}
+                  onPress={() => set('unit', unit)}
                 >
-                  <Text style={[styles.pickerOptionText, formData.unit === unit && styles.pickerOptionTextActive]}>
-                    {unit}
-                  </Text>
+                  <Text style={[s.chipText, form.unit === unit && s.chipTextActive]}>{unit}</Text>
                 </TouchableOpacity>
               ))}
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setUnitOpen(false)}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+            </View>
+
+            {/* Stock fields */}
+            <View style={s.row}>
+              <View style={s.half}>
+                <Text style={s.label}>CURRENT STOCK *</Text>
+                <TextInput
+                  style={inputStyle('current_stock')}
+                  placeholder="0"
+                  placeholderTextColor={C.muted}
+                  keyboardType="numeric"
+                  value={form.current_stock}
+                  onChangeText={t => set('current_stock', t)}
+                  onFocus={() => setFocused('current_stock')}
+                  onBlur={() => setFocused(null)}
+                />
+                {errors.current_stock && <Text style={s.fieldError}>{errors.current_stock}</Text>}
+              </View>
+              <View style={s.half}>
+                <Text style={s.label}>COST PER UNIT *</Text>
+                <TextInput
+                  style={inputStyle('cost_per_unit')}
+                  placeholder="0.00"
+                  placeholderTextColor={C.muted}
+                  keyboardType="numeric"
+                  value={form.cost_per_unit}
+                  onChangeText={t => set('cost_per_unit', t)}
+                  onFocus={() => setFocused('cost_per_unit')}
+                  onBlur={() => setFocused(null)}
+                />
+                {errors.cost_per_unit && <Text style={s.fieldError}>{errors.cost_per_unit}</Text>}
+              </View>
+            </View>
+
+            <View style={s.row}>
+              <View style={s.half}>
+                <Text style={s.label}>MIN STOCK *</Text>
+                <TextInput
+                  style={inputStyle('min_stock')}
+                  placeholder="0"
+                  placeholderTextColor={C.muted}
+                  keyboardType="numeric"
+                  value={form.min_stock}
+                  onChangeText={t => set('min_stock', t)}
+                  onFocus={() => setFocused('min_stock')}
+                  onBlur={() => setFocused(null)}
+                />
+                {errors.min_stock && <Text style={s.fieldError}>{errors.min_stock}</Text>}
+              </View>
+              <View style={s.half}>
+                <Text style={s.label}>MAX STOCK *</Text>
+                <TextInput
+                  style={inputStyle('max_stock')}
+                  placeholder="100"
+                  placeholderTextColor={C.muted}
+                  keyboardType="numeric"
+                  value={form.max_stock}
+                  onChangeText={t => set('max_stock', t)}
+                  onFocus={() => setFocused('max_stock')}
+                  onBlur={() => setFocused(null)}
+                />
+                {errors.max_stock && <Text style={s.fieldError}>{errors.max_stock}</Text>}
+              </View>
+            </View>
+
+            {/* Expiry */}
+            <Text style={s.label}>EXPIRY DATE (optional)</Text>
+            <TextInput
+              style={inputStyle('expiration_date')}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={C.muted}
+              value={form.expiration_date}
+              onChangeText={t => set('expiration_date', t)}
+              onFocus={() => setFocused('expiration_date')}
+              onBlur={() => setFocused(null)}
+            />
+
+            {/* Buttons */}
+            <View style={s.buttons}>
+              <TouchableOpacity style={s.cancelBtn} onPress={handleClose}>
+                <Text style={s.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.submitBtn, loading && { opacity: 0.55 }]}
+                onPress={handleSubmit}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                <Text style={s.submitText}>{loading ? 'Adding...' : 'Add Ingredient'}</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </Modal>
+
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   )
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    justifyContent: 'flex-end',
-  },
-  container: {
-    backgroundColor: C.surface,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    borderWidth: 1.5, borderColor: C.cardBorder,
-    maxHeight: '92%',
-  },
+const s = StyleSheet.create({
+  overlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'flex-end' },
+  container: { backgroundColor: C.charcoal, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderTopWidth: 1, borderColor: C.border, padding: 24, maxHeight: '92%' },
+  handle:    { width: 36, height: 4, borderRadius: radius.pill, backgroundColor: C.graphite, alignSelf: 'center', marginBottom: 20 },
 
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1.5, borderBottomColor: C.cardBorder,
-  },
-  headerLeft: {
-    flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1,
-  },
-  headerIcon: {
-    width: 40, height: 40,
-    borderRadius: radius.md,
-    backgroundColor: C.accent,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: C.accent,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3, shadowRadius: 6, elevation: 3,
-  },
-  headerTitle: {
-    fontSize: 15, fontWeight: '900',
-    color: C.textPrimary, letterSpacing: 0.2,
-  },
-  headerSubtitle: {
-    fontSize: 11, color: C.textSub, fontWeight: '500', marginTop: 2,
-  },
-  closeButton: {
-    padding: 8, borderRadius: radius.xs,
-    backgroundColor: C.elevated,
-  },
+  header:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  title:    { fontSize: 18, fontWeight: '900', color: C.white, letterSpacing: 0.4 },
+  closeBtn: { width: 32, height: 32, borderRadius: radius.sm, backgroundColor: C.graphite, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' },
 
-  scroll: { flexGrow: 0 },
-  scrollContent: { padding: 20, paddingBottom: 32 },
+  label:      { fontSize: 10, fontWeight: '800', color: C.muted, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8, marginTop: 16 },
+  input:      { borderWidth: 1.5, borderColor: C.border, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: C.white, backgroundColor: C.black },
+  inputFocused:{ borderColor: C.orange },
+  inputError: { borderColor: C.error },
+  fieldError: { fontSize: 11, color: C.error, marginTop: 4, fontWeight: '600' },
 
-  errorBanner: {
-    backgroundColor: C.dangerDim,
-    borderWidth: 1, borderColor: C.dangerBdr,
-    borderRadius: radius.md,
-    padding: 12, marginBottom: 16,
-  },
-  errorBannerText: {
-    color: C.danger, fontSize: 13, fontWeight: '600',
-  },
+  chipRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip:         { paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill, borderWidth: 1, borderColor: C.border, backgroundColor: C.graphite },
+  chipActive:   { borderColor: C.orange, backgroundColor: C.orangeTint },
+  chipText:     { fontSize: 12, fontWeight: '600', color: C.muted },
+  chipTextActive:{ color: C.orange },
 
-  label: {
-    fontSize: 11, fontWeight: '800',
-    color: C.textMuted, marginBottom: 6, marginTop: 14,
-    textTransform: 'uppercase', letterSpacing: 1.2,
-  },
-  input: {
-    borderWidth: 1.5, borderColor: C.cardBorder,
-    borderRadius: radius.md,
-    paddingHorizontal: 14, paddingVertical: 10,
-    fontSize: 14, color: C.textPrimary,
-    backgroundColor: C.inputBg,
-  },
-  textArea: {
-    height: 80, textAlignVertical: 'top',
-  },
-  row: {
-    flexDirection: 'row', gap: 12,
-  },
+  row:  { flexDirection: 'row', gap: 12 },
   half: { flex: 1 },
 
-  picker: {
-    borderWidth: 1.5, borderColor: C.cardBorder,
-    borderRadius: radius.md,
-    paddingHorizontal: 14, paddingVertical: 11,
-    backgroundColor: C.inputBg,
-  },
-  pickerText: {
-    fontSize: 14, color: C.textPrimary, fontWeight: '600',
-  },
-  pickerModal: {
-    backgroundColor: C.surface,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    borderWidth: 1.5, borderColor: C.cardBorder,
-    padding: 24,
-  },
-  pickerModalTitle: {
-    fontSize: 15, fontWeight: '900',
-    color: C.textPrimary, marginBottom: 12,
-  },
-  pickerOption: {
-    paddingVertical: 13, paddingHorizontal: 12,
-    borderRadius: radius.md, marginBottom: 4,
-  },
-  pickerOptionActive: {
-    backgroundColor: C.accentDim,
-    borderWidth: 1, borderColor: C.accentBorder,
-  },
-  pickerOptionText: {
-    fontSize: 14, color: C.textSub, fontWeight: '600',
-  },
-  pickerOptionTextActive: {
-    color: C.accent, fontWeight: '800',
-  },
-
-  actions: {
-    flexDirection: 'row', gap: 12, marginTop: 24,
-  },
-  cancelButton: {
-    flex: 1,
-    borderWidth: 1.5, borderColor: C.cardBorder,
-    borderRadius: radius.pill,
-    paddingVertical: 12, alignItems: 'center',
-    backgroundColor: C.elevated,
-  },
-  cancelButtonText: {
-    fontSize: 14, color: C.textSub, fontWeight: '700',
-  },
-  submitButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center', justifyContent: 'center',
-    gap: 8,
-    backgroundColor: C.accent,
-    borderRadius: radius.pill,
-    paddingVertical: 12,
-    shadowColor: C.accent,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3, shadowRadius: 6, elevation: 3,
-  },
-  submitButtonDisabled: { opacity: 0.5 },
-  submitButtonText: {
-    fontSize: 14, color: C.textPrimary,
-    fontWeight: '800', letterSpacing: 0.2,
-  },
+  buttons:    { flexDirection: 'row', gap: 12, marginTop: 24, marginBottom: 8 },
+  cancelBtn:  { flex: 1, borderWidth: 1.5, borderColor: C.border, borderRadius: radius.pill, paddingVertical: 13, alignItems: 'center', backgroundColor: C.graphite },
+  cancelText: { fontSize: 14, color: C.muted, fontWeight: '700' },
+  submitBtn:  { flex: 2, backgroundColor: C.orange, borderRadius: radius.pill, paddingVertical: 13, alignItems: 'center' },
+  submitText: { fontSize: 14, color: C.white, fontWeight: '800', letterSpacing: 0.3 },
 })

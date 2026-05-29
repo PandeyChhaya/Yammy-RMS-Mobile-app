@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useFocusEffect } from 'expo-router'
+import { Hand, LayoutGrid, ShoppingCart, Table2 } from 'lucide-react-native'
 import { useCallback, useState } from 'react'
 import {
+  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text, TouchableOpacity,
@@ -18,13 +20,13 @@ import ReservationWidget from './reservationWidget'
 import TablesSection from './tablesSection'
 
 const C = {
-  background:       '#0A0A0A', 
-  surface:          '#1A1A1A', 
-  surfaceHighlight: '#2C2C2C', 
-  primary:          '#FF6B2C', 
-  primaryDim:       '#3D1C00', 
-  textMain:         '#FFFFFF', 
-  textMuted:        '#9CA3AF', 
+  background:       '#0A0A0A',
+  surface:          '#1A1A1A',
+  surfaceHighlight: '#2C2C2C',
+  primary:          '#FF6B2C',
+  primaryDim:       '#3D1C00',
+  textMain:         '#FFFFFF',
+  textMuted:        '#9CA3AF',
   border:           '#2C2C2C',
 }
 
@@ -159,7 +161,7 @@ export default function ModernPOSLayout({
           onTableSelect={onTableSelect}
         />
       )}
-       <ReservationWidget selectedTable={selectedTable} />
+      <ReservationWidget selectedTable={selectedTable} />
     </View>
   )
 
@@ -193,7 +195,7 @@ export default function ModernPOSLayout({
 
   if (isTablet) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" backgroundColor={C.surface} />
 
         <View style={styles.topBar}>
@@ -209,8 +211,9 @@ export default function ModernPOSLayout({
               style={[styles.topToggle, showTables && styles.topToggleActive]}
               onPress={toggleTables}
             >
+              <Table2 size={13} color={showTables ? C.primary : C.textMuted} />
               <Text style={[styles.topToggleText, showTables && styles.topToggleTextActive]}>
-                🏠 Tables
+                Tables
               </Text>
             </TouchableOpacity>
 
@@ -218,8 +221,9 @@ export default function ModernPOSLayout({
               style={[styles.topToggle, styles.topToggleHanded]}
               onPress={toggleHanded}
             >
+              <Hand size={13} color={C.textMain} />
               <Text style={styles.topToggleTextHanded}>
-                {handedMode ? '🤚 Left' : '✋ Right'}
+                {handedMode ? 'Left' : 'Right'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -250,12 +254,12 @@ export default function ModernPOSLayout({
         </View>
 
         <View style={styles.bottomRule} />
-      </View>
+      </SafeAreaView>
     )
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={C.surface} />
 
       <View style={styles.topBar}>
@@ -270,9 +274,7 @@ export default function ModernPOSLayout({
           style={[styles.topToggle, showTables && styles.topToggleActive]}
           onPress={toggleTables}
         >
-          <Text style={[styles.topToggleText, showTables && styles.topToggleTextActive]}>
-            🏠
-          </Text>
+          <Table2 size={13} color={showTables ? C.primary : C.textMuted} />
         </TouchableOpacity>
 
         {selectedTable && (
@@ -289,8 +291,9 @@ export default function ModernPOSLayout({
           style={[styles.mobileTab, activePanel === 'menu' && styles.mobileTabActive]}
           onPress={() => setActivePanel('menu')}
         >
+          <LayoutGrid size={14} color={activePanel === 'menu' ? C.primary : C.textMuted} />
           <Text style={[styles.mobileTabText, activePanel === 'menu' && styles.mobileTabTextActive]}>
-            🍽 Menu
+            Menu
           </Text>
         </TouchableOpacity>
 
@@ -298,8 +301,9 @@ export default function ModernPOSLayout({
           style={[styles.mobileTab, activePanel === 'cart' && styles.mobileTabActive]}
           onPress={() => setActivePanel('cart')}
         >
+          <ShoppingCart size={14} color={activePanel === 'cart' ? C.primary : C.textMuted} />
           <Text style={[styles.mobileTabText, activePanel === 'cart' && styles.mobileTabTextActive]}>
-            🛒 Cart{cartItems.length > 0 ? ` (${cartItems.length})` : ''}
+            Cart{cartItems.length > 0 ? ` (${cartItems.length})` : ''}
           </Text>
         </TouchableOpacity>
       </View>
@@ -309,22 +313,20 @@ export default function ModernPOSLayout({
       </View>
 
       <View style={styles.bottomRule} />
-    </View>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: C.background,
-  },
+  safeArea:  { flex: 1, backgroundColor: C.background },
+  container: { flex: 1, backgroundColor: C.background },
 
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     backgroundColor: C.surface,
     borderBottomWidth: 1.5,
     borderBottomColor: C.border,
@@ -332,35 +334,38 @@ const styles = StyleSheet.create({
   brand: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 7,
     flex: 1,
   },
   brandIcon: {
-    width: 30,
-    height: 30,
+    width: 26,
+    height: 26,
     borderRadius: radius.sm,
     backgroundColor: C.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   brandIconText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '900',
     color: C.textMain,
   },
   brandName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     color: C.textMain,
   },
 
   topBarControls: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   topToggle: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: radius.pill,
     backgroundColor: C.surfaceHighlight,
     borderWidth: 1.5,
@@ -375,7 +380,7 @@ const styles = StyleSheet.create({
     borderColor: C.border,
   },
   topToggleText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: C.textMuted,
   },
@@ -383,7 +388,7 @@ const styles = StyleSheet.create({
     color: C.primary,
   },
   topToggleTextHanded: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: C.textMain,
   },
@@ -391,11 +396,11 @@ const styles = StyleSheet.create({
   selectedTableBadge: {
     backgroundColor: C.primary,
     borderRadius: radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   selectedTableText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
     color: C.textMain,
   },
@@ -418,17 +423,20 @@ const styles = StyleSheet.create({
 
   mobileTabs: {
     flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     backgroundColor: C.surface,
     borderBottomWidth: 1.5,
     borderBottomColor: C.border,
   },
   mobileTab: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 9,
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 7,
     borderRadius: radius.pill,
     backgroundColor: C.surfaceHighlight,
     borderWidth: 1.5,
@@ -439,7 +447,7 @@ const styles = StyleSheet.create({
     borderColor: C.primary,
   },
   mobileTabText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: C.textMuted,
   },
@@ -448,7 +456,7 @@ const styles = StyleSheet.create({
   },
 
   bottomRule: {
-    height: 3,
-    backgroundColor: C.primary, 
+    height: 2,
+    backgroundColor: C.primary,
   },
 })

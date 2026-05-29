@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { AlertCircle, CheckCircle, ChefHat, ShoppingCart, Trash2, Users, Zap } from 'lucide-react-native'
+import { AlertCircle, CheckCircle, ChefHat, CreditCard, DollarSign, ShoppingCart, Smartphone, Trash2, Users, Zap } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
@@ -66,9 +66,9 @@ const fmt = (amount: number, symbol = 'NPR') =>
   `${symbol} ${amount.toFixed(2)}`
 
 const PAYMENT_METHODS = [
-  { id: 'cash',     name: 'Cash',     icon: '💵' },
-  { id: 'card',     name: 'Card',     icon: '💳' },
-  { id: 'transfer', name: 'Transfer', icon: '📱' },
+  { id: 'cash',     name: 'Cash',     icon: DollarSign },
+  { id: 'card',     name: 'Card',     icon: CreditCard },
+  { id: 'transfer', name: 'Transfer', icon: Smartphone },
 ]
 
 export default function CartSection({
@@ -207,18 +207,22 @@ export default function CartSection({
         <View style={styles.fieldBlock}>
           <Text style={styles.fieldLabel}>Payment Method</Text>
           <View style={styles.paymentGrid}>
-            {PAYMENT_METHODS.map((m) => (
-              <TouchableOpacity
-                key={m.id}
-                style={[styles.paymentButton, paymentMethod === m.id && styles.paymentButtonActive]}
-                onPress={() => setPaymentMethod(m.id)}
-              >
-                <Text style={styles.paymentIcon}>{m.icon}</Text>
-                <Text style={[styles.paymentLabel, paymentMethod === m.id && styles.paymentLabelActive]}>
-                  {m.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {PAYMENT_METHODS.map((m) => {
+              const Icon = m.icon
+              const active = paymentMethod === m.id
+              return (
+                <TouchableOpacity
+                  key={m.id}
+                  style={[styles.paymentButton, active && styles.paymentButtonActive]}
+                  onPress={() => setPaymentMethod(m.id)}
+                >
+                  <Icon size={14} color={active ? C.primary : C.textMuted} />
+                  <Text style={[styles.paymentLabel, active && styles.paymentLabelActive]}>
+                    {m.name}
+                  </Text>
+                </TouchableOpacity>
+              )
+            })}
           </View>
         </View>
 
@@ -274,16 +278,16 @@ export default function CartSection({
 }
 
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: C.background, borderLeftWidth: 1.5, borderLeftColor: C.border },
+  container: { flex: 1, backgroundColor: C.background, borderLeftWidth: 1.5, borderLeftColor: C.border },
 
-  header:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border, backgroundColor: C.surface },
-  headerLeft:      { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle:     { fontSize: 15, fontWeight: '800', color: C.textMain },
-  tableBadge:      { backgroundColor: C.primaryDim, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: C.primary },
-  tableBadgeText:  { fontSize: 11, fontWeight: '700', color: C.primary },
-  headerRight:     { alignItems: 'flex-end' },
-  headerTotal:     { fontSize: 17, fontWeight: '900', color: C.textMain },
-  headerCount:     { fontSize: 11, color: C.textMuted, marginTop: 1 },
+  header:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border, backgroundColor: C.surface },
+  headerLeft:     { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerTitle:    { fontSize: 15, fontWeight: '800', color: C.textMain },
+  tableBadge:     { backgroundColor: C.primaryDim, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: C.primary },
+  tableBadgeText: { fontSize: 11, fontWeight: '700', color: C.primary },
+  headerRight:    { alignItems: 'flex-end' },
+  headerTotal:    { fontSize: 17, fontWeight: '900', color: C.textMain },
+  headerCount:    { fontSize: 11, color: C.textMuted, marginTop: 1 },
 
   successBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 12, marginTop: 8, backgroundColor: C.successDim, borderRadius: radius.sm, borderWidth: 1, borderColor: C.success, padding: 10 },
   successText:   { fontSize: 12, fontWeight: '600', color: C.success },
@@ -309,9 +313,8 @@ const styles = StyleSheet.create({
   input:      { borderWidth: 1.5, borderColor: C.border, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 9, fontSize: 13, color: C.textMain, backgroundColor: C.background },
 
   paymentGrid:         { flexDirection: 'row', gap: 8 },
-  paymentButton:       { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: radius.md, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.background, gap: 2 },
+  paymentButton:       { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: radius.md, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.background, gap: 4 },
   paymentButtonActive: { backgroundColor: C.primaryDim, borderColor: C.primary },
-  paymentIcon:         { fontSize: 14 },
   paymentLabel:        { fontSize: 11, fontWeight: '700', color: C.textMuted },
   paymentLabelActive:  { color: C.primary },
 
