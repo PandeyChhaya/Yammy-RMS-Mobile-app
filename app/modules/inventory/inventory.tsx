@@ -23,21 +23,25 @@ import { useIngredients } from './hooks/useIngredients'
 import { useStockLevels } from './hooks/useStockLevels'
 
 const C = {
-    espresso:    '#1C1008',
-    clay:        '#7A4528',
-    latte:       '#C8956A',
-    cream:       '#FDF6EC',
-    parchment:   '#F5E9D4',
-    vellum:      '#EDD9BC',
-    brass:       '#B5822A',
-    brassLight:  '#F7EDD8',
-    brassBorder: '#DEC07A',
-    sage:        '#3B6E52',
-    sageLight:   '#EBF4EE',
-    sageBorder:  '#9FCFB4',
-    terracotta:  '#A03020',
-    tcLight:     '#FAECEA',
-    tcBorder:    '#E8A898',
+    bg:          '#0F172A',
+    surface:     '#1E293B',
+    card:        '#1E293B',
+    cardBorder:  '#334155',
+    elevated:    '#334155',
+    inputBg:     '#0F172A',
+    accent:      '#6366F1',
+    accentDim:   '#6366F122',
+    accentBorder:'#6366F155',
+    success:     '#22C55E',
+    successDim:  '#22C55E18',
+    successBdr:  '#22C55E44',
+    danger:      '#EF4444',
+    dangerDim:   '#EF444418',
+    dangerBdr:   '#EF444444',
+    textPrimary: '#F1F5F9',
+    textSub:     '#94A3B8',
+    textMuted:   '#475569',
+    placeholder: '#334155',
 }
 
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
@@ -106,7 +110,7 @@ export default function Inventory() {
         if (ingredientsLoading) {
             return (
                 <View style={styles.centered}>
-                    <ActivityIndicator size="large" color={C.brass} />
+                    <ActivityIndicator size="large" color={C.accent} />
                 </View>
             )
         }
@@ -137,7 +141,7 @@ export default function Inventory() {
 
             <View style={styles.header}>
                 <View style={styles.headerIcon}>
-                    <Warehouse size={22} color={C.cream} />
+                    <Warehouse size={22} color={C.textPrimary} />
                 </View>
                 <View>
                     <Text style={styles.headerTitle}>Inventory</Text>
@@ -155,7 +159,7 @@ export default function Inventory() {
                             style={[styles.tab, active && styles.tabActive]}
                             onPress={() => setActiveTab(tab.id)}
                         >
-                            <Icon size={15} color={active ? C.brass : C.clay} />
+                            <Icon size={15} color={active ? C.accent : C.textMuted} />
                             <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>
                                 {tab.label}
                             </Text>
@@ -172,11 +176,11 @@ export default function Inventory() {
             {activeTab === 'ingredients' && (
                 <View style={styles.searchRow}>
                     <View style={styles.searchBox}>
-                        <Search size={15} color={C.clay} />
+                        <Search size={15} color={C.textMuted} />
                         <TextInput
                             style={styles.searchInput}
                             placeholder="Search ingredients..."
-                            placeholderTextColor={C.latte}
+                            placeholderTextColor={C.textMuted}
                             value={searchTerm}
                             onChangeText={setSearchTerm}
                         />
@@ -211,7 +215,7 @@ export default function Inventory() {
                         style={styles.addBtn}
                         onPress={() => setShowAddModal(true)}
                     >
-                        <Plus size={16} color={C.cream} />
+                        <Plus size={16} color={C.textPrimary} />
                         <Text style={styles.addBtnText}>Add</Text>
                     </TouchableOpacity>
                 </View>
@@ -240,7 +244,7 @@ export default function Inventory() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F5E9D4',
+        backgroundColor: C.bg,
     },
     centered: {
         flex: 1, alignItems: 'center', justifyContent: 'center',
@@ -248,7 +252,7 @@ const styles = StyleSheet.create({
 
     errorText: {
         fontSize: 13,
-        color: C.terracotta,
+        color: C.danger,
         textAlign: 'center',
         paddingHorizontal: 24,
     },
@@ -256,43 +260,45 @@ const styles = StyleSheet.create({
         marginTop: 12,
         paddingHorizontal: 20,
         paddingVertical: 8,
-        backgroundColor: C.brassLight,
+        backgroundColor: C.accentDim,
         borderRadius: radius.sm,
         borderWidth: 1,
-        borderColor: C.brassBorder,
+        borderColor: C.accentBorder,
     },
     retryBtnText: {
         fontSize: 13,
         fontWeight: '700',
-        color: C.brass,
+        color: C.accent,
     },
 
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
-        backgroundColor: C.espresso,
+        backgroundColor: C.surface,
         paddingHorizontal: 16,
         paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: C.cardBorder,
     },
     headerIcon: {
         width: 40, height: 40,
         borderRadius: radius.sm,
-        backgroundColor: C.brass,
+        backgroundColor: C.accent,
         alignItems: 'center', justifyContent: 'center',
     },
     headerTitle: {
-        fontSize: 17, fontWeight: '800', color: C.cream,
+        fontSize: 17, fontWeight: '800', color: C.textPrimary,
     },
     headerSub: {
-        fontSize: 11, color: C.latte, marginTop: 1,
+        fontSize: 11, color: C.textSub, marginTop: 1,
     },
 
     tabBar: {
         flexDirection: 'row',
-        backgroundColor: C.cream,
+        backgroundColor: C.surface,
         borderBottomWidth: 1.5,
-        borderBottomColor: C.vellum,
+        borderBottomColor: C.cardBorder,
     },
     tab: {
         flex: 1, flexDirection: 'row',
@@ -302,47 +308,47 @@ const styles = StyleSheet.create({
         borderBottomColor: 'transparent',
     },
     tabActive: {
-        borderBottomColor: C.brass,
+        borderBottomColor: C.accent,
     },
     tabLabel: {
-        fontSize: 13, fontWeight: '600', color: C.clay,
+        fontSize: 13, fontWeight: '600', color: C.textMuted,
     },
     tabLabelActive: {
-        color: C.brass,
+        color: C.accent,
     },
     badge: {
-        backgroundColor: C.terracotta,
+        backgroundColor: C.danger,
         borderRadius: radius.pill,
         minWidth: 18, height: 18,
         alignItems: 'center', justifyContent: 'center',
         paddingHorizontal: 5,
     },
     badgeText: {
-        fontSize: 10, fontWeight: '800', color: C.cream,
+        fontSize: 10, fontWeight: '800', color: C.textPrimary,
     },
 
     searchRow: {
-        backgroundColor: C.cream,
+        backgroundColor: C.surface,
         paddingHorizontal: 12,
         paddingTop: 10,
         paddingBottom: 8,
         gap: 8,
         borderBottomWidth: 1,
-        borderBottomColor: C.vellum,
+        borderBottomColor: C.cardBorder,
     },
     searchBox: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        backgroundColor: C.parchment,
+        backgroundColor: C.inputBg,
         borderWidth: 1.5,
-        borderColor: C.vellum,
+        borderColor: C.cardBorder,
         borderRadius: radius.sm,
         paddingHorizontal: 10,
         paddingVertical: 8,
     },
     searchInput: {
-        flex: 1, fontSize: 13, color: C.espresso,
+        flex: 1, fontSize: 13, color: C.textPrimary,
     },
     categoryScroll: {
         flexGrow: 0,
@@ -353,31 +359,36 @@ const styles = StyleSheet.create({
     categoryChip: {
         paddingHorizontal: 12, paddingVertical: 5,
         borderRadius: radius.pill,
-        backgroundColor: C.parchment,
-        borderWidth: 1, borderColor: C.vellum,
+        backgroundColor: C.elevated,
+        borderWidth: 1, borderColor: C.cardBorder,
     },
     categoryChipActive: {
-        backgroundColor: C.brassLight,
-        borderColor: C.brassBorder,
+        backgroundColor: C.accentDim,
+        borderColor: C.accentBorder,
     },
     categoryChipText: {
-        fontSize: 11, fontWeight: '600', color: C.clay,
+        fontSize: 11, fontWeight: '600', color: C.textSub,
     },
     categoryChipTextActive: {
-        color: C.brass,
+        color: C.accent,
     },
     addBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: C.sage,
+        backgroundColor: C.accent,
         paddingHorizontal: 14,
         paddingVertical: 8,
         borderRadius: radius.sm,
         alignSelf: 'flex-end',
+        shadowColor: C.accent,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        elevation: 4,
     },
     addBtnText: {
-        fontSize: 13, fontWeight: '700', color: C.cream,
+        fontSize: 13, fontWeight: '700', color: C.textPrimary,
     },
 
     content: {

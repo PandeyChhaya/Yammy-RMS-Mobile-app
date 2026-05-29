@@ -15,27 +15,29 @@ import {
 import { StockAlert, getAlertIcon } from '../types/inventory'
 
 const C = {
-    espresso:    '#1C1008',
-    clay:        '#7A4528',
-    latte:       '#C8956A',
-    cream:       '#FDF6EC',
-    parchment:   '#F5E9D4',
-    vellum:      '#EDD9BC',
-    brass:       '#B5822A',
-    brassLight:  '#F7EDD8',
-    brassBorder: '#DEC07A',
-    sage:        '#3B6E52',
-    sageLight:   '#EBF4EE',
-    sageBorder:  '#9FCFB4',
-    terracotta:  '#A03020',
-    tcLight:     '#FAECEA',
-    tcBorder:    '#E8A898',
-    orange:      '#C2410C',
-    orangeLight: '#FFF7ED',
-    orangeBorder:'#FDBA74',
-    yellow:      '#92400E',
-    yellowLight: '#FFFBEB',
-    yellowBorder:'#FCD34D',
+    bg:          '#0F172A',
+    surface:     '#1E293B',
+    card:        '#1E293B',
+    cardBorder:  '#334155',
+    elevated:    '#334155',
+    accent:      '#6366F1',
+    accentDim:   '#6366F122',
+    accentBorder:'#6366F155',
+    success:     '#22C55E',
+    successDim:  '#22C55E18',
+    successBdr:  '#22C55E44',
+    warning:     '#F59E0B',
+    warningDim:  '#F59E0B18',
+    warningBdr:  '#F59E0B44',
+    danger:      '#EF4444',
+    dangerDim:   '#EF444418',
+    dangerBdr:   '#EF444444',
+    orange:      '#F97316',
+    orangeDim:   '#F9731618',
+    orangeBdr:   '#F9731644',
+    textPrimary: '#F1F5F9',
+    textSub:     '#94A3B8',
+    textMuted:   '#475569',
 }
 
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
@@ -67,9 +69,9 @@ const getAlertPriority = (type: string): 'high' | 'medium' | 'low' => {
 
 const priorityStyle = (priority: 'high' | 'medium' | 'low') => {
     switch (priority) {
-        case 'high':   return { bg: C.tcLight,     border: C.tcBorder,     text: C.terracotta, icon: C.terracotta }
-        case 'medium': return { bg: C.orangeLight,  border: C.orangeBorder, text: C.orange,     icon: C.orange }
-        default:       return { bg: C.yellowLight,  border: C.yellowBorder, text: C.yellow,     icon: C.yellow }
+        case 'high':   return { bg: C.dangerDim,  border: C.dangerBdr,  text: C.danger,  icon: C.danger }
+        case 'medium': return { bg: C.orangeDim,  border: C.orangeBdr,  text: C.orange,  icon: C.orange }
+        default:       return { bg: C.warningDim, border: C.warningBdr, text: C.warning, icon: C.warning }
     }
 }
 
@@ -136,7 +138,7 @@ export default function StockAlerts({ alerts, onMarkAsRead }: StockAlertsProps) 
         return (
             <View style={styles.empty}>
                 <View style={styles.emptyIcon}>
-                    <AlertTriangle size={32} color={C.brass} />
+                    <AlertTriangle size={32} color={C.accent} />
                 </View>
                 <Text style={styles.emptyTitle}>No Active Alerts</Text>
                 <Text style={styles.emptySub}>All your stocks are in good condition</Text>
@@ -149,7 +151,7 @@ export default function StockAlerts({ alerts, onMarkAsRead }: StockAlertsProps) 
 
             <View style={styles.summaryBar}>
                 <View style={styles.summaryItem}>
-                    <View style={[styles.summaryDot, { backgroundColor: C.terracotta }]} />
+                    <View style={[styles.summaryDot, { backgroundColor: C.danger }]} />
                     <Text style={styles.summaryText}>{highAlerts.length} urgent</Text>
                 </View>
                 <View style={styles.summaryItem}>
@@ -157,14 +159,14 @@ export default function StockAlerts({ alerts, onMarkAsRead }: StockAlertsProps) 
                     <Text style={styles.summaryText}>{mediumAlerts.length} warning</Text>
                 </View>
                 <View style={styles.summaryItem}>
-                    <View style={[styles.summaryDot, { backgroundColor: C.yellow }]} />
+                    <View style={[styles.summaryDot, { backgroundColor: C.warning }]} />
                     <Text style={styles.summaryText}>{lowAlerts.length} info</Text>
                 </View>
                 <TouchableOpacity
                     style={styles.markAllBtn}
                     onPress={() => alerts.forEach(a => onMarkAsRead(a.id))}
                 >
-                    <Check size={12} color={C.cream} />
+                    <Check size={12} color={C.textPrimary} />
                     <Text style={styles.markAllText}>All Read</Text>
                 </TouchableOpacity>
             </View>
@@ -213,23 +215,23 @@ const styles = StyleSheet.create({
     },
     emptyIcon: {
         width: 72, height: 72, borderRadius: radius.lg,
-        backgroundColor: C.brassLight, borderWidth: 1.5, borderColor: C.brassBorder,
+        backgroundColor: C.accentDim, borderWidth: 1.5, borderColor: C.accentBorder,
         alignItems: 'center', justifyContent: 'center',
     },
     emptyTitle: {
-        fontSize: 17, fontWeight: '800', color: C.espresso,
+        fontSize: 17, fontWeight: '800', color: C.textPrimary,
     },
     emptySub: {
-        fontSize: 12, color: C.clay, textAlign: 'center',
+        fontSize: 12, color: C.textMuted, textAlign: 'center',
     },
 
     summaryBar: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
-        backgroundColor: C.cream,
+        backgroundColor: C.surface,
         borderRadius: radius.md,
-        borderWidth: 1.5, borderColor: C.vellum,
+        borderWidth: 1.5, borderColor: C.cardBorder,
         padding: 12,
     },
     summaryItem: {
@@ -239,15 +241,18 @@ const styles = StyleSheet.create({
         width: 8, height: 8, borderRadius: radius.pill,
     },
     summaryText: {
-        fontSize: 11, color: C.clay, fontWeight: '600',
+        fontSize: 11, color: C.textSub, fontWeight: '600',
     },
     markAllBtn: {
         flexDirection: 'row', alignItems: 'center', gap: 4,
-        backgroundColor: C.sage, borderRadius: radius.pill,
+        backgroundColor: C.accent, borderRadius: radius.pill,
         paddingHorizontal: 10, paddingVertical: 5,
+        shadowColor: C.accent,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3, shadowRadius: 4, elevation: 2,
     },
     markAllText: {
-        fontSize: 10, fontWeight: '800', color: C.cream,
+        fontSize: 10, fontWeight: '800', color: C.textPrimary,
     },
 
     group: {

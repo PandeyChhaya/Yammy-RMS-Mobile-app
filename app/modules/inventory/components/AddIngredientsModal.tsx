@@ -14,21 +14,21 @@ import inventoryService from '../services/inventory'
 import { CreateIngredientRequest } from '../types/inventory'
 
 const C = {
-  espresso:    '#1C1008',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
+  bg:          '#0F172A',
+  surface:     '#1E293B',
+  card:        '#1E293B',
+  cardBorder:  '#334155',
+  elevated:    '#334155',
+  inputBg:     '#0F172A',
+  accent:      '#6366F1',
+  accentDim:   '#6366F122',
+  accentBorder:'#6366F155',
+  danger:      '#EF4444',
+  dangerDim:   '#EF444418',
+  dangerBdr:   '#EF444444',
+  textPrimary: '#F1F5F9',
+  textSub:     '#94A3B8',
+  textMuted:   '#475569',
 }
 
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
@@ -91,7 +91,7 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.headerIcon}>
-                <Package size={20} color={C.cream} />
+                <Package size={20} color={C.textPrimary} />
               </View>
               <View>
                 <Text style={styles.headerTitle}>Add New Ingredient</Text>
@@ -99,7 +99,7 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
               </View>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={20} color={C.clay} />
+              <X size={20} color={C.textSub} />
             </TouchableOpacity>
           </View>
 
@@ -118,7 +118,7 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
             <TextInput
               style={styles.input}
               placeholder="Enter ingredient name"
-              placeholderTextColor={C.latte}
+              placeholderTextColor={C.textMuted}
               value={formData.name}
               onChangeText={t => handleInputChange('name', t)}
             />
@@ -136,7 +136,7 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
                   keyboardType="numeric"
                   value={String(formData.min_stock)}
                   onChangeText={t => handleInputChange('min_stock', parseFloat(t) || 0)}
-                  placeholderTextColor={C.latte}
+                  placeholderTextColor={C.textMuted}
                 />
               </View>
               <View style={styles.half}>
@@ -146,7 +146,7 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
                   keyboardType="numeric"
                   value={String(formData.max_stock)}
                   onChangeText={t => handleInputChange('max_stock', parseFloat(t) || 0)}
-                  placeholderTextColor={C.latte}
+                  placeholderTextColor={C.textMuted}
                 />
               </View>
             </View>
@@ -159,7 +159,7 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
                   keyboardType="numeric"
                   value={String(formData.cost_per_unit)}
                   onChangeText={t => handleInputChange('cost_per_unit', parseFloat(t) || 0)}
-                  placeholderTextColor={C.latte}
+                  placeholderTextColor={C.textMuted}
                 />
               </View>
               <View style={styles.half}>
@@ -169,17 +169,16 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
                   keyboardType="numeric"
                   value={String(formData.min_stock)}
                   onChangeText={t => handleInputChange('min_stock', parseFloat(t) || 0)}
-                  placeholderTextColor={C.latte}
+                  placeholderTextColor={C.textMuted}
                 />
               </View>
             </View>
-
 
             <Text style={styles.label}>Description (Optional)</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Enter description..."
-              placeholderTextColor={C.latte}
+              placeholderTextColor={C.textMuted}
               value={formData.description || ''}
               onChangeText={t => handleInputChange('description', t)}
               multiline
@@ -190,7 +189,7 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
             <TextInput
               style={styles.input}
               placeholder="YYYY-MM-DD"
-              placeholderTextColor={C.latte}
+              placeholderTextColor={C.textMuted}
               value={
                 formData.expiration_date
                   ? new Date(formData.expiration_date).toISOString().split('T')[0]
@@ -211,10 +210,10 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator size="small" color={C.cream} />
+                  <ActivityIndicator size="small" color={C.textPrimary} />
                 ) : (
                   <>
-                    <Save size={15} color={C.cream} />
+                    <Save size={15} color={C.textPrimary} />
                     <Text style={styles.submitButtonText}>Create Ingredient</Text>
                   </>
                 )}
@@ -252,14 +251,14 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: AddIn
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(28,16,8,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'flex-end',
   },
   container: {
-    backgroundColor: C.parchment,
+    backgroundColor: C.surface,
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
-    borderWidth: 1.5, borderColor: C.vellum,
+    borderWidth: 1.5, borderColor: C.cardBorder,
     maxHeight: '92%',
   },
 
@@ -268,7 +267,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 20,
-    borderBottomWidth: 1.5, borderBottomColor: C.vellum,
+    borderBottomWidth: 1.5, borderBottomColor: C.cardBorder,
   },
   headerLeft: {
     flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1,
@@ -276,48 +275,48 @@ const styles = StyleSheet.create({
   headerIcon: {
     width: 40, height: 40,
     borderRadius: radius.md,
-    backgroundColor: C.brass,
+    backgroundColor: C.accent,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: C.brass,
+    shadowColor: C.accent,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3, shadowRadius: 6, elevation: 3,
   },
   headerTitle: {
     fontSize: 15, fontWeight: '900',
-    color: C.espresso, letterSpacing: 0.2,
+    color: C.textPrimary, letterSpacing: 0.2,
   },
   headerSubtitle: {
-    fontSize: 11, color: C.clay, fontWeight: '500', marginTop: 2,
+    fontSize: 11, color: C.textSub, fontWeight: '500', marginTop: 2,
   },
   closeButton: {
     padding: 8, borderRadius: radius.xs,
-    backgroundColor: C.vellum,
+    backgroundColor: C.elevated,
   },
 
   scroll: { flexGrow: 0 },
   scrollContent: { padding: 20, paddingBottom: 32 },
 
   errorBanner: {
-    backgroundColor: C.tcLight,
-    borderWidth: 1, borderColor: C.tcBorder,
+    backgroundColor: C.dangerDim,
+    borderWidth: 1, borderColor: C.dangerBdr,
     borderRadius: radius.md,
     padding: 12, marginBottom: 16,
   },
   errorBannerText: {
-    color: C.terracotta, fontSize: 13, fontWeight: '600',
+    color: C.danger, fontSize: 13, fontWeight: '600',
   },
 
   label: {
     fontSize: 11, fontWeight: '800',
-    color: C.clay, marginBottom: 6, marginTop: 14,
+    color: C.textMuted, marginBottom: 6, marginTop: 14,
     textTransform: 'uppercase', letterSpacing: 1.2,
   },
   input: {
-    borderWidth: 1.5, borderColor: C.vellum,
+    borderWidth: 1.5, borderColor: C.cardBorder,
     borderRadius: radius.md,
     paddingHorizontal: 14, paddingVertical: 10,
-    fontSize: 14, color: C.espresso,
-    backgroundColor: C.cream,
+    fontSize: 14, color: C.textPrimary,
+    backgroundColor: C.inputBg,
   },
   textArea: {
     height: 80, textAlignVertical: 'top',
@@ -328,38 +327,38 @@ const styles = StyleSheet.create({
   half: { flex: 1 },
 
   picker: {
-    borderWidth: 1.5, borderColor: C.vellum,
+    borderWidth: 1.5, borderColor: C.cardBorder,
     borderRadius: radius.md,
     paddingHorizontal: 14, paddingVertical: 11,
-    backgroundColor: C.cream,
+    backgroundColor: C.inputBg,
   },
   pickerText: {
-    fontSize: 14, color: C.espresso, fontWeight: '600',
+    fontSize: 14, color: C.textPrimary, fontWeight: '600',
   },
   pickerModal: {
-    backgroundColor: C.parchment,
+    backgroundColor: C.surface,
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
-    borderWidth: 1.5, borderColor: C.vellum,
+    borderWidth: 1.5, borderColor: C.cardBorder,
     padding: 24,
   },
   pickerModalTitle: {
     fontSize: 15, fontWeight: '900',
-    color: C.espresso, marginBottom: 12,
+    color: C.textPrimary, marginBottom: 12,
   },
   pickerOption: {
     paddingVertical: 13, paddingHorizontal: 12,
     borderRadius: radius.md, marginBottom: 4,
   },
   pickerOptionActive: {
-    backgroundColor: C.brassLight,
-    borderWidth: 1, borderColor: C.brassBorder,
+    backgroundColor: C.accentDim,
+    borderWidth: 1, borderColor: C.accentBorder,
   },
   pickerOptionText: {
-    fontSize: 14, color: C.clay, fontWeight: '600',
+    fontSize: 14, color: C.textSub, fontWeight: '600',
   },
   pickerOptionTextActive: {
-    color: C.brass, fontWeight: '800',
+    color: C.accent, fontWeight: '800',
   },
 
   actions: {
@@ -367,29 +366,29 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    borderWidth: 1.5, borderColor: C.vellum,
+    borderWidth: 1.5, borderColor: C.cardBorder,
     borderRadius: radius.pill,
     paddingVertical: 12, alignItems: 'center',
-    backgroundColor: C.cream,
+    backgroundColor: C.elevated,
   },
   cancelButtonText: {
-    fontSize: 14, color: C.clay, fontWeight: '700',
+    fontSize: 14, color: C.textSub, fontWeight: '700',
   },
   submitButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center', justifyContent: 'center',
     gap: 8,
-    backgroundColor: C.brass,
+    backgroundColor: C.accent,
     borderRadius: radius.pill,
     paddingVertical: 12,
-    shadowColor: C.brass,
+    shadowColor: C.accent,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3, shadowRadius: 6, elevation: 3,
   },
   submitButtonDisabled: { opacity: 0.5 },
   submitButtonText: {
-    fontSize: 14, color: C.cream,
+    fontSize: 14, color: C.textPrimary,
     fontWeight: '800', letterSpacing: 0.2,
   },
 })

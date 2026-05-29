@@ -16,25 +16,25 @@ import categoriesService from './services/categoriesService';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const C = {
-  bg:          '#0A0A0A',
-  surface:     '#1A1A1A',
-  card:        '#1E1E1E',
-  cardBorder:  '#2E2E2E',
-  elevated:    '#2C2C2C',
-  inputBg:     '#141414',
-  accent:      '#FF6B2C',
-  accentDim:   '#FF6B2C22',
-  accentBorder:'#FF6B2C55',
+  bg:          '#0F172A',
+  surface:     '#1E293B',
+  card:        '#1E293B',
+  cardBorder:  '#334155',
+  elevated:    '#334155',
+  inputBg:     '#0F172A',
+  accent:      '#6366F1',
+  accentDim:   '#6366F122',
+  accentBorder:'#6366F155',
   success:     '#22C55E',
   successDim:  '#22C55E18',
   successBdr:  '#22C55E44',
   danger:      '#EF4444',
   dangerDim:   '#EF444418',
   dangerBdr:   '#EF444444',
-  textPrimary: '#F5F5F5',
-  textSub:     '#A0A0A0',
-  textMuted:   '#5A5A5A',
-  placeholder: '#3A3A3A',
+  textPrimary: '#F1F5F9',
+  textSub:     '#94A3B8',
+  textMuted:   '#475569',
+  placeholder: '#334155',
 }
 
 const R = { xs: 8, sm: 12, md: 14, lg: 18, xl: 24, pill: 100 }
@@ -336,7 +336,6 @@ export default function Categories({ userRole = 'admin' }: CategoriesProps) {
         {/* Category Cards */}
         {categories?.map((cat: Category) => (
           <View key={cat.category_id} style={styles.card}>
-            {/* Orange left accent bar */}
             <View style={styles.cardAccentBar} />
 
             <View style={styles.cardInner}>

@@ -1,512 +1,429 @@
+    
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Eye,
-  LogOut,
-  Shield,
-  Trash2,
-  TrendingUp,
-  Users,
-  Video,
-  XCircle,
+    AlertCircle, CheckCircle, Edit, LogOut,
+    Plus, Search, Shield, Trash2, Users,
 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator, Alert, Modal, ScrollView, StyleSheet,
+    Switch, Text, TextInput, TouchableOpacity, View,
 } from 'react-native'
 import { authService } from '../modules/auth/services/auth.service'
-
-const BASE_URL = 'http://192.168.1.71:5000/api'
+const BASE_URL = 'http://192.168.1.71:5000/api/users'
 
 const C = {
-  espresso:    '#1C1008',
-  roast:       '#3D2010',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-  violet:      '#6D28D9',
-  violetLight: '#EDE9FE',
-  violetBorder:'#C4B5FD',
+  black:'#0A0A0A', charcoal:'#1A1A1A', graphite:'#2C2C2C', steel:'#3D3D3D',
+  muted:'#6B6B6B', border:'#2E2E2E', card:'#1E1E1E', orange:'#FF6B2C',
+  orangeTint:'#2A1A10', orangeDim:'#7A3010', white:'#FFFFFF', offWhite:'#F0F0F0',
+  dim:'#A0A0A0', success:'#22C55E', successBg:'#0D2818', error:'#EF4444',
+  errorBg:'#2A0A0A', warning:'#F59E0B', info:'#3B82F6',
 }
-const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
+const radius = { xs:6, sm:10, md:14, lg:18, pill:100 }
 
-type MiniStatus = 'pending' | 'approved' | 'rejected'
-
-interface Mini {
-  mini_id:          number
-  user_id:          number
-  title:            string
-  description:      string
-  video_url:        string
-  thumbnail_url:    string
-  status:           MiniStatus
-  rejection_reason: string | null
-  view_count:       number
-  created_at:       string
-  updated_at:       string
-  users: {
-    user_id:   number
-    user_name: string
-  }
+interface AdminUser {
+  user_id: number
+  user_name: string
+  user_email: string
+  user_role: string
+  is_active: boolean
 }
 
-interface Stats {
-  total:    number
-  pending:  number
-  approved: number
-  rejected: number
+interface AdminFormData {
+  user_name: string
+  user_email: string
+  user_password: string
 }
 
-export default function SuperAdminDashboard() {
+const DEFAULT_FORM: AdminFormData = { user_name:'', user_email:'', user_password:'' }
+
+export default function SuperAdmin() {
   const router = useRouter()
 
-  const [userName,      setUserName]      = useState('Super Admin')
-  const [minis,         setMinis]         = useState<Mini[]>([])
-  const [filtered,      setFiltered]      = useState<Mini[]>([])
+  const [superName,     setSuperName]     = useState('')
+  const [admins,        setAdmins]        = useState<AdminUser[]>([])
   const [loading,       setLoading]       = useState(true)
-  const [refreshing,    setRefreshing]    = useState(false)
-  const [activeFilter,  setActiveFilter]  = useState<MiniStatus | 'all'>('pending')
-  const [stats,         setStats]         = useState<Stats>({ total: 0, pending: 0, approved: 0, rejected: 0 })
-
-  const [rejectModal,       setRejectModal]       = useState(false)
-  const [selectedMini,      setSelectedMini]      = useState<Mini | null>(null)
-  const [rejectionReason,   setRejectionReason]   = useState('')
-  const [actionLoading,     setActionLoading]     = useState(false)
+  const [search,        setSearch]        = useState('')
+  const [showAddModal,  setShowAddModal]  = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingAdmin,  setEditingAdmin]  = useState<AdminUser | null>(null)
+  const [addForm,       setAddForm]       = useState<AdminFormData>(DEFAULT_FORM)
+  const [editForm,      setEditForm]      = useState<AdminFormData>(DEFAULT_FORM)
+  const [successMsg,    setSuccessMsg]    = useState<string | null>(null)
+  const [errorMsg,      setErrorMsg]      = useState<string | null>(null)
+  const [focusedInput,  setFocusedInput]  = useState<string | null>(null)
 
   useEffect(() => {
-    loadUser()
-    fetchMinis()
+    AsyncStorage.getItem('@userName').then(n => { if (n) setSuperName(n) })
+    fetchAdmins()
   }, [])
-
-  useEffect(() => {
-    const result = activeFilter === 'all'
-      ? minis
-      : minis.filter(m => m.status === activeFilter)
-    setFiltered(result)
-  }, [activeFilter, minis])
-
-  const loadUser = async () => {
-    const name = await AsyncStorage.getItem('@userName')
-    if (name) setUserName(name)
-  }
 
   const getHeaders = async () => {
     const token = await authService.getToken()
-    return {
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${token}`,
-    }
+    return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
   }
 
-  const fetchMinis = async () => {
+  const fetchAdmins = async () => {
+    setLoading(true)
     try {
-      const headers = await getHeaders()
-      const res = await fetch(`${BASE_URL}/minis/all`, { headers })
-      if (!res.ok) throw new Error('Failed to fetch')
-      const data: Mini[] = await res.json()
-      setMinis(data)
-      setStats({
-        total:    data.length,
-        pending:  data.filter(m => m.status === 'pending').length,
-        approved: data.filter(m => m.status === 'approved').length,
-        rejected: data.filter(m => m.status === 'rejected').length,
-      })
-    } catch (err) {
-      console.error('Fetch minis error:', err)
+      const res = await fetch(BASE_URL, { headers: await getHeaders() })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message)
+      setAdmins(data.filter((u: AdminUser) => u.user_role === 'Admin'))
+    } catch (err: any) {
+      flash('error', err.message || 'Failed to load admins')
     } finally {
       setLoading(false)
-      setRefreshing(false)
     }
   }
 
-  const handleApprove = async (mini: Mini) => {
-    setActionLoading(true)
+  const handleCreate = async () => {
+    if (!addForm.user_name.trim())     { flash('error', 'Name is required'); return }
+    if (!addForm.user_email.trim())    { flash('error', 'Email is required'); return }
+    if (!addForm.user_password.trim()) { flash('error', 'Password is required'); return }
     try {
-      const headers = await getHeaders()
-      const res = await fetch(`${BASE_URL}/minis/${mini.mini_id}/status`, {
-        method:  'PATCH',
-        headers,
-        body:    JSON.stringify({ status: 'approved' }),
+      const res = await fetch(BASE_URL, {
+        method: 'POST',
+        headers: await getHeaders(),
+        body: JSON.stringify({ ...addForm, user_role: 'Admin', is_active: true }),
       })
-      if (!res.ok) throw new Error('Failed to approve')
-      await fetchMinis()
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message)
+      flash('success', 'Admin created!')
+      setShowAddModal(false)
+      setAddForm(DEFAULT_FORM)
+      fetchAdmins()
     } catch (err: any) {
-      Alert.alert('Error', err.message)
-    } finally {
-      setActionLoading(false)
+      flash('error', err.message || 'Failed to create admin')
     }
   }
 
-  const openRejectModal = (mini: Mini) => {
-    setSelectedMini(mini)
-    setRejectionReason('')
-    setRejectModal(true)
-  }
-
-  const handleReject = async () => {
-    if (!selectedMini) return
-    if (!rejectionReason.trim()) {
-      Alert.alert('Required', 'Please provide a rejection reason')
-      return
-    }
-    setActionLoading(true)
+  const handleUpdate = async () => {
+    if (!editingAdmin) return
     try {
-      const headers = await getHeaders()
-      const res = await fetch(`${BASE_URL}/minis/${selectedMini.mini_id}/status`, {
-        method:  'PATCH',
-        headers,
-        body:    JSON.stringify({ status: 'rejected', rejection_reason: rejectionReason.trim() }),
+      const res = await fetch(`${BASE_URL}/${editingAdmin.user_id}`, {
+        method: 'PUT',
+        headers: await getHeaders(),
+        body: JSON.stringify({ user_name: editForm.user_name, user_email: editForm.user_email }),
       })
-      if (!res.ok) throw new Error('Failed to reject')
-      setRejectModal(false)
-      setSelectedMini(null)
-      await fetchMinis()
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message)
+      flash('success', 'Admin updated!')
+      setShowEditModal(false)
+      setEditingAdmin(null)
+      fetchAdmins()
     } catch (err: any) {
-      Alert.alert('Error', err.message)
-    } finally {
-      setActionLoading(false)
+      flash('error', err.message || 'Failed to update admin')
     }
   }
 
-  const handleDelete = (mini: Mini) => {
-    Alert.alert(
-      'Delete Mini',
-      `Delete "${mini.title}" permanently?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete', style: 'destructive', onPress: async () => {
-            try {
-              const headers = await getHeaders()
-              await fetch(`${BASE_URL}/minis/${mini.mini_id}`, { method: 'DELETE', headers })
-              await fetchMinis()
-            } catch (err: any) {
-              Alert.alert('Error', err.message)
-            }
+  const handleDelete = (id: number, name: string) => {
+    Alert.alert('Remove Admin', `Remove "${name}" as admin?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove', style: 'destructive',
+        onPress: async () => {
+          try {
+            const res = await fetch(`${BASE_URL}/${id}`, { method: 'DELETE', headers: await getHeaders() })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.message)
+            flash('success', 'Admin removed.')
+            fetchAdmins()
+          } catch (err: any) {
+            flash('error', err.message || 'Failed to delete')
           }
         },
-      ]
-    )
+      },
+    ])
+  }
+
+  const handleToggleActive = async (admin: AdminUser) => {
+    try {
+      const res = await fetch(`${BASE_URL}/${admin.user_id}`, {
+        method: 'PUT',
+        headers: await getHeaders(),
+        body: JSON.stringify({ is_active: !admin.is_active }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message)
+      fetchAdmins()
+    } catch (err: any) {
+      flash('error', err.message)
+    }
   }
 
   const handleLogout = async () => {
-    await authService.logout()
-    await AsyncStorage.multiRemove(['@userName', '@userRole', '@userId'])
-    router.replace('/modules/auth/login')
+    Alert.alert('Sign Out', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out', style: 'destructive',
+        onPress: async () => {
+          await authService.logout()
+          router.replace('/modules/auth/login')
+        },
+      },
+    ])
   }
 
-  const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-
-  const STATUS_TABS: { key: MiniStatus | 'all'; label: string; count: number }[] = [
-    { key: 'all',      label: 'All',      count: stats.total    },
-    { key: 'pending',  label: 'Pending',  count: stats.pending  },
-    { key: 'approved', label: 'Approved', count: stats.approved },
-    { key: 'rejected', label: 'Rejected', count: stats.rejected },
-  ]
-
-  const getStatusConfig = (status: MiniStatus) => {
-    switch (status) {
-      case 'pending':  return { bg: C.brassLight,   border: C.brassBorder,  text: C.brass,      label: 'Pending'  }
-      case 'approved': return { bg: C.sageLight,    border: C.sageBorder,   text: C.sage,       label: 'Approved' }
-      case 'rejected': return { bg: C.tcLight,      border: C.tcBorder,     text: C.terracotta, label: 'Rejected' }
-    }
+  const flash = (type: 'success' | 'error', msg: string) => {
+    if (type === 'success') { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(null), 3000) }
+    else { setErrorMsg(msg); setTimeout(() => setErrorMsg(null), 5000) }
   }
 
-  if (loading) {
-    return (
-      <View style={s.loadingScreen}>
-        <Shield size={40} color={C.violet} />
-        <ActivityIndicator size="large" color={C.violet} style={{ marginTop: 20 }} />
-        <Text style={s.loadingText}>Loading Super Admin Panel…</Text>
-      </View>
-    )
-  }
+  const inputStyle = (key: string) => [s.input, focusedInput === key && s.inputFocused]
+
+  const filtered = admins.filter(a =>
+    a.user_name.toLowerCase().includes(search.toLowerCase()) ||
+    a.user_email.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const activeCount   = admins.filter(a => a.is_active).length
+  const inactiveCount = admins.filter(a => !a.is_active).length
 
   return (
-    <View style={s.root}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); fetchMinis() }}
-            tintColor={C.brass}
-          />
-        }
-      >
+    <View style={s.container}>
+      <View style={s.blob1} /><View style={s.blob2} />
+
+      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+
+        {/* Header */}
         <View style={s.header}>
           <View style={s.headerTop}>
-            <View style={s.brand}>
-              <View style={s.shieldBadge}>
-                <Shield size={20} color={C.cream} />
+            <View style={s.brandRow}>
+              <View style={s.logoBox}>
+                <Shield size={20} color={C.white} />
               </View>
               <View>
                 <Text style={s.brandName}>Super Admin</Text>
-                <Text style={s.brandSub}>YAMMY CONTROL PANEL</Text>
+                <Text style={s.brandSub}>YAMMY · Global Control</Text>
               </View>
             </View>
-            <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
-              <LogOut size={16} color={C.latte} />
+            <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
+              <LogOut size={16} color={C.dim} />
             </TouchableOpacity>
           </View>
 
-          <View style={s.userCard}>
+          <View style={s.welcomeCard}>
             <View style={s.avatarWrap}>
-              <Text style={s.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
+              <Text style={s.avatarText}>{superName.charAt(0).toUpperCase()}</Text>
             </View>
-            <View style={s.userInfo}>
-              <Text style={s.userName}>{userName}</Text>
+            <View style={s.welcomeInfo}>
+              <Text style={s.welcomeName}>{superName}</Text>
               <View style={s.superBadge}>
-                <Shield size={10} color={C.violet} />
-                <Text style={s.superBadgeText}>Super Admin</Text>
+                <Text style={s.superBadgeText}>SUPER ADMIN</Text>
               </View>
-            </View>
-            <View style={s.onlinePill}>
-              <View style={s.onlineDot} />
-              <Text style={s.onlineText}>Online</Text>
             </View>
           </View>
         </View>
 
-        <View style={s.body}>
-
-          <View style={s.statsRow}>
-            {[
-              { label: 'Total',    value: stats.total,    color: C.clay,       bg: C.parchment,    border: C.vellum,      icon: <Video size={16} color={C.clay} />      },
-              { label: 'Pending',  value: stats.pending,  color: C.brass,      bg: C.brassLight,   border: C.brassBorder,  icon: <Clock size={16} color={C.brass} />     },
-              { label: 'Approved', value: stats.approved, color: C.sage,       bg: C.sageLight,    border: C.sageBorder,   icon: <CheckCircle size={16} color={C.sage} />},
-              { label: 'Rejected', value: stats.rejected, color: C.terracotta, bg: C.tcLight,      border: C.tcBorder,     icon: <XCircle size={16} color={C.terracotta} />},
-            ].map((stat) => (
-              <View key={stat.label} style={[s.statCard, { backgroundColor: stat.bg, borderColor: stat.border }]}>
-                {stat.icon}
-                <Text style={[s.statValue, { color: stat.color }]}>{stat.value}</Text>
-                <Text style={s.statLabel}>{stat.label}</Text>
-              </View>
-            ))}
-          </View>
-
-          <View style={s.section}>
-            <View style={s.sectionHeader}>
-              <Video size={16} color={C.clay} />
-              <Text style={s.sectionTitle}>Minis Review</Text>
+        {/* Stats */}
+        <View style={s.statsRow}>
+          {[
+            { label: 'Total Admins', value: admins.length,   color: C.orange },
+            { label: 'Active',       value: activeCount,     color: C.success },
+            { label: 'Inactive',     value: inactiveCount,   color: C.error },
+          ].map(stat => (
+            <View key={stat.label} style={s.statCard}>
+              <Text style={[s.statNumber, { color: stat.color }]}>{stat.value}</Text>
+              <Text style={s.statLabel}>{stat.label}</Text>
             </View>
-            <Text style={s.sectionSub}>Approve or reject restaurant food videos</Text>
+          ))}
+        </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.tabsScroll}>
-              <View style={s.tabsRow}>
-                {STATUS_TABS.map(tab => (
-                  <TouchableOpacity
-                    key={tab.key}
-                    style={[s.tab, activeFilter === tab.key && s.tabActive]}
-                    onPress={() => setActiveFilter(tab.key)}
-                  >
-                    <Text style={[s.tabText, activeFilter === tab.key && s.tabTextActive]}>
-                      {tab.label}
-                    </Text>
-                    <View style={[s.tabBadge, activeFilter === tab.key && s.tabBadgeActive]}>
-                      <Text style={[s.tabBadgeText, activeFilter === tab.key && s.tabBadgeTextActive]}>
-                        {tab.count}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
+        {/* Banners */}
+        {successMsg && (
+          <View style={s.successBanner}>
+            <CheckCircle size={16} color={C.success} />
+            <Text style={s.successText}>{successMsg}</Text>
+          </View>
+        )}
+        {errorMsg && (
+          <View style={s.errorBanner}>
+            <AlertCircle size={16} color={C.error} />
+            <Text style={s.errorBannerText}>{errorMsg}</Text>
+          </View>
+        )}
 
-            {filtered.length === 0 ? (
-              <View style={s.emptyState}>
-                <Video size={40} color={C.vellum} />
-                <Text style={s.emptyTitle}>No minis here</Text>
-                <Text style={s.emptySub}>
-                  {activeFilter === 'pending' ? 'All caught up! No pending videos.' : `No ${activeFilter} videos yet.`}
-                </Text>
-              </View>
-            ) : (
-              filtered.map((mini) => {
-                const cfg = getStatusConfig(mini.status)
-                return (
-                  <View key={mini.mini_id} style={[s.miniCard, { borderColor: cfg.border }]}>
+        {/* Admins section */}
+        <View style={s.sectionHeader}>
+          <View style={s.sectionLeft}>
+            <Users size={15} color={C.orange} />
+            <Text style={s.sectionTitle}>Admins ({admins.length})</Text>
+          </View>
+          <TouchableOpacity style={s.addButton} onPress={() => { setAddForm(DEFAULT_FORM); setShowAddModal(true) }} activeOpacity={0.85}>
+            <Plus size={15} color={C.white} />
+            <Text style={s.addButtonText}>Add Admin</Text>
+          </TouchableOpacity>
+        </View>
 
-                    <View style={s.miniHeader}>
-                      <View style={s.miniTitleBlock}>
-                        <Text style={s.miniTitle} numberOfLines={1}>{mini.title}</Text>
-                        <View style={s.miniMeta}>
-                          <Users size={11} color={C.clay} />
-                          <Text style={s.miniMetaText}>{mini.users.user_name}</Text>
-                          <Text style={s.miniDot}>·</Text>
-                          <Eye size={11} color={C.clay} />
-                          <Text style={s.miniMetaText}>{mini.view_count} views</Text>
-                        </View>
-                      </View>
-                      <View style={[s.statusBadge, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
-                        <Text style={[s.statusText, { color: cfg.text }]}>{cfg.label}</Text>
-                      </View>
-                    </View>
+        {/* Search */}
+        <View style={s.searchRow}>
+          <Search size={15} color={C.orange} />
+          <TextInput
+            style={s.searchInput}
+            placeholder="Search admins…"
+            placeholderTextColor={C.muted}
+            value={search}
+            onChangeText={setSearch}
+          />
+        </View>
 
-                    {mini.description ? (
-                      <Text style={s.miniDesc} numberOfLines={2}>{mini.description}</Text>
-                    ) : null}
-
-
-                    {mini.status === 'rejected' && mini.rejection_reason ? (
-                      <View style={s.rejectionBlock}>
-                        <AlertCircle size={12} color={C.terracotta} />
-                        <Text style={s.rejectionText} numberOfLines={2}>{mini.rejection_reason}</Text>
-                      </View>
-                    ) : null}
-
-                    <Text style={s.miniDate}>Uploaded {formatDate(mini.created_at)}</Text>
-
-                    <View style={s.miniActions}>
-                      {mini.status === 'pending' && (
-                        <>
-                          <TouchableOpacity
-                            style={s.approveBtn}
-                            onPress={() => handleApprove(mini)}
-                            disabled={actionLoading}
-                          >
-                            <CheckCircle size={14} color={C.cream} />
-                            <Text style={s.approveBtnText}>Approve</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={s.rejectBtn}
-                            onPress={() => openRejectModal(mini)}
-                            disabled={actionLoading}
-                          >
-                            <XCircle size={14} color={C.terracotta} />
-                            <Text style={s.rejectBtnText}>Reject</Text>
-                          </TouchableOpacity>
-                        </>
-                      )}
-                      {mini.status === 'approved' && (
-                        <TouchableOpacity
-                          style={s.rejectBtn}
-                          onPress={() => openRejectModal(mini)}
-                          disabled={actionLoading}
-                        >
-                          <XCircle size={14} color={C.terracotta} />
-                          <Text style={s.rejectBtnText}>Revoke</Text>
-                        </TouchableOpacity>
-                      )}
-                      {mini.status === 'rejected' && (
-                        <TouchableOpacity
-                          style={s.approveBtn}
-                          onPress={() => handleApprove(mini)}
-                          disabled={actionLoading}
-                        >
-                          <CheckCircle size={14} color={C.cream} />
-                          <Text style={s.approveBtnText}>Approve</Text>
-                        </TouchableOpacity>
-                      )}
-                      <TouchableOpacity
-                        style={s.deleteBtn}
-                        onPress={() => handleDelete(mini)}
-                        disabled={actionLoading}
-                      >
-                        <Trash2 size={14} color={C.clay} />
-                      </TouchableOpacity>
-                    </View>
-
+        {/* List */}
+        {loading ? (
+          <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+            <ActivityIndicator size="large" color={C.orange} />
+          </View>
+        ) : filtered.length === 0 ? (
+          <View style={s.emptyState}>
+            <Shield size={48} color={C.steel} />
+            <Text style={s.emptyTitle}>No admins found</Text>
+            <Text style={s.emptySubtitle}>Create your first admin account</Text>
+          </View>
+        ) : (
+          filtered.map(admin => (
+            <View key={admin.user_id} style={s.card}>
+              <View style={s.cardHeader}>
+                <View style={s.cardAvatar}>
+                  <Text style={s.cardAvatarText}>{admin.user_name.charAt(0).toUpperCase()}</Text>
+                </View>
+                <View style={s.cardInfo}>
+                  <Text style={s.cardName}>{admin.user_name}</Text>
+                  <Text style={s.cardEmail}>{admin.user_email}</Text>
+                  <View style={s.adminBadge}>
+                    <Text style={s.adminBadgeText}>Admin</Text>
                   </View>
-                )
-              })
-            )}
-          </View>
+                </View>
+                <View style={s.cardActions}>
+                  <TouchableOpacity
+                    style={s.editBtn}
+                    onPress={() => {
+                      setEditingAdmin(admin)
+                      setEditForm({ user_name: admin.user_name, user_email: admin.user_email, user_password: '' })
+                      setShowEditModal(true)
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Edit size={14} color={C.orange} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={s.deleteBtn}
+                    onPress={() => handleDelete(admin.user_id, admin.user_name)}
+                    activeOpacity={0.8}
+                  >
+                    <Trash2 size={14} color={C.error} />
+                  </TouchableOpacity>
+                </View>
+              </View>
 
-          <View style={s.section}>
-            <View style={s.sectionHeader}>
-              <TrendingUp size={16} color={C.clay} />
-              <Text style={s.sectionTitle}>Platform Overview</Text>
-            </View>
-            <View style={s.overviewCard}>
-              <View style={s.overviewRow}>
-                <Text style={s.overviewLabel}>Approval Rate</Text>
-                <Text style={s.overviewValue}>
-                  {stats.total > 0
-                    ? `${Math.round((stats.approved / stats.total) * 100)}%`
-                    : '—'}
-                </Text>
-              </View>
-              <View style={s.overviewDivider} />
-              <View style={s.overviewRow}>
-                <Text style={s.overviewLabel}>Rejection Rate</Text>
-                <Text style={[s.overviewValue, { color: C.terracotta }]}>
-                  {stats.total > 0
-                    ? `${Math.round((stats.rejected / stats.total) * 100)}%`
-                    : '—'}
-                </Text>
-              </View>
-              <View style={s.overviewDivider} />
-              <View style={s.overviewRow}>
-                <Text style={s.overviewLabel}>Awaiting Review</Text>
-                <Text style={[s.overviewValue, { color: C.brass }]}>{stats.pending}</Text>
+              <View style={s.cardFooter}>
+                <View style={s.activeRow}>
+                  <View style={[s.activeDot, { backgroundColor: admin.is_active ? C.success : C.muted }]} />
+                  <Text style={[s.activeText, { color: admin.is_active ? C.success : C.muted }]}>
+                    {admin.is_active ? 'Active' : 'Inactive'}
+                  </Text>
+                </View>
+                <Switch
+                  value={admin.is_active}
+                  onValueChange={() => handleToggleActive(admin)}
+                  trackColor={{ false: C.graphite, true: C.orangeTint }}
+                  thumbColor={admin.is_active ? C.orange : C.steel}
+                />
               </View>
             </View>
-          </View>
-
-        </View>
+          ))
+        )}
       </ScrollView>
 
-      <Modal visible={rejectModal} transparent animationType="slide" onRequestClose={() => setRejectModal(false)}>
+      {/* Add Modal */}
+      <Modal visible={showAddModal} animationType="slide" transparent>
         <View style={s.modalOverlay}>
-          <View style={s.modalSheet}>
-            <Text style={s.modalTitle}>Reject Mini</Text>
-            <Text style={s.modalSub}>
-              {selectedMini?.title}
-            </Text>
-            <Text style={s.modalLabel}>Reason for rejection</Text>
-            <TextInput
-              style={s.modalInput}
-              placeholder="e.g. Poor video quality, inappropriate content..."
-              placeholderTextColor={C.latte}
-              value={rejectionReason}
-              onChangeText={setRejectionReason}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-            <View style={s.modalActions}>
-              <TouchableOpacity
-                style={s.modalCancelBtn}
-                onPress={() => setRejectModal(false)}
-              >
-                <Text style={s.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.modalRejectBtn, actionLoading && { opacity: 0.6 }]}
-                onPress={handleReject}
-                disabled={actionLoading}
-              >
-                {actionLoading
-                  ? <ActivityIndicator size="small" color={C.cream} />
-                  : <Text style={s.modalRejectText}>Confirm Reject</Text>
-                }
-              </TouchableOpacity>
-            </View>
+          <View style={s.modalContainer}>
+            <Text style={s.modalTitle}>New Admin Account</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={s.label}>Full Name</Text>
+              <TextInput
+                style={inputStyle('add_name')}
+                placeholder="Admin name"
+                placeholderTextColor={C.muted}
+                value={addForm.user_name}
+                onChangeText={v => setAddForm({ ...addForm, user_name: v })}
+                onFocus={() => setFocusedInput('add_name')}
+                onBlur={() => setFocusedInput(null)}
+              />
+              <Text style={s.label}>Email</Text>
+              <TextInput
+                style={inputStyle('add_email')}
+                placeholder="admin@restaurant.com"
+                placeholderTextColor={C.muted}
+                value={addForm.user_email}
+                onChangeText={v => setAddForm({ ...addForm, user_email: v })}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                onFocus={() => setFocusedInput('add_email')}
+                onBlur={() => setFocusedInput(null)}
+              />
+              <Text style={s.label}>Temporary Password</Text>
+              <TextInput
+                style={inputStyle('add_pass')}
+                placeholder="Min 8 chars, 1 uppercase, 1 number, 1 special"
+                placeholderTextColor={C.muted}
+                value={addForm.user_password}
+                onChangeText={v => setAddForm({ ...addForm, user_password: v })}
+                secureTextEntry
+                onFocus={() => setFocusedInput('add_pass')}
+                onBlur={() => setFocusedInput(null)}
+              />
+              <View style={s.modalButtons}>
+                <TouchableOpacity style={s.cancelButton} onPress={() => setShowAddModal(false)}>
+                  <Text style={s.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.submitButton} onPress={handleCreate} activeOpacity={0.85}>
+                  <Text style={s.submitButtonText}>Create Admin →</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal visible={showEditModal} animationType="slide" transparent>
+        <View style={s.modalOverlay}>
+          <View style={s.modalContainer}>
+            <Text style={s.modalTitle}>Edit Admin</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={s.label}>Full Name</Text>
+              <TextInput
+                style={inputStyle('edit_name')}
+                placeholder="Full name"
+                placeholderTextColor={C.muted}
+                value={editForm.user_name}
+                onChangeText={v => setEditForm({ ...editForm, user_name: v })}
+                onFocus={() => setFocusedInput('edit_name')}
+                onBlur={() => setFocusedInput(null)}
+              />
+              <Text style={s.label}>Email</Text>
+              <TextInput
+                style={inputStyle('edit_email')}
+                placeholder="Email"
+                placeholderTextColor={C.muted}
+                value={editForm.user_email}
+                onChangeText={v => setEditForm({ ...editForm, user_email: v })}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                onFocus={() => setFocusedInput('edit_email')}
+                onBlur={() => setFocusedInput(null)}
+              />
+              <View style={s.modalButtons}>
+                <TouchableOpacity style={s.cancelButton} onPress={() => { setShowEditModal(false); setEditingAdmin(null) }}>
+                  <Text style={s.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.submitButton} onPress={handleUpdate} activeOpacity={0.85}>
+                  <Text style={s.submitButtonText}>Save Changes →</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -515,94 +432,79 @@ export default function SuperAdminDashboard() {
 }
 
 const s = StyleSheet.create({
-  root:          { flex: 1, backgroundColor: C.cream },
-  loadingScreen: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.cream, gap: 12 },
-  loadingText:   { fontSize: 14, color: C.clay, marginTop: 8 },
+  container: { flex:1, backgroundColor:C.black },
+  content:   { padding:20, paddingTop:56, paddingBottom:48 },
+  blob1: { position:'absolute', top:-80, left:'20%', width:260, height:260, borderRadius:130, backgroundColor:C.orange, opacity:0.08 },
+  blob2: { position:'absolute', top:-40, left:'45%', width:180, height:180, borderRadius:90,  backgroundColor:C.orange, opacity:0.12 },
 
-  header:    { backgroundColor: C.espresso, paddingTop: 56, paddingHorizontal: 20, paddingBottom: 24, gap: 20 },
-  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  brand:     { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  shieldBadge: { width: 44, height: 44, borderRadius: radius.sm, backgroundColor: C.violet, alignItems: 'center', justifyContent: 'center' },
-  brandName: { fontSize: 18, fontWeight: '900', color: C.cream },
-  brandSub:  { fontSize: 9, color: C.latte, fontWeight: '700', letterSpacing: 1.5, marginTop: 2 },
-  logoutBtn: { width: 38, height: 38, borderRadius: radius.sm, backgroundColor: '#2A1A05', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#3D2010' },
+  header:    { backgroundColor:C.charcoal, margin:-20, marginTop:-56, padding:20, paddingTop:56, paddingBottom:20, marginBottom:20, borderBottomWidth:1, borderBottomColor:C.border },
+  headerTop: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:16 },
+  brandRow:  { flexDirection:'row', alignItems:'center', gap:12 },
+  logoBox:   { width:44, height:44, borderRadius:radius.sm, backgroundColor:C.orange, alignItems:'center', justifyContent:'center' },
+  brandName: { fontSize:18, fontWeight:'900', color:C.white, letterSpacing:0.4 },
+  brandSub:  { fontSize:10, color:C.muted, marginTop:1 },
+  logoutBtn: { width:38, height:38, borderRadius:radius.sm, backgroundColor:C.graphite, alignItems:'center', justifyContent:'center', borderWidth:1, borderColor:C.border },
 
-  userCard:   { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#2A1A05', borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: '#3D2010' },
-  avatarWrap: { width: 46, height: 46, borderRadius: radius.sm, backgroundColor: C.violet, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontSize: 20, fontWeight: '900', color: C.cream },
-  userInfo:   { flex: 1, gap: 5 },
-  userName:   { fontSize: 15, fontWeight: '800', color: C.cream },
-  superBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', backgroundColor: C.violetLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, borderWidth: 1, borderColor: C.violetBorder },
-  superBadgeText: { fontSize: 10, fontWeight: '700', color: C.violet },
-  onlinePill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#0E2218', borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: C.sageBorder },
-  onlineDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: C.sage },
-  onlineText: { fontSize: 10, fontWeight: '700', color: C.sage },
+  welcomeCard: { flexDirection:'row', alignItems:'center', gap:14, backgroundColor:'rgba(255,107,44,0.08)', borderRadius:radius.md, padding:14, borderWidth:1, borderColor:C.orangeDim },
+  avatarWrap:  { width:46, height:46, borderRadius:radius.sm, backgroundColor:C.orange, alignItems:'center', justifyContent:'center' },
+  avatarText:  { fontSize:20, fontWeight:'900', color:C.white },
+  welcomeInfo: { flex:1, gap:6 },
+  welcomeName: { fontSize:15, fontWeight:'800', color:C.white },
+  superBadge:  { alignSelf:'flex-start', backgroundColor:C.orangeTint, borderRadius:radius.pill, paddingHorizontal:10, paddingVertical:3, borderWidth:1, borderColor:C.orangeDim },
+  superBadgeText: { fontSize:9, fontWeight:'900', color:C.orange, letterSpacing:1.5 },
 
-  body:     { padding: 20, gap: 24 },
+  statsRow: { flexDirection:'row', gap:10, marginBottom:16 },
+  statCard: { flex:1, backgroundColor:C.card, borderRadius:radius.md, borderWidth:1, borderColor:C.border, padding:12, alignItems:'center', gap:4 },
+  statNumber: { fontSize:22, fontWeight:'900' },
+  statLabel:  { fontSize:10, fontWeight:'700', color:C.muted, textTransform:'uppercase', letterSpacing:0.8 },
 
-  statsRow: { flexDirection: 'row', gap: 10 },
-  statCard: { flex: 1, borderRadius: radius.md, padding: 12, borderWidth: 1.5, alignItems: 'center', gap: 4 },
-  statValue:{ fontSize: 22, fontWeight: '900' },
-  statLabel:{ fontSize: 9, color: C.clay, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  successBanner: { flexDirection:'row', alignItems:'center', backgroundColor:C.successBg, borderWidth:1, borderColor:C.success, borderRadius:radius.md, padding:12, marginBottom:12, gap:8 },
+  successText:   { color:C.success, fontSize:13, fontWeight:'600' },
+  errorBanner:   { flexDirection:'row', alignItems:'center', backgroundColor:C.errorBg, borderWidth:1, borderColor:C.error, borderRadius:radius.md, padding:12, marginBottom:12, gap:8 },
+  errorBannerText: { color:C.error, fontSize:13, fontWeight:'600' },
 
-  section:       { gap: 12 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionTitle:  { fontSize: 11, fontWeight: '800', color: C.clay, textTransform: 'uppercase', letterSpacing: 1.4 },
-  sectionSub:    { fontSize: 12, color: C.latte, marginTop: -4 },
+  sectionHeader: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:12 },
+  sectionLeft:   { flexDirection:'row', alignItems:'center', gap:8 },
+  sectionTitle:  { fontSize:13, fontWeight:'800', color:C.orange },
+  addButton:     { flexDirection:'row', alignItems:'center', backgroundColor:C.orange, borderRadius:radius.pill, paddingHorizontal:14, paddingVertical:8, gap:6 },
+  addButtonText: { color:C.white, fontWeight:'700', fontSize:13 },
 
-  tabsScroll: { marginBottom: 4 },
-  tabsRow:    { flexDirection: 'row', gap: 8, paddingBottom: 2 },
-  tab:        { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: C.parchment, borderWidth: 1.5, borderColor: C.vellum },
-  tabActive:  { backgroundColor: C.espresso, borderColor: C.espresso },
-  tabText:    { fontSize: 12, fontWeight: '700', color: C.clay },
-  tabTextActive: { color: C.cream },
-  tabBadge:   { backgroundColor: C.vellum, borderRadius: radius.pill, paddingHorizontal: 6, paddingVertical: 1 },
-  tabBadgeActive: { backgroundColor: '#3D2010' },
-  tabBadgeText: { fontSize: 10, fontWeight: '800', color: C.clay },
-  tabBadgeTextActive: { color: C.latte },
+  searchRow:   { flexDirection:'row', alignItems:'center', backgroundColor:C.graphite, borderWidth:1, borderColor:C.border, borderRadius:radius.md, paddingHorizontal:14, paddingVertical:10, marginBottom:16, gap:10 },
+  searchInput: { flex:1, fontSize:14, color:C.white },
 
-  emptyState: { alignItems: 'center', paddingVertical: 48, gap: 10 },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: C.espresso },
-  emptySub:   { fontSize: 12, color: C.clay, textAlign: 'center' },
+  emptyState:    { alignItems:'center', paddingVertical:56, gap:12 },
+  emptyTitle:    { fontSize:17, fontWeight:'800', color:C.offWhite },
+  emptySubtitle: { fontSize:13, color:C.muted },
 
-  miniCard:   { backgroundColor: C.parchment, borderRadius: radius.md, borderWidth: 1.5, padding: 14, marginBottom: 12, gap: 10 },
-  miniHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
-  miniTitleBlock: { flex: 1 },
-  miniTitle:  { fontSize: 14, fontWeight: '800', color: C.espresso, marginBottom: 4 },
-  miniMeta:   { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  miniMetaText: { fontSize: 11, color: C.clay },
-  miniDot:    { fontSize: 11, color: C.latte },
-  miniDesc:   { fontSize: 12, color: C.clay, lineHeight: 17 },
-  miniDate:   { fontSize: 10, color: C.latte, fontWeight: '500' },
+  card:       { backgroundColor:C.card, borderRadius:radius.lg, borderWidth:1, borderColor:C.border, padding:14, marginBottom:10 },
+  cardHeader: { flexDirection:'row', alignItems:'flex-start', gap:12, marginBottom:12 },
+  cardAvatar: { width:44, height:44, borderRadius:radius.sm, backgroundColor:C.orange, alignItems:'center', justifyContent:'center', flexShrink:0 },
+  cardAvatarText: { fontSize:18, fontWeight:'900', color:C.white },
+  cardInfo:   { flex:1, gap:4 },
+  cardName:   { fontSize:14, fontWeight:'800', color:C.white },
+  cardEmail:  { fontSize:12, color:C.muted },
+  adminBadge: { alignSelf:'flex-start', backgroundColor:C.orangeTint, borderRadius:radius.pill, borderWidth:1, borderColor:C.orangeDim, paddingHorizontal:8, paddingVertical:3, marginTop:2 },
+  adminBadgeText: { fontSize:10, fontWeight:'700', color:C.orange },
+  cardActions: { flexDirection:'row', gap:6 },
+  editBtn:     { padding:8, borderRadius:radius.xs, backgroundColor:C.orangeTint, borderWidth:1, borderColor:C.orangeDim },
+  deleteBtn:   { padding:8, borderRadius:radius.xs, backgroundColor:C.errorBg, borderWidth:1, borderColor:'#7A1010' },
 
-  rejectionBlock: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, backgroundColor: C.tcLight, borderRadius: radius.xs, padding: 8, borderWidth: 1, borderColor: C.tcBorder },
-  rejectionText:  { fontSize: 11, color: C.terracotta, flex: 1 },
+  cardFooter: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', borderTopWidth:1, borderTopColor:C.border, paddingTop:10 },
+  activeRow:  { flexDirection:'row', alignItems:'center', gap:6 },
+  activeDot:  { width:6, height:6, borderRadius:3 },
+  activeText: { fontSize:12, fontWeight:'600' },
 
-  statusBadge: { borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, alignSelf: 'flex-start' },
-  statusText:  { fontSize: 10, fontWeight: '700' },
+  modalOverlay:   { flex:1, backgroundColor:'rgba(0,0,0,0.75)', justifyContent:'flex-end' },
+  modalContainer: { backgroundColor:C.charcoal, borderTopLeftRadius:28, borderTopRightRadius:28, borderTopWidth:1, borderColor:C.border, padding:24, maxHeight:'85%' },
+  modalTitle:     { fontSize:18, fontWeight:'900', color:C.white, marginBottom:20, letterSpacing:0.3 },
 
-  miniActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  approveBtn:  { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: C.sage, borderRadius: radius.pill, paddingVertical: 10 },
-  approveBtnText: { fontSize: 12, fontWeight: '800', color: C.cream },
-  rejectBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: C.tcLight, borderRadius: radius.pill, paddingVertical: 10, borderWidth: 1, borderColor: C.tcBorder },
-  rejectBtnText: { fontSize: 12, fontWeight: '800', color: C.terracotta },
-  deleteBtn:   { width: 38, height: 38, borderRadius: radius.sm, backgroundColor: C.parchment, borderWidth: 1.5, borderColor: C.vellum, alignItems: 'center', justifyContent: 'center' },
+  label:        { fontSize:11, fontWeight:'700', color:C.muted, textTransform:'uppercase', letterSpacing:1.1, marginBottom:8, marginTop:16 },
+  input:        { backgroundColor:C.graphite, borderWidth:1, borderColor:C.border, borderRadius:radius.md, paddingHorizontal:16, height:52, fontSize:15, color:C.white },
+  inputFocused: { borderColor:C.orange },
 
-  overviewCard:    { backgroundColor: C.parchment, borderRadius: radius.md, borderWidth: 1.5, borderColor: C.vellum, padding: 4 },
-  overviewRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14 },
-  overviewLabel:   { fontSize: 13, color: C.clay, fontWeight: '600' },
-  overviewValue:   { fontSize: 18, fontWeight: '900', color: C.sage },
-  overviewDivider: { height: 1, backgroundColor: C.vellum, marginHorizontal: 14 },
-
-  modalOverlay:  { flex: 1, backgroundColor: 'rgba(28,16,8,0.6)', justifyContent: 'flex-end' },
-  modalSheet:    { backgroundColor: C.parchment, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, borderWidth: 1.5, borderColor: C.vellum, padding: 24, gap: 14 },
-  modalTitle:    { fontSize: 18, fontWeight: '900', color: C.espresso },
-  modalSub:      { fontSize: 13, color: C.clay, marginTop: -6 },
-  modalLabel:    { fontSize: 10, fontWeight: '800', color: C.clay, textTransform: 'uppercase', letterSpacing: 1 },
-  modalInput:    { borderWidth: 1.5, borderColor: C.vellum, borderRadius: radius.md, padding: 12, fontSize: 13, color: C.espresso, backgroundColor: C.cream, minHeight: 100 },
-  modalActions:  { flexDirection: 'row', gap: 10 },
-  modalCancelBtn:  { flex: 1, alignItems: 'center', paddingVertical: 13, borderRadius: radius.pill, backgroundColor: C.cream, borderWidth: 1.5, borderColor: C.vellum },
-  modalCancelText: { fontSize: 13, fontWeight: '700', color: C.clay },
-  modalRejectBtn:  { flex: 1, alignItems: 'center', paddingVertical: 13, borderRadius: radius.pill, backgroundColor: C.terracotta },
-  modalRejectText: { fontSize: 13, fontWeight: '800', color: C.cream },
+  modalButtons:     { flexDirection:'row', gap:12, marginTop:28, marginBottom:8 },
+  cancelButton:     { flex:1, backgroundColor:C.graphite, borderWidth:1, borderColor:C.border, borderRadius:radius.md, height:52, alignItems:'center', justifyContent:'center' },
+  cancelButtonText: { fontSize:14, color:C.offWhite, fontWeight:'600' },
+  submitButton:     { flex:1, alignItems:'center', justifyContent:'center', backgroundColor:C.orange, borderRadius:radius.md, height:54 },
+  submitButtonText: { fontSize:15, color:C.white, fontWeight:'800' },
 })

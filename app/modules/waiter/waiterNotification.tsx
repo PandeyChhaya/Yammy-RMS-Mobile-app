@@ -13,21 +13,26 @@ import { io as socketIO } from 'socket.io-client'
 const SOCKET_URL = 'http://192.168.1.71:5000'
 
 const C = {
-  espresso:    '#1C1008',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
+  bg:          '#0F172A',
+  surface:     '#1E293B',
+  card:        '#1E293B',
+  cardBorder:  '#334155',
+  elevated:    '#334155',
+  accent:      '#6366F1',
+  accentDim:   '#6366F122',
+  accentBorder:'#6366F155',
+  success:     '#22C55E',
+  successDim:  '#22C55E18',
+  successBdr:  '#22C55E44',
+  danger:      '#EF4444',
+  dangerDim:   '#EF444418',
+  dangerBdr:   '#EF444444',
+  warning:     '#F59E0B',
+  warningDim:  '#F59E0B18',
+  warningBdr:  '#F59E0B44',
+  textPrimary: '#F1F5F9',
+  textSub:     '#94A3B8',
+  textMuted:   '#475569',
 }
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
@@ -120,15 +125,15 @@ export default function WaiterNotifications() {
 
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Bell size={20} color={C.cream} />
+          <Bell size={20} color={C.textPrimary} />
           <View>
             <Text style={styles.headerTitle}>Waiter Calls</Text>
             <Text style={styles.headerSub}>Live customer requests</Text>
           </View>
         </View>
         <View style={[styles.statusPill, connected ? styles.statusOnline : styles.statusOffline]}>
-          <View style={[styles.statusDot, { backgroundColor: connected ? C.sage : C.terracotta }]} />
-          <Text style={[styles.statusText, { color: connected ? C.sage : C.terracotta }]}>
+          <View style={[styles.statusDot, { backgroundColor: connected ? C.success : C.danger }]} />
+          <Text style={[styles.statusText, { color: connected ? C.success : C.danger }]}>
             {connected ? 'Live' : 'Offline'}
           </Text>
         </View>
@@ -139,7 +144,7 @@ export default function WaiterNotifications() {
         {calls.length === 0 && (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
-              <Bell size={36} color={C.brass} />
+              <Bell size={36} color={C.accent} />
             </View>
             <Text style={styles.emptyTitle}>No calls yet</Text>
             <Text style={styles.emptySub}>Customer requests will appear here in real-time</Text>
@@ -156,10 +161,10 @@ export default function WaiterNotifications() {
                     <Text style={styles.tableTagText}>Table {call.table_number}</Text>
                   </View>
                   <View style={styles.cardHeaderRight}>
-                    <Clock size={11} color={C.clay} />
+                    <Clock size={11} color={C.textMuted} />
                     <Text style={styles.timeText}>{formatTime(call.timestamp)}</Text>
                     <TouchableOpacity onPress={() => handleDismiss(call.id)}>
-                      <X size={14} color={C.clay} />
+                      <X size={14} color={C.textMuted} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -173,7 +178,7 @@ export default function WaiterNotifications() {
                   style={styles.acceptBtn}
                   onPress={() => handleAccept(call)}
                 >
-                  <CheckCircle size={14} color={C.cream} />
+                  <CheckCircle size={14} color={C.textPrimary} />
                   <Text style={styles.acceptBtnText}>I'll Go</Text>
                 </TouchableOpacity>
               </View>
@@ -188,15 +193,15 @@ export default function WaiterNotifications() {
               <View key={call.id} style={[styles.card, styles.cardAccepted]}>
                 <View style={styles.cardHeader}>
                   <View style={[styles.tableTag, styles.tableTagAccepted]}>
-                    <Text style={[styles.tableTagText, { color: C.sage }]}>Table {call.table_number}</Text>
+                    <Text style={[styles.tableTagText, { color: C.success }]}>Table {call.table_number}</Text>
                   </View>
                   <TouchableOpacity onPress={() => handleDismiss(call.id)}>
-                    <X size={14} color={C.clay} />
+                    <X size={14} color={C.textMuted} />
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.customerName}>{call.customer_name}</Text>
                 <View style={styles.acceptedByRow}>
-                  <CheckCircle size={12} color={C.sage} />
+                  <CheckCircle size={12} color={C.success} />
                   <Text style={styles.acceptedByText}>
                     {call.accepted_by === waiterName ? 'You accepted this' : `${call.accepted_by} is handling this`}
                   </Text>
@@ -212,54 +217,58 @@ export default function WaiterNotifications() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.cream },
+  container: { flex: 1, backgroundColor: C.bg },
   content:   { padding: 16, paddingBottom: 48 },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: C.espresso,
+    backgroundColor: C.surface,
+    borderBottomWidth: 1, borderBottomColor: C.cardBorder,
     paddingTop: 52, paddingHorizontal: 20, paddingBottom: 20,
   },
   headerLeft:  { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerTitle: { fontSize: 18, fontWeight: '900', color: C.cream },
-  headerSub:   { fontSize: 11, color: C.latte, marginTop: 2 },
+  headerTitle: { fontSize: 18, fontWeight: '900', color: C.textPrimary },
+  headerSub:   { fontSize: 11, color: C.textSub, marginTop: 2 },
 
   statusPill:    { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 100, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1 },
-  statusOnline:  { backgroundColor: C.sageLight, borderColor: C.sageBorder },
-  statusOffline: { backgroundColor: C.tcLight,   borderColor: C.tcBorder },
+  statusOnline:  { backgroundColor: C.successDim, borderColor: C.successBdr },
+  statusOffline: { backgroundColor: C.dangerDim,  borderColor: C.dangerBdr },
   statusDot:     { width: 6, height: 6, borderRadius: 3 },
   statusText:    { fontSize: 10, fontWeight: '700' },
 
   emptyState: { alignItems: 'center', paddingVertical: 72, gap: 12 },
-  emptyIcon:  { width: 80, height: 80, borderRadius: 40, backgroundColor: C.brassLight, borderWidth: 1.5, borderColor: C.brassBorder, alignItems: 'center', justifyContent: 'center' },
-  emptyTitle: { fontSize: 17, fontWeight: '800', color: C.espresso },
-  emptySub:   { fontSize: 13, color: C.clay, textAlign: 'center', lineHeight: 20 },
+  emptyIcon:  { width: 80, height: 80, borderRadius: 40, backgroundColor: C.accentDim, borderWidth: 1.5, borderColor: C.accentBorder, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { fontSize: 17, fontWeight: '800', color: C.textPrimary },
+  emptySub:   { fontSize: 13, color: C.textSub, textAlign: 'center', lineHeight: 20 },
 
-  sectionLabel: { fontSize: 11, fontWeight: '800', color: C.clay, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 },
+  sectionLabel: { fontSize: 11, fontWeight: '800', color: C.textMuted, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 },
 
   card: {
     borderRadius: 14, borderWidth: 1.5, padding: 14, marginBottom: 12, gap: 8,
   },
-  cardPending:  { backgroundColor: C.brassLight, borderColor: C.brassBorder },
-  cardAccepted: { backgroundColor: C.sageLight,  borderColor: C.sageBorder, opacity: 0.8 },
+  cardPending:  { backgroundColor: C.accentDim,  borderColor: C.accentBorder },
+  cardAccepted: { backgroundColor: C.successDim, borderColor: C.successBdr, opacity: 0.8 },
 
   cardHeader:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cardHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 
-  tableTag:         { backgroundColor: C.brass, borderRadius: 100, paddingHorizontal: 10, paddingVertical: 4 },
-  tableTagAccepted: { backgroundColor: C.sageLight, borderWidth: 1, borderColor: C.sageBorder },
-  tableTagText:     { fontSize: 11, fontWeight: '800', color: C.cream },
+  tableTag:         { backgroundColor: C.accent, borderRadius: 100, paddingHorizontal: 10, paddingVertical: 4 },
+  tableTagAccepted: { backgroundColor: C.successDim, borderWidth: 1, borderColor: C.successBdr },
+  tableTagText:     { fontSize: 11, fontWeight: '800', color: C.textPrimary },
 
-  timeText:     { fontSize: 11, color: C.clay },
-  customerName: { fontSize: 15, fontWeight: '800', color: C.espresso },
-  noteText:     { fontSize: 13, color: C.clay, fontStyle: 'italic' },
+  timeText:     { fontSize: 11, color: C.textMuted },
+  customerName: { fontSize: 15, fontWeight: '800', color: C.textPrimary },
+  noteText:     { fontSize: 13, color: C.textSub, fontStyle: 'italic' },
 
   acceptBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: C.sage, borderRadius: 100, paddingVertical: 10, marginTop: 4,
+    backgroundColor: C.success, borderRadius: 100, paddingVertical: 10, marginTop: 4,
+    shadowColor: C.success,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3, shadowRadius: 6, elevation: 3,
   },
-  acceptBtnText: { fontSize: 13, fontWeight: '800', color: C.cream },
+  acceptBtnText: { fontSize: 13, fontWeight: '800', color: C.textPrimary },
 
   acceptedByRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  acceptedByText:{ fontSize: 12, color: C.sage, fontWeight: '600' },
+  acceptedByText:{ fontSize: 12, color: C.success, fontWeight: '600' },
 })
