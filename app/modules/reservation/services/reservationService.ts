@@ -5,7 +5,7 @@ import {
   ReservationWithTable,
   UpdateReservationRequest
 } from '../../pos/types/reservation'
-export const API_BASE_URL = 'http://10.78.34.24:5000/api'
+export const API_BASE_URL = 'http://192.168.1.71:5000/api'
 
 const BASE_URL = `${API_BASE_URL}/reservations`
 

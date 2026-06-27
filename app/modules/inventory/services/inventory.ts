@@ -15,7 +15,7 @@ import type {
     UpdateSupplierRequest,
 } from "../types/inventory";
 
-const BASE_URL = 'http://10.78.34.24:5000/api/inventory';
+const BASE_URL = 'http://192.168.1.71:5000/api/inventory';
 
 const auth_headers = async () => {
     const token = await authService.getToken();
@@ -44,7 +44,13 @@ const getAllIngredients = async (): Promise<Ingredient[]> => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || 'Failed to load ingredients');
     if (!Array.isArray(data)) throw new Error('Unexpected response format');
-    return data;
+    return data.map((item: any) => ({
+        ...item,
+        current_stock: Number(item.current_stock),
+        min_stock:     Number(item.min_stock),
+        max_stock:     Number(item.max_stock),
+        cost_per_unit: Number(item.cost_per_unit),
+    }));
 };
 
 const getIngredient = async (id: string): Promise<Ingredient> => {

@@ -9,7 +9,6 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import {
     ActivityIndicator,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
@@ -106,7 +105,7 @@ export default function Inventory() {
     }
 
     return (
-        <SafeAreaView style={s.safeArea}>
+        <View style={s.safeArea}>
             <View style={s.container}>
                 <View style={s.blob1} />
                 <View style={s.blob2} />
@@ -187,7 +186,7 @@ export default function Inventory() {
 
                 <AddIngredientModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSuccess={handleRefresh} />
             </View>
-        </SafeAreaView>
+        </View>
     )
 }
 
@@ -203,7 +202,7 @@ const s = StyleSheet.create({
     retryBtn:     { marginTop: 12, paddingHorizontal: 20, paddingVertical: 8, backgroundColor: C.orangeTint, borderRadius: radius.sm, borderWidth: 1, borderColor: C.orangeDim },
     retryBtnText: { fontSize: 13, fontWeight: '700', color: C.orange },
 
-    header:      { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.charcoal, paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
+    header: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.charcoal, paddingHorizontal: 14, paddingTop: 56, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
     headerIcon:  { width: 36, height: 36, borderRadius: radius.sm, backgroundColor: C.orange, alignItems: 'center', justifyContent: 'center' },
     headerTitle: { fontSize: 16, fontWeight: '800', color: C.white },
     headerSub:   { fontSize: 11, color: C.muted, marginTop: 1 },

@@ -1,34 +1,28 @@
+// tablesSection.tsx
 import { Receipt, Table2 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
-  ScrollView, StyleSheet,
-  Text, TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
   View,
 } from 'react-native'
 import reservationService from '../../reservation/services/reservationService'
 import { TableData } from '../types/tables'
 import TableCard from './tableCard'
 
-const C = {
-  background: '#0A0A0A',
-  surface: '#1A1A1A',
-  surfaceHighlight: '#2C2C2C',
-  primary: '#FF6B2C',
-  primaryDim: '#3D1C00',
-  textMain: '#FFFFFF',
-  textMuted: '#9CA3AF',
+const palette = {
+  bg: '#0A0A0A',
+  card: '#1A1A1A',
+  brand: '#FF6B2C',
+  text: '#FFFFFF',
+  textDim: '#9CA3AF',
   border: '#2C2C2C',
-  danger: '#EF4444',
-  dangerDim: '#450A0A',
-  success: '#10B981',
-  successDim: '#064E3B',
-  warning: '#F59E0B',
-  warningDim: '#3A2500',
-  info: '#3B82F6',
-  infoDim: '#1E1B4B',
 }
-const radius = { xs: 6, sm: 10, md: 14, pill: 100 }
+
+const corner = { sm: 10, pill: 100 }
 
 interface TablesSectionProps {
   tables: TableData[]
@@ -36,57 +30,58 @@ interface TablesSectionProps {
   onTableSelect: (table: TableData | null) => void
 }
 
-export default function TablesSection({
-  tables,
-  selectedTable,
-  onTableSelect,
-}: TablesSectionProps) {
-  const [reservations, setReservations] = useState<Map<number, string>>(new Map())
-  const [loading, setLoading]           = useState(false)
+export default function TablesSection(props: TablesSectionProps) {
+  const { tables, selectedTable, onTableSelect } = props
+
+  const [reservationTimes, setReservationTimes] = useState<Map<number, string>>(new Map())
+  const [loadingReservations, setLoadingReservations] = useState(false)
 
   useEffect(() => {
-    const fetchReservations = async () => {
-      try {
-        setLoading(true)
-        const today = new Date().toISOString().split('T')[0]
-        const todayReservations = await reservationService.getReservationsWithTableInfo(today)
+    let cancelled = false
 
-        const map = new Map<number, string>()
-        todayReservations
+    async function loadReservations() {
+      setLoadingReservations(true)
+      try {
+        const today = new Date().toISOString().split('T')[0]
+        const todays = await reservationService.getReservationsWithTableInfo(today)
+
+        const times = new Map<number, string>()
+        todays
           .filter((r: any) => r.status === 'confirmed' && r.table_id)
           .forEach((r: any) => {
-            const time = String(r.reservation_time).substring(0, 5)
-            map.set(r.table_id, time)
+            times.set(r.table_id, String(r.reservation_time).substring(0, 5))
           })
 
-        setReservations(map)
+        if (!cancelled) setReservationTimes(times)
       } catch (err) {
-        console.error('Error fetching reservations:', err)
+        console.error('could not load reservations for table view:', err)
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoadingReservations(false)
       }
     }
 
-    fetchReservations()
+    loadReservations()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const isDirectSale = selectedTable === null
 
   return (
     <View style={styles.container}>
-
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Table2 size={16} color={C.textMuted} />
+          <Table2 size={16} color={palette.textDim} />
           <Text style={styles.headerTitle}>Tables</Text>
-          {loading && <ActivityIndicator size="small" color={C.primary} />}
+          {loadingReservations ? <ActivityIndicator size="small" color={palette.brand} /> : null}
         </View>
 
         <TouchableOpacity
           style={[styles.directSaleButton, isDirectSale && styles.directSaleButtonActive]}
           onPress={() => onTableSelect(null)}
         >
-          <Receipt size={13} color={isDirectSale ? C.textMain : C.textMuted} />
+          <Receipt size={13} color={isDirectSale ? palette.text : palette.textDim} />
           <Text style={[styles.directSaleText, isDirectSale && styles.directSaleTextActive]}>
             Direct Sale
           </Text>
@@ -95,22 +90,18 @@ export default function TablesSection({
 
       {tables.length === 0 ? (
         <View style={styles.emptyState}>
-          <Table2 size={24} color={C.border} />
+          <Table2 size={24} color={palette.border} />
           <Text style={styles.emptyText}>No tables configured</Text>
         </View>
       ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {tables.map((table) => (
             <TableCard
               key={table.table_id}
               table={table}
               isSelected={selectedTable?.table_id === table.table_id}
               onSelect={onTableSelect}
-              reservationTime={reservations.get(table.table_id)}
+              reservationTime={reservationTimes.get(table.table_id)}
             />
           ))}
         </ScrollView>
@@ -121,11 +112,10 @@ export default function TablesSection({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: C.surface,
+    backgroundColor: palette.card,
     borderBottomWidth: 1.5,
-    borderBottomColor: C.border,
+    borderBottomColor: palette.border,
   },
-
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -133,7 +123,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: palette.border,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -143,33 +133,31 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: C.textMain,
+    color: palette.text,
   },
-
   directSaleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: radius.pill,
-    backgroundColor: C.background,
+    borderRadius: corner.pill,
+    backgroundColor: palette.bg,
     borderWidth: 1.5,
-    borderColor: C.border,
+    borderColor: palette.border,
   },
   directSaleButtonActive: {
-    backgroundColor: C.primary,
-    borderColor: C.primary,
+    backgroundColor: palette.brand,
+    borderColor: palette.brand,
   },
   directSaleText: {
     fontSize: 12,
     fontWeight: '700',
-    color: C.textMuted,
+    color: palette.textDim,
   },
   directSaleTextActive: {
-    color: C.textMain,
+    color: palette.text,
   },
-
   scrollContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -177,7 +165,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -186,6 +173,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 12,
-    color: C.textMuted,
+    color: palette.textDim,
   },
 })

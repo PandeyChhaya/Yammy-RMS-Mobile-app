@@ -47,7 +47,7 @@ const C = {
 }
 const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
-const BASE_URL = 'http://10.78.34.24:5000/api'
+const BASE_URL = 'http://192.168.1.71:5000/api'
 
 interface Reservation {
   reservation_id: number

@@ -14,7 +14,7 @@ import {
 import { authService } from '../../auth/services/auth.service'
 import { ordersService } from '../../orders/services/orderService'
 
-const BASE_URL = 'http://10.78.34.24:5000/api'
+const BASE_URL = 'http://192.168.1.71:5000/api'
 
 const C = {
   espresso:    '#1C1008',

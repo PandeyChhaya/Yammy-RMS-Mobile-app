@@ -1,9 +1,14 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "../../db.js";
+import { validatePassword } from '../../utils/passwordValidator.js';
 
 export const registerUser = async (body: any) => {
   const { user_name, user_email, user_password, user_role } = body;
+
+
+  const passwordError = validatePassword(user_password);
+  if (passwordError) throw new Error(passwordError);
 
   const JWT_SECRET = process.env.JWT_SECRET as string;
   const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;

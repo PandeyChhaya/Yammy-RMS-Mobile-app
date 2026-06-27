@@ -16,6 +16,7 @@ import orderRouter from "./modules/orders/orders.routes.js";
 import paymentRouter from "./modules/payments/payments.routes.js";
 import reservationsRouter from "./modules/reservations/reservations.routes.js";
 import tableRouter from "./modules/tables/tables.routes.js";
+import usersRouter from "./modules/users/users.routes.js";
 
 const app    = express();
 const server = createServer(app);
@@ -39,6 +40,7 @@ app.use("/api/loyalty",      loyaltyRouter);
 app.use("/api/reservations", reservationsRouter);
 app.use("/api/inventory",    inventoryRouter);
 app.use("/api/minis",        miniRouter);
+app.use("/api/users", usersRouter);
 
 io.on("connection", (socket) => {
   console.log(`Socket connected: ${socket.id}`);

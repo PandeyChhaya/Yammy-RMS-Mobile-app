@@ -11,7 +11,7 @@ import {
   Switch, Text, TextInput, TouchableOpacity, View,
 } from 'react-native'
 import { authService } from '../modules/auth/services/auth.service'
-const BASE_URL = 'http://10.78.34.24:5000/api/users'
+const BASE_URL = 'http://192.168.1.71:5000/api/users'
 
 const C = {
   black:'#0A0A0A', charcoal:'#1A1A1A', graphite:'#2C2C2C', steel:'#3D3D3D',
