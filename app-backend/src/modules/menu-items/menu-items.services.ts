@@ -1,86 +1,105 @@
 import prisma from '../../db.js';
 
+export const postMenuItems = async (body: any) => {
+    const {
+        menu_items_name,
+        slug,
+        price,
+        cost_price,
+        menu_items_category_id,
+        menu_items_description,
+        image_url,
+        is_available,
+        prep_time,
+        calories,
+        display_order,
+    } = body;
 
-export const postMenuItems = async(body:any)=>{
+    const existing = await prisma.menu_items.findUnique({ where: { slug } });
+    if (existing) throw new Error('Menu Item already exists!!');
 
-    const {menu_items_name, slug, price}= body;// destructuring
-
-    const existingMenuItems = await prisma.menu_items.findUnique({
-        where :{slug},
-    
-    })
-    if (existingMenuItems) throw new Error("Menu Item already exists!!");
-
-    const updatedMenuItem=await  prisma.menu_items.create({
-        data:{
+    const created = await prisma.menu_items.create({
+        data: {
             menu_items_name,
             slug,
             price,
-        }
+            cost_price,
+            menu_items_category_id,
+            menu_items_description,
+            image_url,
+            is_available: is_available ?? true,
+            prep_time,
+            calories,
+            display_order,
+        },
     });
 
-    return{message: "Menu Item Updated Successfully", menu_items_id: updatedMenuItem.menu_items_id}
-
-
+    return { message: 'Menu Item Created Successfully', menu_items_id: created.menu_items_id };
 };
-export const getMenuItems= async(body:any)=>{
 
-    const{menu_items_id}= body;
+export const getMenuItems = async (body: any) => {
+    const { menu_items_id } = body;
 
-    const menuItemsExist = await prisma.menu_items.findUnique({
-        where :{menu_items_id},
+    const item = await prisma.menu_items.findUnique({ where: { menu_items_id } });
+    if (!item) throw new Error('Menu Item doesnt exist!!');
+
+    return item;
+};
+
+export const getAllMenuItems = async () => {
+    const items = await prisma.menu_items.findMany({
+        orderBy: { display_order: 'asc' },
+        include: { categories: true },
     });
-
-    if(!menuItemsExist) throw new Error("Menu Item doesnt exist!!" );
-
-    return menuItemsExist;
-
+    return items;
 };
 
-export const getAllMenuItems = async()=>{
+export const putMenuItems = async (body: any) => {
+    const {
+        menu_items_id,
+        menu_items_name,
+        slug,
+        price,
+        cost_price,
+        menu_items_category_id,
+        menu_items_description,
+        image_url,
+        is_available,
+        prep_time,
+        calories,
+        display_order,
+    } = body;
 
-    const menuItems= await prisma.menu_items.findMany();
-    return menuItems;
+    const existing = await prisma.menu_items.findUnique({ where: { menu_items_id } });
+    if (!existing) throw new Error('Menu Item doesnt exist!!');
 
-};
-
-export const putMenuItems= async(body:any)=>{
-
-    const {menu_items_id, menu_items_name, slug, price}= body;
-
-    const menuItemsExists= await prisma.menu_items.findUnique({
-        where :{menu_items_id},
-    })
-
-    if(!menuItemsExists) throw new Error ("Menu Item doesnt exist!!");
-
-    const updatedMenuItem = await prisma.menu_items.update({
-        where:{menu_items_id},
-
-        data :{
+    const updated = await prisma.menu_items.update({
+        where: { menu_items_id },
+        data: {
             menu_items_name,
             slug,
             price,
-        } })
-
-        return {message:("Menu Item Updated Successfully!!"), menu_items_id:updatedMenuItem.menu_items_id}
-
-
-};
- 
-export const deleteMenuItem = async(body:any)=>{
-
-    const {menu_items_id}= body;
-    
-    const checkMenuItemExist= await prisma.menu_items.findUnique({
-        where:{menu_items_id},
-    })
-
-    if(!checkMenuItemExist) throw new Error ("Menu Item Doesnt exist!!");
-
-    await prisma.menu_items.delete({
-        where:{menu_items_id},
+            cost_price,
+            menu_items_category_id,
+            menu_items_description,
+            image_url,
+            is_available,
+            prep_time,
+            calories,
+            display_order,
+        },
     });
 
-    return{message:("Menu Item Deleted Successfully!!"), menu_items_id};
-}
+    return { message: 'Menu Item Updated Successfully!!', menu_items_id: updated.menu_items_id };
+};
+
+export const deleteMenuItem = async (body: any) => {
+    const { menu_items_id } = body;
+
+    const existing = await prisma.menu_items.findUnique({ where: { menu_items_id } });
+    if (!existing) throw new Error('Menu Item doesnt exist!!');
+
+    await prisma.menu_items.delete({ where: { menu_items_id } });
+
+    return { message: 'Menu Item Deleted Successfully!!', menu_items_id };
+};

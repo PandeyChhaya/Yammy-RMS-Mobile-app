@@ -14,7 +14,6 @@ import { TableData } from './types/tables'
 
 const TAX_RATES = [{ name: 'VAT', rate: 13 }]
 
-// distinct enough at a glance on the dark background, last one matches the brand color
 const CATEGORY_COLORS = [
   '#14B8A6',
   '#F59E0B',
@@ -49,12 +48,13 @@ export default function POS() {
   })
 
   const menuItems: MenuItemDisplay[] = rawMenuItems.map((item) => {
+    console.log('raw menu item:', JSON.stringify(item))
     const category = categories.find((c) => c.category_id === item.menu_items_category_id)
     return {
       menu_items_id: item.menu_items_id,
       menu_items_name: item.menu_items_name,
       slug: item.slug,
-      price: item.price,
+      price: Number(item.price),
       menu_items_category_id: item.menu_items_category_id,
       menu_items_description: item.menu_items_description,
       image_url: item.image_url,
@@ -112,6 +112,8 @@ export default function POS() {
   )
 
   function addToCart(item: MenuItemDisplay) {
+    console.log('addToCart item:', JSON.stringify(item))
+  console.log('item.price type:', typeof item.price, item.price)
     setCartItems((prev) => {
       const existing = prev.find((c) => c.menu_item_id === String(item.menu_items_id))
 

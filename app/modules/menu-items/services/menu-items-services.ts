@@ -3,13 +3,18 @@ import { authService } from "../../auth/services/auth.service";
 const BASE_URL = 'http://192.168.1.71:5000/api/menuItems';
 
 export interface MenuItem {
-  menu_items_id: number,
-  menu_items_name: string,
-  slug: string,
-  price: number,
-  menu_items_category_id: number,
-  menu_items_description?: string,
-  image_url: string
+  menu_items_id: number
+  menu_items_name: string
+  slug: string
+  price: number
+  menu_items_category_id: number
+  menu_items_description?: string
+  image_url?: string
+  is_available: boolean
+  cost_price?: number
+  prep_time?: number
+  calories?: number
+  display_order?: number
 }
 
 export interface MenuItemFilters {
@@ -48,7 +53,10 @@ const getMenuItem = async (): Promise<MenuItem[]> => {
   return data
 }
 
-const putMenuItem = async (menu_items_id: string, updates: Partial<Omit<MenuItem, 'menu_items_id' | 'menu_items_category_id'>>): Promise<MenuItem> => {
+const putMenuItem = async (
+  menu_items_id: string,
+  updates: Partial<Omit<MenuItem, 'menu_items_id'>>
+): Promise<MenuItem> => {
   const response = await fetch(`${BASE_URL}/${menu_items_id}`, {
     method: 'PUT',
     headers: await auth_headers(),

@@ -1,5 +1,4 @@
-// menuItemCard.tsx
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 
 const palette = {
   bg: '#0A0A0A',
@@ -40,8 +39,6 @@ function money(amount: number, symbol = 'NPR') {
   return `${symbol} ${Number(amount).toFixed(2)}`
 }
 
-// Devanagari and CJK glyphs run wider per-character than Latin text at the
-// same point size, so the size step-down has to start earlier for those.
 function fontSizeFor(label: string): number {
   const length = label.length
   const isDevanagari = /[\u0900-\u097f]/.test(label)
@@ -76,16 +73,27 @@ export default function MenuItemCard(props: MenuItemCardProps) {
   const available = item.is_available !== false
   const dotColor = getCategoryColor(item.menu_items_category_id)
   const nameSize = fontSizeFor(item.menu_items_name)
+  const hasImage = !!item.image_url
 
   const disabled = !available || outOfStock
 
   return (
     <TouchableOpacity
-      style={[styles.card, disabled && styles.cardDisabled]}
+      style={[
+        styles.card,
+        { borderColor: hasImage ? 'transparent' : palette.border },
+        disabled && styles.cardDisabled,
+      ]}
       onPress={() => onSelect(item)}
       disabled={disabled}
       activeOpacity={0.75}
     >
+      {hasImage ? (
+        <Image source={{ uri: item.image_url }} style={styles.bgImage} />
+      ) : null}
+
+      {hasImage ? <View style={styles.bgOverlay} /> : null}
+
       <View style={styles.priceTag}>
         <Text style={styles.priceTagText}>{money(item.price, symbol)}</Text>
       </View>
@@ -131,7 +139,6 @@ const styles = StyleSheet.create({
     backgroundColor: palette.card,
     borderRadius: corner.md,
     borderWidth: 1.5,
-    borderColor: palette.border,
     padding: 10,
     paddingTop: 18,
     justifyContent: 'space-between',
@@ -141,6 +148,23 @@ const styles = StyleSheet.create({
   cardDisabled: {
     opacity: 0.5,
   },
+  bgImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  bgOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.48)',
+  },
   priceTag: {
     position: 'absolute',
     top: -1,
@@ -148,11 +172,11 @@ const styles = StyleSheet.create({
     backgroundColor: palette.brand,
     borderBottomLeftRadius: corner.sm,
     borderTopRightRadius: corner.md,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 3,
   },
   priceTagText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
     color: palette.text,
   },
@@ -167,15 +191,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
-  stockOk: {
-    backgroundColor: palette.green,
-  },
-  stockLow: {
-    backgroundColor: palette.amber,
-  },
-  stockOut: {
-    backgroundColor: palette.red,
-  },
+  stockOk: { backgroundColor: palette.green },
+  stockLow: { backgroundColor: palette.amber },
+  stockOut: { backgroundColor: palette.red },
   stockBadgeText: {
     fontSize: 9,
     fontWeight: '900',
@@ -211,14 +229,19 @@ const styles = StyleSheet.create({
     color: palette.text,
     textAlign: 'center',
     lineHeight: 18,
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   dotWrap: {
     alignItems: 'center',
     marginTop: 6,
   },
   categoryDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
 })

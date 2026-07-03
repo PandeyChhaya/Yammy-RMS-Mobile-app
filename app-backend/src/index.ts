@@ -7,6 +7,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import authRouter from "./modules/auth/auth.routes.js";
 import categoriesRouter from "./modules/categories/categories.routes.js";
+import imagesRoutes from "./modules/image/image.routes.js";
 import inventoryRouter from "./modules/inventory/inventory.routes.js";
 import loyaltyRouter from "./modules/loyalty/loyalty.routes.js";
 import menuItemsRouter from "./modules/menu-items/menu-items.routes.js";
@@ -41,6 +42,7 @@ app.use("/api/reservations", reservationsRouter);
 app.use("/api/inventory",    inventoryRouter);
 app.use("/api/minis",        miniRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/images", imagesRoutes);
 
 io.on("connection", (socket) => {
   console.log(`Socket connected: ${socket.id}`);
