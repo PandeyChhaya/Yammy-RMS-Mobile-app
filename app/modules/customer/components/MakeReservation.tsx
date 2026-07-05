@@ -50,10 +50,10 @@ export default function MakeReservation() {
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null)
   const [filterSize,      setFilterSize]      = useState<number | 'all'>('all')
 
-  const { data: tables = [], isLoading } = useQuery({
-    queryKey: ['tables'],
-    queryFn:  tableService.getTable,
-  })
+ const { data: tables = [], isLoading } = useQuery({
+  queryKey: ['tables'],
+  queryFn:  () => tableService.getTable(),
+})
 
   const availableTables = tables.filter(t => t.table_status === 'Available')
 

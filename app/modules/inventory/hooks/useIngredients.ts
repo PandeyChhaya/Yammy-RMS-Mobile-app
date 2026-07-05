@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { authService } from '../../auth/services/auth.service'
+import inventoryService from '../services/inventory'
 import type { CreateIngredientRequest, Ingredient, UpdateIngredientRequest } from '../types/inventory'
 
 const auth_headers = async () => {
