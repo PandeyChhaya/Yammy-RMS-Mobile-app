@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
-<<<<<<< HEAD
   AlertCircle,
   CheckCircle,
   ChefHat,
@@ -14,8 +13,6 @@ import {
 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
-=======
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   ActivityIndicator,
   ScrollView,
   StyleSheet,
@@ -26,9 +23,8 @@ import {
 } from 'react-native'
 import { CartItemDisplay } from '../types/cart'
 import { TableData } from '../types/tables'
-import CartItem from './cartItem'
+import CartItem from './CartItem'
 
-<<<<<<< HEAD
 const palette = {
   bg: '#0A0A0A',
   card: '#1A1A1A',
@@ -44,23 +40,6 @@ const palette = {
   greenBg: '#064E3B',
   amber: '#F59E0B',
   blue: '#3B82F6',
-=======
-const C = {
-  background: '#0A0A0A',
-  surface: '#1A1A1A',
-  surfaceHighlight: '#2C2C2C',
-  primary: '#FF6B2C',
-  primaryDim: '#3D1C00',
-  textMain: '#FFFFFF',
-  textMuted: '#9CA3AF',
-  border: '#2C2C2C',
-  danger: '#EF4444',
-  dangerDim: '#450A0A',
-  success: '#10B981',
-  successDim: '#064E3B',
-  warning: '#F59E0B',
-  info: '#3B82F6',
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
 }
 
 const corner = { xs: 6, sm: 10, md: 14, pill: 100 }
@@ -148,11 +127,7 @@ export default function CartSection(props: CartSectionProps) {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-<<<<<<< HEAD
           <ShoppingCart size={18} color={palette.textDim} />
-=======
-          <ShoppingCart size={18} color={C.textMuted} />
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
           <Text style={styles.headerTitle}>Cart</Text>
           {selectedTable ? (
             <View style={styles.tableBadge}>
@@ -170,22 +145,14 @@ export default function CartSection(props: CartSectionProps) {
 
       {showSuccessMessage ? (
         <View style={styles.successBanner}>
-<<<<<<< HEAD
           <CheckCircle size={14} color={palette.green} />
-=======
-          <CheckCircle size={14} color={C.success} />
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
           <Text style={styles.successText}>{showSuccessMessage}</Text>
         </View>
       ) : null}
 
       {showErrorMessage ? (
         <View style={styles.errorBanner}>
-<<<<<<< HEAD
           <AlertCircle size={14} color={palette.red} />
-=======
-          <AlertCircle size={14} color={C.danger} />
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
           <Text style={styles.errorText}>{showErrorMessage}</Text>
         </View>
       ) : null}
@@ -197,11 +164,7 @@ export default function CartSection(props: CartSectionProps) {
       >
         {!hasItems ? (
           <View style={styles.emptyState}>
-<<<<<<< HEAD
             <ShoppingCart size={28} color={palette.cardAlt} />
-=======
-            <ShoppingCart size={28} color={C.surfaceHighlight} />
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
             <Text style={styles.emptyText}>
               {selectedTable
                 ? `Select items for Table ${selectedTable.table_number}`
@@ -252,11 +215,7 @@ export default function CartSection(props: CartSectionProps) {
             value={customerName}
             onChangeText={setCustomerName}
             placeholder="Customer name (optional)"
-<<<<<<< HEAD
             placeholderTextColor={palette.textDim}
-=======
-            placeholderTextColor={C.textMuted}
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
           />
         </View>
 
@@ -282,7 +241,6 @@ export default function CartSection(props: CartSectionProps) {
           </View>
         </View>
 
-<<<<<<< HEAD
         {canTakePayment ? (
           <TouchableOpacity
             style={[styles.payButton, !hasItems && styles.disabled]}
@@ -293,16 +251,6 @@ export default function CartSection(props: CartSectionProps) {
             <Text style={styles.payButtonText}>Pay {money(totalWithTax, symbol)}</Text>
           </TouchableOpacity>
         ) : null}
-=======
-        <TouchableOpacity
-          style={[styles.payButton, !hasItems && styles.disabled]}
-          onPress={onPayment}
-          disabled={!hasItems}
-        >
-          <Zap size={14} color={C.textMain} />
-          <Text style={styles.payButtonText}>Pay {fmt(totalWithTax, symbol)}</Text>
-        </TouchableOpacity>
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
 
         <View style={styles.secondaryRow}>
           <TouchableOpacity
@@ -314,23 +262,16 @@ export default function CartSection(props: CartSectionProps) {
             onPress={onSendToKitchen}
             disabled={!selectedTable || !hasItems || isSendingToKitchen}
           >
-<<<<<<< HEAD
             {isSendingToKitchen ? (
               <ActivityIndicator size="small" color={palette.text} />
             ) : (
               <ChefHat size={13} color={palette.text} />
             )}
-=======
-            {isSendingToKitchen
-              ? <ActivityIndicator size="small" color={C.textMain} />
-              : <ChefHat size={13} color={C.textMain} />}
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
             <Text style={styles.secondaryButtonText}>
               {isSendingToKitchen ? 'Sending…' : 'Kitchen'}
             </Text>
           </TouchableOpacity>
 
-<<<<<<< HEAD
           {canTakePayment ? (
             <TouchableOpacity
               style={[styles.secondaryButton, styles.splitButton, !hasItems && styles.disabled]}
@@ -341,16 +282,6 @@ export default function CartSection(props: CartSectionProps) {
               <Text style={styles.secondaryButtonText}>Split</Text>
             </TouchableOpacity>
           ) : null}
-=======
-          <TouchableOpacity
-            style={[styles.secondaryButton, styles.splitButton, !hasItems && styles.disabled]}
-            onPress={onSplitTicket}
-            disabled={!hasItems}
-          >
-            <Users size={13} color={C.textMain} />
-            <Text style={styles.secondaryButtonText}>Split</Text>
-          </TouchableOpacity>
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
         </View>
 
         <TouchableOpacity
@@ -358,11 +289,7 @@ export default function CartSection(props: CartSectionProps) {
           onPress={onClearCart}
           disabled={!hasItems}
         >
-<<<<<<< HEAD
           <Trash2 size={13} color={palette.red} />
-=======
-          <Trash2 size={13} color={C.danger} />
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
           <Text style={styles.clearButtonText}>Clear Cart</Text>
         </TouchableOpacity>
       </View>
@@ -371,7 +298,6 @@ export default function CartSection(props: CartSectionProps) {
 }
 
 const styles = StyleSheet.create({
-<<<<<<< HEAD
   container: {
     flex: 1,
     backgroundColor: palette.bg,
@@ -624,60 +550,4 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.45,
   },
-=======
-  container:   { flex: 1, backgroundColor: C.background, borderLeftWidth: 1.5, borderLeftColor: C.border },
-
-  header:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border, backgroundColor: C.surface },
-  headerLeft:      { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle:     { fontSize: 15, fontWeight: '800', color: C.textMain },
-  tableBadge:      { backgroundColor: C.primaryDim, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: C.primary },
-  tableBadgeText:  { fontSize: 11, fontWeight: '700', color: C.primary },
-  headerRight:     { alignItems: 'flex-end' },
-  headerTotal:     { fontSize: 17, fontWeight: '900', color: C.textMain },
-  headerCount:     { fontSize: 11, color: C.textMuted, marginTop: 1 },
-
-  successBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 12, marginTop: 8, backgroundColor: C.successDim, borderRadius: radius.sm, borderWidth: 1, borderColor: C.success, padding: 10 },
-  successText:   { fontSize: 12, fontWeight: '600', color: C.success },
-  errorBanner:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 12, marginTop: 8, backgroundColor: C.dangerDim, borderRadius: radius.sm, borderWidth: 1, borderColor: C.danger, padding: 10 },
-  errorText:     { fontSize: 12, fontWeight: '600', color: C.danger },
-
-  itemsList:    { flex: 1 },
-  itemsContent: { padding: 12, paddingBottom: 4 },
-  emptyState:   { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 10 },
-  emptyText:    { fontSize: 12, color: C.textMuted, textAlign: 'center' },
-
-  footer:        { borderTopWidth: 1.5, borderTopColor: C.border, backgroundColor: C.surface, padding: 12, gap: 10 },
-  taxBlock:      { backgroundColor: C.background, borderRadius: radius.sm, borderWidth: 1, borderColor: C.border, padding: 10, gap: 4 },
-  taxRow:        { flexDirection: 'row', justifyContent: 'space-between' },
-  taxLabel:      { fontSize: 11, color: C.textMuted },
-  taxValue:      { fontSize: 11, fontWeight: '600', color: C.textMain },
-  taxTotalRow:   { borderTopWidth: 1, borderTopColor: C.border, marginTop: 4, paddingTop: 4 },
-  taxTotalLabel: { fontSize: 13, fontWeight: '800', color: C.textMain },
-  taxTotalValue: { fontSize: 13, fontWeight: '900', color: C.primary },
-
-  fieldBlock: { gap: 5 },
-  fieldLabel: { fontSize: 10, fontWeight: '800', color: C.textMuted, textTransform: 'uppercase', letterSpacing: 1 },
-  input:      { borderWidth: 1.5, borderColor: C.border, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 9, fontSize: 13, color: C.textMain, backgroundColor: C.background },
-
-  paymentGrid:         { flexDirection: 'row', gap: 8 },
-  paymentButton:       { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: radius.md, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.background, gap: 2 },
-  paymentButtonActive: { backgroundColor: C.primaryDim, borderColor: C.primary },
-  paymentIcon:         { fontSize: 14 },
-  paymentLabel:        { fontSize: 11, fontWeight: '700', color: C.textMuted },
-  paymentLabelActive:  { color: C.primary },
-
-  payButton:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: C.primary, borderRadius: radius.pill, paddingVertical: 13 },
-  payButtonText: { fontSize: 14, fontWeight: '800', color: C.textMain },
-
-  secondaryRow:        { flexDirection: 'row', gap: 8 },
-  secondaryButton:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 10, borderRadius: radius.md },
-  kitchenButton:       { backgroundColor: C.warning },
-  splitButton:         { backgroundColor: C.info },
-  secondaryButtonText: { fontSize: 12, fontWeight: '700', color: C.textMain },
-
-  clearButton:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: C.background, borderRadius: radius.pill, paddingVertical: 10, borderWidth: 1.5, borderColor: C.border },
-  clearButtonText: { fontSize: 12, fontWeight: '700', color: C.danger },
-
-  disabled: { opacity: 0.45 },
->>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
 })
