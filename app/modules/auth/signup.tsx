@@ -32,9 +32,9 @@ const C = {
 const R = { md: 14, xl: 24 }
 
 const ROLES = [
-  'Customer',
   'Admin',
-  'Super Admin',
+  'Customer',
+  
   'Cashier',
   'Waiter',
   'Kitchen Staff',
@@ -184,7 +184,7 @@ export default function Signup() {
             <View style={styles.sep} />
             <TextInput
               style={styles.input}
-              placeholder="Your full name"
+              placeholder="Your name"
               placeholderTextColor={C.mutedDark}
               value={fullName}
               onChangeText={setFullName}
@@ -202,7 +202,7 @@ export default function Signup() {
             <View style={styles.sep} />
             <TextInput
               style={styles.input}
-              placeholder="user@restaurant.com"
+              placeholder="user@yammy.com"
               placeholderTextColor={C.mutedDark}
               value={email}
               onChangeText={setEmail}

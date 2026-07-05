@@ -56,8 +56,11 @@ const getReservationById = async (id: number): Promise<ReservationWithTable> => 
 export interface PostReservationPayload {
   table_id:           number
   party_size:         number
-  reserved_at:        string       // ISO datetime e.g. "2024-12-01T19:00"
+  reserved_at:        string
   reservation_notes?: string
+  customer_name:      string
+  customer_phone?:    string
+  duration_minutes?:  number
 }
 
 const postReservation = async (payload: PostReservationPayload): Promise<ReservationWithTable> => {

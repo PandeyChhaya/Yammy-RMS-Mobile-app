@@ -1,10 +1,10 @@
 import prisma from '../../db.js';
 
-export const postCategory = async (body: any) => {
+export const postCategory = async (body: any, restaurant_id: number) => {
     const { category_name, category_description, slug, image_url } = body;
 
-    const categoryExists = await prisma.categories.findUnique({
-        where: { slug },
+    const categoryExists = await prisma.categories.findFirst({
+        where: { slug, restaurant_id },
     });
 
     if (categoryExists) throw new Error('Category already exists');
@@ -15,6 +15,7 @@ export const postCategory = async (body: any) => {
             category_description,
             slug,
             image_url,
+            restaurant_id,
         },
     });
 
@@ -32,8 +33,11 @@ export const getCategory = async (body: any) => {
     return categoryExists;
 };
 
-export const getAllCategory = async () => {
-    const categories = await prisma.categories.findMany();
+// now takes restaurant_id from query param, filters results to that restaurant only
+export const getAllCategory = async (restaurant_id?: number) => {
+    const categories = await prisma.categories.findMany({
+        where: restaurant_id ? { restaurant_id } : undefined,
+    });
     return categories;
 };
 

@@ -4,16 +4,17 @@ import { useRouter } from 'expo-router'
 import { Eye, Film, Store } from 'lucide-react-native'
 import { useEffect, useRef, useState } from 'react'
 import {
-    ActivityIndicator,
-    Dimensions,
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import minisService from '../../minis/services/minis'
 import type { Mini } from '../../minis/types/minis'
+import { useRestaurant } from '../../shared/context/RestaurantContext'
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -31,12 +32,13 @@ const C = {
 
 export default function ViewMinis() {
   const router = useRouter()
+  const { setSelectedRestaurantId } = useRestaurant()
   const [activeIndex, setActiveIndex] = useState(0)
   const videoRefs = useRef<{ [key: number]: any }>({})
 
-  const { data: minis = [], isLoading } = useQuery({
+  const { data: minis = [], isLoading } = useQuery<Mini[]>({
     queryKey: ['approved-minis'],
-    queryFn:  minisService.getApproved,
+    queryFn:  () => minisService.getApproved(),
   })
 
   useEffect(() => {
@@ -121,13 +123,19 @@ export default function ViewMinis() {
           <View style={styles.actions}>
             <TouchableOpacity
               style={styles.actionBtn}
-              onPress={() => router.push(`/modules/customer/components/MakeReservation` as any)}
+              onPress={() => {
+                setSelectedRestaurantId(item.restaurant_id)
+                router.push(`/modules/customer/components/MakeReservation` as any)
+              }}
             >
               <Text style={styles.actionBtnText}>Reserve</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionBtn, styles.actionBtnSecondary]}
-              onPress={() => router.push(`/modules/menu/Menu` as any)}
+              onPress={() => {
+                setSelectedRestaurantId(item.restaurant_id)
+                router.push(`/modules/customer/components/KioskOrder` as any)
+              }}
             >
               <Text style={[styles.actionBtnText, { color: C.brass }]}>Menu</Text>
             </TouchableOpacity>

@@ -2,13 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertCircle,
-  Calendar,
   CheckCircle,
   CreditCard,
   Edit,
   Plus,
   Settings,
-  Trash2,
+  Trash2
 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
@@ -22,13 +21,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { authService } from '../auth/services/auth.service'
 import { ReservationStatus, ReservationWithTable } from '../pos/types/reservation'
 import { CreateTableRequest, TableData } from '../pos/types/tables'
 import reservationService from '../reservation/services/reservationService'
 import ReservationsCalendar from './components/ReservationCalender'
 import ReservationModal from './components/ReservationModal'
 import tableService from './services/tableService'
-
 const C = {
   black:       '#0A0A0A',
   charcoal:    '#1A1A1A',
@@ -90,9 +89,12 @@ export default function Tables() {
     })
   }, [])
 
-  const { data: tables = [], isLoading, error } = useQuery<TableData[]>({
+ const { data: tables = [], isLoading, error } = useQuery<TableData[]>({
     queryKey: ['tables'],
-    queryFn:  () => tableService.getTable(),
+    queryFn:  async () => {
+      const restaurant_id = await authService.getRestaurantId()
+      return tableService.getTable(restaurant_id ?? undefined)
+    },
     retry: 3,
   })
 
@@ -355,9 +357,7 @@ export default function Tables() {
         {canManage && (
           <>
             <View style={styles.sectionHeader}>
-              <View style={styles.sectionIconBadge}>
-                <Calendar size={14} color={C.orange} />
-              </View>
+              
               <Text style={styles.sectionTitle}>Planning</Text>
             </View>
 
@@ -379,9 +379,7 @@ export default function Tables() {
         )}
 
         <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-          <View style={styles.sectionIconBadge}>
-            <Settings size={14} color={C.orange} />
-          </View>
+          
           <Text style={styles.sectionTitle}>Tables ({tables.length})</Text>
         </View>
 
@@ -400,17 +398,41 @@ export default function Tables() {
         ) : (
           tables.map((table) => {
             const cfg = STATUS_CONFIG[table.table_status] ?? STATUS_CONFIG.Available
+            const dotCount = Math.min(table.capacity, 8)
             return (
               <View key={table.table_id} style={styles.card}>
 
                 <View style={styles.cardHeader}>
-                  <View style={styles.cardTitleRow}>
-                    <View style={[styles.statusDot, { backgroundColor: cfg.dot }]} />
-                    <View>
-                      <Text style={styles.cardTitle}>Table {table.table_number}</Text>
-                      <Text style={styles.cardSub}>Floor {table.floor} · 👥 {table.capacity} seats</Text>
+                  <View style={styles.tableVisual}>
+                    <View style={[styles.tableCircle, { borderColor: cfg.border, backgroundColor: cfg.bg }]}>
+                      <Text style={[styles.tableCircleNumber, { color: cfg.text }]}>{table.table_number}</Text>
                     </View>
+                    {Array.from({ length: dotCount }).map((_, i) => {
+                      const angle  = (i / dotCount) * 2 * Math.PI - Math.PI / 2
+                      const orbit  = 42
+                      return (
+                        <View
+                          key={i}
+                          style={[
+                            styles.chairDotAbs,
+                            {
+                              backgroundColor: cfg.dot,
+                              transform: [
+                                { translateX: orbit * Math.cos(angle) },
+                                { translateY: orbit * Math.sin(angle) },
+                              ],
+                            },
+                          ]}
+                        />
+                      )
+                    })}
                   </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>Table {table.table_number}</Text>
+                    <Text style={styles.cardSub}>Floor {table.floor} ·  {table.capacity} seats</Text>
+                  </View>
+
                   {canManage && (
                     <View style={styles.cardActions}>
                       <TouchableOpacity style={styles.iconButtonEdit} onPress={() => handleEdit(table)} activeOpacity={0.8}>
@@ -537,13 +559,24 @@ const styles = StyleSheet.create({
   emptyTitle:    { fontSize: 17, fontWeight: '800', color: C.offWhite },
   emptySubtitle: { fontSize: 13, color: C.muted },
 
-  card:         { backgroundColor: C.card, borderRadius: radius.lg, borderWidth: 1, borderColor: C.border, padding: 16, marginBottom: 12, gap: 10 },
-  cardHeader:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  statusDot:    { width: 7, height: 7, borderRadius: 4 },
-  cardTitle:    { fontSize: 15, fontWeight: '800', color: C.white },
-  cardSub:      { fontSize: 11, color: C.muted, marginTop: 2 },
-  cardActions:  { flexDirection: 'row', gap: 6 },
+  card:       { backgroundColor: C.card, borderRadius: radius.lg, borderWidth: 1, borderColor: C.border, padding: 16, marginBottom: 12, gap: 12 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+
+  tableVisual: { width: 76, height: 76, alignItems: 'center', justifyContent: 'center' },
+  tableCircle: {
+    width: 52, height: 52, borderRadius: 26,
+    borderWidth: 2,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  tableCircleNumber: { fontSize: 16, fontWeight: '900' },
+  chairDotAbs: {
+    position: 'absolute',
+    width: 8, height: 8, borderRadius: 4,
+  },
+
+  cardTitle:   { fontSize: 15, fontWeight: '800', color: C.white },
+  cardSub:     { fontSize: 11, color: C.muted, marginTop: 2 },
+  cardActions: { flexDirection: 'row', gap: 6 },
 
   iconButtonEdit:   { padding: 8, borderRadius: 10, backgroundColor: C.orangeTint, borderWidth: 1, borderColor: C.orangeDim },
   iconButtonDelete: { padding: 8, borderRadius: 10, backgroundColor: C.errorBg,    borderWidth: 1, borderColor: '#7A1010' },

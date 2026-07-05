@@ -26,26 +26,8 @@ import {
   View,
 } from 'react-native'
 import { authService } from '../auth/services/auth.service'
-
-const C = {
-  espresso:    '#1C1008',
-  roast:       '#3D2010',
-  clay:        '#7A4528',
-  latte:       '#C8956A',
-  cream:       '#FDF6EC',
-  parchment:   '#F5E9D4',
-  vellum:      '#EDD9BC',
-  brass:       '#B5822A',
-  brassLight:  '#F7EDD8',
-  brassBorder: '#DEC07A',
-  sage:        '#3B6E52',
-  sageLight:   '#EBF4EE',
-  sageBorder:  '#9FCFB4',
-  terracotta:  '#A03020',
-  tcLight:     '#FAECEA',
-  tcBorder:    '#E8A898',
-}
-const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
+import { useRestaurant } from '../shared/context/RestaurantContext'
+import { corner, palette } from '../shared/theme'
 
 const BASE_URL = 'http://192.168.1.71:5000/api'
 
@@ -74,7 +56,7 @@ interface Order {
 
 export default function CustomerDashboard() {
   const router = useRouter()
-
+ const { selectedRestaurantId } = useRestaurant()
   const [userName,      setUserName]      = useState('Guest')
   const [customerId,    setCustomerId]    = useState<number | null>(null)
   const [loyaltyPoints, setLoyaltyPoints] = useState<number>(0)
@@ -103,12 +85,14 @@ export default function CustomerDashboard() {
         const cId = parseInt(id)
         setCustomerId(cId)
         const headers = await getHeaders()
+        const rid = selectedRestaurantId ? `&restaurant_id=${selectedRestaurantId}` : ''
+        const ridQ = selectedRestaurantId ? `?restaurant_id=${selectedRestaurantId}` : ''
 
         const [loyaltyRes, reservationsRes, menuRes, ordersRes] = await Promise.all([
           fetch(`${BASE_URL}/loyalty/${cId}`,                    { headers }),
           fetch(`${BASE_URL}/reservation/customer/${cId}`,       { headers }),
-          fetch(`${BASE_URL}/menuItems`,                         { headers }),
-          fetch(`${BASE_URL}/orders`,                            { headers }),
+          fetch(`${BASE_URL}/menuItems${ridQ}`,                  { headers }),
+          fetch(`${BASE_URL}/orders${ridQ}`,                     { headers }),
         ])
 
         if (loyaltyRes.ok)       setLoyaltyPoints((await loyaltyRes.json()).loyalty_points || 0)
@@ -134,10 +118,10 @@ export default function CustomerDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return { bg: C.sageLight, text: C.sage,       border: C.sageBorder }
-      case 'pending':   return { bg: C.brassLight, text: C.brass,      border: C.brassBorder }
-      case 'cancelled': return { bg: C.tcLight,    text: C.terracotta, border: C.tcBorder }
-      default:          return { bg: C.parchment,  text: C.clay,       border: C.vellum }
+      case 'confirmed': return { bg: palette.successBg, text: palette.success,   border: palette.success }
+      case 'pending':   return { bg: palette.orangeTint, text: palette.orange,    border: palette.orangeDim }
+      case 'cancelled': return { bg: palette.errorBg,    text: palette.error,     border: palette.error }
+      default:          return { bg: palette.card,       text: palette.muted,    border: palette.border }
     }
   }
 
@@ -148,8 +132,8 @@ export default function CustomerDashboard() {
     return (
       <View style={s.loading}>
         <View style={s.loadingCard}>
-          <View style={s.loadingIcon}><Utensils size={26} color={C.brass} /></View>
-          <ActivityIndicator size="large" color={C.brass} style={{ marginTop: 20 }} />
+          <View style={s.loadingIcon}><Utensils size={26} color={palette.orange} /></View>
+          <ActivityIndicator size="large" color={palette.orange} style={{ marginTop: 20 }} />
           <Text style={s.loadingTitle}>Yammy Fresh</Text>
           <Text style={s.loadingText}>Loading your dashboard…</Text>
         </View>
@@ -164,14 +148,14 @@ export default function CustomerDashboard() {
         <View style={s.header}>
           <View style={s.headerTop}>
             <View style={s.brand}>
-              <View style={s.logoBadge}><Utensils size={20} color={C.cream} /></View>
+              <View style={s.logoBadge}><Utensils size={20} color={palette.white} /></View>
               <View>
                 <Text style={s.brandName}>Yammy Fresh</Text>
                 <Text style={s.brandSub}>Welcome back</Text>
               </View>
             </View>
             <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-              <LogOut size={16} color={C.latte} />
+              <LogOut size={16} color={palette.dim} />
             </TouchableOpacity>
           </View>
 
@@ -187,14 +171,14 @@ export default function CustomerDashboard() {
 
           <View style={s.loyaltyBanner}>
             <View style={s.loyaltyLeft}>
-              <Gift size={20} color={C.brass} />
+              <Gift size={20} color={palette.orange} />
               <View>
                 <Text style={s.loyaltyLabel}>Loyalty Points</Text>
                 <Text style={s.loyaltyPoints}>{loyaltyPoints} pts</Text>
               </View>
             </View>
             <View style={s.loyaltyRight}>
-              <Star size={14} color={C.brass} />
+              <Star size={14} color={palette.orange} />
               <Text style={s.loyaltyEquiv}>≈ NPR {loyaltyPoints * 2}</Text>
             </View>
           </View>
@@ -207,41 +191,41 @@ export default function CustomerDashboard() {
             <View style={s.actionsGrid}>
 
               <TouchableOpacity
-                style={[s.actionCard, { backgroundColor: C.brassLight, borderColor: C.brassBorder }]}
+                style={[s.actionCard, { backgroundColor: palette.orangeTint, borderColor: palette.orangeDim }]}
                 onPress={() => router.push('/modules/customer/components/MakeReservation' as any)}
                 activeOpacity={0.8}
               >
-                <View style={s.actionIconWrap}><Calendar size={22} color={C.brass} /></View>
+                <View style={s.actionIconWrap}><Calendar size={22} color={palette.orange} /></View>
                 <Text style={s.actionLabel}>Reserve Table</Text>
                 <Text style={s.actionSub}>Book a spot</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[s.actionCard, { backgroundColor: C.sageLight, borderColor: C.sageBorder }]}
-                onPress={() => router.push('/modules/customer/components/MakeOrder' as any)}
+                style={[s.actionCard, { backgroundColor: palette.successBg, borderColor: palette.success }]}
+                onPress={() => router.push('/modules/customer/components/KioskOrder' as any)}
                 activeOpacity={0.8}
               >
-                <View style={s.actionIconWrap}><Coffee size={22} color={C.sage} /></View>
+                <View style={s.actionIconWrap}><Coffee size={22} color={palette.success} /></View>
                 <Text style={s.actionLabel}>Order Food</Text>
                 <Text style={s.actionSub}>Browse & order</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[s.actionCard, { backgroundColor: C.tcLight, borderColor: C.tcBorder }]}
+                style={[s.actionCard, { backgroundColor: palette.errorBg, borderColor: palette.error }]}
                 onPress={() => router.push('/modules/customer/components/CallWaiter' as any)}
                 activeOpacity={0.8}
               >
-                <View style={s.actionIconWrap}><Bell size={22} color={C.terracotta} /></View>
+                <View style={s.actionIconWrap}><Bell size={22} color={palette.error} /></View>
                 <Text style={s.actionLabel}>Call Waiter</Text>
                 <Text style={s.actionSub}>Get assistance</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[s.actionCard, { backgroundColor: C.parchment, borderColor: C.vellum }]}
+                style={[s.actionCard, { backgroundColor: palette.card, borderColor: palette.border }]}
                 onPress={handleCall}
                 activeOpacity={0.8}
               >
-                <View style={s.actionIconWrap}><Phone size={22} color={C.clay} /></View>
+                <View style={s.actionIconWrap}><Phone size={22} color={palette.muted} /></View>
                 <Text style={s.actionLabel}>Call Us</Text>
                 <Text style={s.actionSub}>+977 98...</Text>
               </TouchableOpacity>
@@ -257,13 +241,13 @@ export default function CustomerDashboard() {
               activeOpacity={0.85}
             >
               <View style={s.videoIconWrap}>
-                <Play size={32} color={C.brass} />
+                <Play size={32} color={palette.orange} />
               </View>
               <View style={s.videoInfo}>
                 <Text style={s.videoTitle}>Watch Food Videos</Text>
                 <Text style={s.videoSub}>See what's cooking at Yammy Fresh</Text>
               </View>
-              <ChevronRight size={18} color={C.latte} />
+              <ChevronRight size={18} color={palette.dim} />
             </TouchableOpacity>
           </View>
 
@@ -277,7 +261,7 @@ export default function CustomerDashboard() {
 
             {reservations.length === 0 ? (
               <View style={s.emptyCard}>
-                <Calendar size={28} color={C.latte} />
+                <Calendar size={28} color={palette.dim} />
                 <Text style={s.emptyText}>No reservations yet</Text>
                 <TouchableOpacity
                   style={s.emptyBtn}
@@ -294,10 +278,10 @@ export default function CustomerDashboard() {
                     <View style={s.reservationLeft}>
                       <Text style={s.reservationDate}>{formatDate(res.reserved_at)}</Text>
                       <View style={s.reservationMeta}>
-                        <Clock size={11} color={C.clay} />
+                        <Clock size={11} color={palette.muted} />
                         <Text style={s.reservationTime}>{formatTime(res.reserved_at)}</Text>
                         <Text style={s.reservationDot}>·</Text>
-                        <Text style={s.reservationParty}>👥 {res.party_size} guests</Text>
+                        <Text style={s.reservationParty}>{res.party_size} guests</Text>
                       </View>
                       {res.reservation_notes && (
                         <Text style={s.reservationNotes} numberOfLines={1}>{res.reservation_notes}</Text>
@@ -317,7 +301,7 @@ export default function CustomerDashboard() {
           <View style={s.section}>
             <View style={s.sectionRow}>
               <Text style={s.sectionTitle}>Our Menu</Text>
-              <TouchableOpacity onPress={() => router.push('/modules/customer/components/MakeOrder' as any)}>
+              <TouchableOpacity onPress={() => router.push('/modules/customer/components/KioskOrder' as any)}>
                 <Text style={s.sectionLink}>Order now</Text>
               </TouchableOpacity>
             </View>
@@ -327,11 +311,11 @@ export default function CustomerDashboard() {
                   <TouchableOpacity
                     key={item.menu_items_id}
                     style={s.menuCard}
-                    onPress={() => router.push('/modules/customer/components/MakeOrder' as any)}
+                    onPress={() => router.push('/modules/customer/components/KioskOrder' as any)}
                     activeOpacity={0.8}
                   >
                     <View style={s.menuIconWrap}>
-                      <Coffee size={22} color={C.brass} />
+                      <Coffee size={22} color={palette.orange} />
                     </View>
                     <Text style={s.menuName} numberOfLines={2}>{item.menu_items_name}</Text>
                     <Text style={s.menuPrice}>NPR {item.price}</Text>
@@ -345,7 +329,7 @@ export default function CustomerDashboard() {
             <Text style={s.sectionTitle}>Recent Orders</Text>
             {recentOrders.length === 0 ? (
               <View style={s.emptyCard}>
-                <ShoppingBag size={28} color={C.latte} />
+                <ShoppingBag size={28} color={palette.dim} />
                 <Text style={s.emptyText}>No orders yet</Text>
               </View>
             ) : (
@@ -373,25 +357,25 @@ export default function CustomerDashboard() {
             <Text style={s.sectionTitle}>Find Us</Text>
             <View style={s.infoCard}>
               <TouchableOpacity style={s.infoRow} onPress={handleLocation} activeOpacity={0.8}>
-                <View style={s.infoIconWrap}><MapPin size={16} color={C.brass} /></View>
+                <View style={s.infoIconWrap}><MapPin size={16} color={palette.orange} /></View>
                 <View style={s.infoContent}>
                   <Text style={s.infoLabel}>Address</Text>
                   <Text style={s.infoValue}>Kathmandu, Nepal</Text>
                 </View>
-                <ChevronRight size={16} color={C.latte} />
+                <ChevronRight size={16} color={palette.dim} />
               </TouchableOpacity>
               <View style={s.infoDivider} />
               <TouchableOpacity style={s.infoRow} onPress={handleCall} activeOpacity={0.8}>
-                <View style={s.infoIconWrap}><Phone size={16} color={C.brass} /></View>
+                <View style={s.infoIconWrap}><Phone size={16} color={palette.orange} /></View>
                 <View style={s.infoContent}>
                   <Text style={s.infoLabel}>Phone</Text>
                   <Text style={s.infoValue}>+977 98XXXXXXXX</Text>
                 </View>
-                <ChevronRight size={16} color={C.latte} />
+                <ChevronRight size={16} color={palette.dim} />
               </TouchableOpacity>
               <View style={s.infoDivider} />
               <View style={s.infoRow}>
-                <View style={s.infoIconWrap}><Clock size={16} color={C.brass} /></View>
+                <View style={s.infoIconWrap}><Clock size={16} color={palette.orange} /></View>
                 <View style={s.infoContent}>
                   <Text style={s.infoLabel}>Hours</Text>
                   <Text style={s.infoValue}>10:00 AM — 10:00 PM</Text>
@@ -407,88 +391,88 @@ export default function CustomerDashboard() {
 }
 
 const s = StyleSheet.create({
-  root:    { flex: 1, backgroundColor: C.cream },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.cream },
-  loadingCard:  { backgroundColor: C.parchment, borderRadius: radius.lg, padding: 36, alignItems: 'center', width: '78%', borderWidth: 1.5, borderColor: C.vellum },
-  loadingIcon:  { width: 58, height: 58, borderRadius: radius.md, backgroundColor: C.brassLight, borderWidth: 1.5, borderColor: C.brassBorder, alignItems: 'center', justifyContent: 'center' },
-  loadingTitle: { fontSize: 20, fontWeight: '800', color: C.espresso, marginTop: 14 },
-  loadingText:  { fontSize: 13, color: C.clay, marginTop: 4 },
+  root:    { flex: 1, backgroundColor: palette.black },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: palette.black },
+  loadingCard:  { backgroundColor: palette.card, borderRadius: corner.lg, padding: 36, alignItems: 'center', width: '78%', borderWidth: 1.5, borderColor: palette.border },
+  loadingIcon:  { width: 58, height: 58, borderRadius: corner.md, backgroundColor: palette.orangeTint, borderWidth: 1.5, borderColor: palette.orangeDim, alignItems: 'center', justifyContent: 'center' },
+  loadingTitle: { fontSize: 20, fontWeight: '800', color: palette.white, marginTop: 14 },
+  loadingText:  { fontSize: 13, color: palette.muted, marginTop: 4 },
 
-  header:    { backgroundColor: C.espresso, paddingTop: 56, paddingHorizontal: 20, paddingBottom: 24, gap: 16, shadowColor: C.espresso, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 10 },
+  header:    { backgroundColor: palette.charcoal, paddingTop: 56, paddingHorizontal: 20, paddingBottom: 24, gap: 16, borderBottomWidth: 1, borderBottomColor: palette.border },
   headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brand:     { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  logoBadge: { width: 44, height: 44, borderRadius: radius.sm, backgroundColor: C.brass, alignItems: 'center', justifyContent: 'center' },
-  brandName: { fontSize: 18, fontWeight: '900', color: C.cream, letterSpacing: 0.4 },
-  brandSub:  { fontSize: 10, color: C.latte, fontWeight: '500', letterSpacing: 1, marginTop: 1 },
-  logoutBtn: { width: 38, height: 38, borderRadius: radius.sm, backgroundColor: '#2A1A05', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#3D2010' },
+  logoBadge: { width: 44, height: 44, borderRadius: corner.sm, backgroundColor: palette.orange, alignItems: 'center', justifyContent: 'center' },
+  brandName: { fontSize: 18, fontWeight: '900', color: palette.white, letterSpacing: 0.4 },
+  brandSub:  { fontSize: 10, color: palette.dim, fontWeight: '500', letterSpacing: 1, marginTop: 1 },
+  logoutBtn: { width: 38, height: 38, borderRadius: corner.sm, backgroundColor: palette.graphite, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: palette.border },
 
   welcomeCard: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  avatarWrap:  { width: 46, height: 46, borderRadius: radius.sm, backgroundColor: C.brass, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: C.brassBorder },
-  avatarText:  { fontSize: 20, fontWeight: '900', color: C.cream },
+  avatarWrap:  { width: 46, height: 46, borderRadius: corner.sm, backgroundColor: palette.orange, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: palette.orangeDim },
+  avatarText:  { fontSize: 20, fontWeight: '900', color: palette.white },
   welcomeInfo: { flex: 1 },
-  welcomeText: { fontSize: 16, fontWeight: '800', color: C.cream },
-  welcomeSub:  { fontSize: 11, color: C.latte, marginTop: 2 },
+  welcomeText: { fontSize: 16, fontWeight: '800', color: palette.white },
+  welcomeSub:  { fontSize: 11, color: palette.dim, marginTop: 2 },
 
-  loyaltyBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#2A1A05', borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: C.brassBorder },
+  loyaltyBanner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: palette.orangeTint, borderRadius: corner.md, padding: 14, borderWidth: 1, borderColor: palette.orangeDim },
   loyaltyLeft:   { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  loyaltyLabel:  { fontSize: 10, color: C.latte, fontWeight: '500', letterSpacing: 0.5 },
-  loyaltyPoints: { fontSize: 20, fontWeight: '900', color: C.brass, marginTop: 1 },
+  loyaltyLabel:  { fontSize: 10, color: palette.dim, fontWeight: '500', letterSpacing: 0.5 },
+  loyaltyPoints: { fontSize: 20, fontWeight: '900', color: palette.orange, marginTop: 1 },
   loyaltyRight:  { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  loyaltyEquiv:  { fontSize: 13, fontWeight: '700', color: C.brass },
+  loyaltyEquiv:  { fontSize: 13, fontWeight: '700', color: palette.orange },
 
   body:       { padding: 20, gap: 28 },
   section:    { gap: 14 },
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sectionTitle:{ fontSize: 11, fontWeight: '800', color: C.clay, textTransform: 'uppercase', letterSpacing: 1.4 },
-  sectionLink: { fontSize: 12, fontWeight: '700', color: C.brass },
+  sectionTitle:{ fontSize: 11, fontWeight: '800', color: palette.muted, textTransform: 'uppercase', letterSpacing: 1.4 },
+  sectionLink: { fontSize: 12, fontWeight: '700', color: palette.orange },
 
   actionsGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  actionCard:     { width: '47%', borderRadius: radius.md, padding: 16, borderWidth: 1.5, gap: 6, shadowColor: C.espresso, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
-  actionIconWrap: { width: 44, height: 44, borderRadius: radius.sm, backgroundColor: C.cream, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  actionLabel:    { fontSize: 13, fontWeight: '800', color: C.espresso },
-  actionSub:      { fontSize: 10, color: C.clay, fontWeight: '500' },
+  actionCard:     { width: '47%', borderRadius: corner.md, padding: 16, borderWidth: 1.5, gap: 6 },
+  actionIconWrap: { width: 44, height: 44, borderRadius: corner.sm, backgroundColor: palette.black, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  actionLabel:    { fontSize: 13, fontWeight: '800', color: palette.white },
+  actionSub:      { fontSize: 10, color: palette.muted, fontWeight: '500' },
 
-  videoCard:     { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: C.parchment, borderRadius: radius.md, padding: 16, borderWidth: 1.5, borderColor: C.vellum },
-  videoIconWrap: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: C.brassLight, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.brassBorder },
+  videoCard:     { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: palette.card, borderRadius: corner.md, padding: 16, borderWidth: 1.5, borderColor: palette.border },
+  videoIconWrap: { width: 56, height: 56, borderRadius: corner.sm, backgroundColor: palette.orangeTint, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: palette.orangeDim },
   videoInfo:     { flex: 1 },
-  videoTitle:    { fontSize: 14, fontWeight: '800', color: C.espresso },
-  videoSub:      { fontSize: 11, color: C.clay, marginTop: 3 },
+  videoTitle:    { fontSize: 14, fontWeight: '800', color: palette.white },
+  videoSub:      { fontSize: 11, color: palette.muted, marginTop: 3 },
 
-  reservationCard:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.parchment, borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: C.vellum },
+  reservationCard:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: palette.card, borderRadius: corner.md, padding: 14, borderWidth: 1, borderColor: palette.border },
   reservationLeft:  { flex: 1, gap: 4 },
-  reservationDate:  { fontSize: 14, fontWeight: '700', color: C.espresso },
+  reservationDate:  { fontSize: 14, fontWeight: '700', color: palette.white },
   reservationMeta:  { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  reservationTime:  { fontSize: 11, color: C.clay },
-  reservationDot:   { fontSize: 11, color: C.latte },
-  reservationParty: { fontSize: 11, color: C.clay },
-  reservationNotes: { fontSize: 11, color: C.latte, fontStyle: 'italic' },
+  reservationTime:  { fontSize: 11, color: palette.muted },
+  reservationDot:   { fontSize: 11, color: palette.dim },
+  reservationParty: { fontSize: 11, color: palette.muted },
+  reservationNotes: { fontSize: 11, color: palette.dim, fontStyle: 'italic' },
 
-  statusBadge: { borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1 },
+  statusBadge: { borderRadius: corner.pill, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1 },
   statusText:  { fontSize: 10, fontWeight: '700' },
 
   menuRow:     { flexDirection: 'row', gap: 12, paddingVertical: 2 },
-  menuCard:    { backgroundColor: C.parchment, borderRadius: radius.md, padding: 14, width: 130, borderWidth: 1, borderColor: C.vellum, gap: 6 },
-  menuIconWrap:{ width: 42, height: 42, borderRadius: radius.sm, backgroundColor: C.brassLight, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.brassBorder },
-  menuName:    { fontSize: 12, fontWeight: '700', color: C.espresso, lineHeight: 16 },
-  menuPrice:   { fontSize: 13, fontWeight: '900', color: C.brass },
+  menuCard:    { backgroundColor: palette.card, borderRadius: corner.md, padding: 14, width: 130, borderWidth: 1, borderColor: palette.border, gap: 6 },
+  menuIconWrap:{ width: 42, height: 42, borderRadius: corner.sm, backgroundColor: palette.orangeTint, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: palette.orangeDim },
+  menuName:    { fontSize: 12, fontWeight: '700', color: palette.white, lineHeight: 16 },
+  menuPrice:   { fontSize: 13, fontWeight: '900', color: palette.orange },
 
-  orderCard:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.parchment, borderRadius: radius.md, padding: 14, borderWidth: 1, borderColor: C.vellum },
+  orderCard:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: palette.card, borderRadius: corner.md, padding: 14, borderWidth: 1, borderColor: palette.border },
   orderLeft:   { gap: 3 },
-  orderId:     { fontSize: 14, fontWeight: '700', color: C.espresso },
-  orderDate:   { fontSize: 11, color: C.clay },
+  orderId:     { fontSize: 14, fontWeight: '700', color: palette.white },
+  orderDate:   { fontSize: 11, color: palette.muted },
   orderRight:  { alignItems: 'flex-end', gap: 6 },
-  orderAmount: { fontSize: 14, fontWeight: '900', color: C.brass },
+  orderAmount: { fontSize: 14, fontWeight: '900', color: palette.orange },
 
-  emptyCard:    { backgroundColor: C.parchment, borderRadius: radius.md, padding: 28, alignItems: 'center', gap: 10, borderWidth: 1, borderColor: C.vellum },
-  emptyText:    { fontSize: 14, fontWeight: '600', color: C.clay },
-  emptyBtn:     { backgroundColor: C.brass, paddingHorizontal: 20, paddingVertical: 10, borderRadius: radius.pill, marginTop: 4 },
-  emptyBtnText: { fontSize: 13, fontWeight: '700', color: C.cream },
+  emptyCard:    { backgroundColor: palette.card, borderRadius: corner.md, padding: 28, alignItems: 'center', gap: 10, borderWidth: 1, borderColor: palette.border },
+  emptyText:    { fontSize: 14, fontWeight: '600', color: palette.muted },
+  emptyBtn:     { backgroundColor: palette.orange, paddingHorizontal: 20, paddingVertical: 10, borderRadius: corner.pill, marginTop: 4 },
+  emptyBtnText: { fontSize: 13, fontWeight: '700', color: palette.white },
 
-  infoCard:    { backgroundColor: C.parchment, borderRadius: radius.md, padding: 4, borderWidth: 1.5, borderColor: C.vellum },
+  infoCard:    { backgroundColor: palette.card, borderRadius: corner.md, padding: 4, borderWidth: 1.5, borderColor: palette.border },
   infoRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  infoIconWrap:{ width: 32, height: 32, borderRadius: radius.xs, backgroundColor: C.brassLight, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.brassBorder },
+  infoIconWrap:{ width: 32, height: 32, borderRadius: corner.xs, backgroundColor: palette.orangeTint, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: palette.orangeDim },
   infoContent: { flex: 1 },
-  infoLabel:   { fontSize: 10, color: C.latte, fontWeight: '600', letterSpacing: 0.5 },
-  infoValue:   { fontSize: 13, fontWeight: '700', color: C.espresso, marginTop: 1 },
-  infoDivider: { height: 1, backgroundColor: C.vellum, marginHorizontal: 14 },
+  infoLabel:   { fontSize: 10, color: palette.dim, fontWeight: '600', letterSpacing: 0.5 },
+  infoValue:   { fontSize: 13, fontWeight: '700', color: palette.white, marginTop: 1 },
+  infoDivider: { height: 1, backgroundColor: palette.border, marginHorizontal: 14 },
 })

@@ -48,7 +48,6 @@ export default function POS() {
   })
 
   const menuItems: MenuItemDisplay[] = rawMenuItems.map((item) => {
-    console.log('raw menu item:', JSON.stringify(item))
     const category = categories.find((c) => c.category_id === item.menu_items_category_id)
     return {
       menu_items_id: item.menu_items_id,
@@ -112,8 +111,6 @@ export default function POS() {
   )
 
   function addToCart(item: MenuItemDisplay) {
-    console.log('addToCart item:', JSON.stringify(item))
-  console.log('item.price type:', typeof item.price, item.price)
     setCartItems((prev) => {
       const existing = prev.find((c) => c.menu_item_id === String(item.menu_items_id))
 

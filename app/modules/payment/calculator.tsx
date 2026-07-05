@@ -8,7 +8,6 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native'
-import QRCode from 'react-native-qrcode-svg'
 import type { PaymentCalculatorProps, PaymentMethod, SplitEntry } from './types/payment'
 
 const C = {
@@ -38,17 +37,22 @@ const radius = { xs: 6, sm: 10, md: 14, lg: 20, pill: 100 }
 const KEYS = ['7','8','9','4','5','6','1','2','3','.','0','⌫']
 const fmt = (n: number, sym = 'NPR') => `${sym} ${Number(n).toFixed(2)}`
 
-type Screen = 'calculator' | 'qr' | 'split'
+export type Screen = 'calculator' | 'split'
+
+interface Props extends PaymentCalculatorProps {
+    screen: Screen
+    setScreen: (s: Screen) => void
+}
 
 export default function PaymentCalculator({
     onClose,
     onCharge,
     onSplit,
     totalWithTax,
-    esewaQrUrl,
     symbol = 'NPR',
-}: PaymentCalculatorProps & { esewaQrUrl?: string }) {
-    const [screen,    setScreen]    = useState<Screen>('calculator')
+    screen,
+    setScreen,
+}: Props) {
     const [input,     setInput]     = useState('')
     const [notes,     setNotes]     = useState('')
     const [showNotes, setShowNotes] = useState(false)
@@ -72,7 +76,8 @@ export default function PaymentCalculator({
 
     const handleCharge = () => {
         if (method === 'esewa') {
-            setScreen('qr')
+            // parent (PaymentModal) swaps in the eSewa WebView once
+            // esewaInitMutation succeeds, no local screen change needed here
             onCharge(totalWithTax, notes, 'esewa')
         } else {
             onCharge(numericValue || totalWithTax, notes, 'cash')
@@ -82,40 +87,6 @@ export default function PaymentCalculator({
     const addSplit    = () => setSplits(p => [...p, { id: Date.now(), amount: '' }])
     const removeSplit = (id: number) => { if (splits.length > 2) setSplits(p => p.filter(s => s.id !== id)) }
     const updateSplit = (id: number, val: string) => setSplits(p => p.map(s => s.id === id ? { ...s, amount: val } : s))
-
-    // ── QR Screen ────────────────────────────────────────────
-    if (screen === 'qr') {
-        const qrValue = esewaQrUrl || `https://rc-epay.esewa.com.np/epay/main?amt=${totalWithTax}&scd=EPAYTEST`
-        return (
-            <ScrollView contentContainerStyle={s.qrScreen} showsVerticalScrollIndicator={false}>
-                <TouchableOpacity style={s.backRow} onPress={() => setScreen('calculator')}>
-                    <ArrowLeft size={16} color={C.orange} />
-                    <Text style={s.backText}>Back</Text>
-                </TouchableOpacity>
-
-                <Text style={s.qrTitle}>eSewa Payment</Text>
-                <Text style={s.qrSubtitle}>Show this QR to the customer</Text>
-
-                <View style={s.qrBox}>
-                    <QRCode
-                        value={qrValue}
-                        size={220}
-                        color={C.white}
-                        backgroundColor={C.graphite}
-                    />
-                </View>
-
-                <View style={s.qrAmountBox}>
-                    <Text style={s.qrAmountLabel}>Amount to Pay</Text>
-                    <Text style={s.qrAmountValue}>{fmt(totalWithTax, symbol)}</Text>
-                </View>
-
-                <Text style={s.qrInstruction}>
-                    Customer opens eSewa → Scan QR → Confirm with PIN or fingerprint
-                </Text>
-            </ScrollView>
-        )
-    }
 
     // ── Split Screen ─────────────────────────────────────────
     if (screen === 'split') {
@@ -349,27 +320,6 @@ const s = StyleSheet.create({
     },
     chargeBtnDisabled: { opacity: 0.4 },
     chargeBtnText:     { fontSize: 15, fontWeight: '800', color: C.white },
-
-    // ── QR Screen
-    qrScreen:  { padding: 24, alignItems: 'center', paddingBottom: 40 },
-    backRow:   { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginBottom: 20 },
-    backText:  { fontSize: 14, fontWeight: '700', color: C.orange },
-    qrTitle:    { fontSize: 20, fontWeight: '900', color: C.white, marginBottom: 4 },
-    qrSubtitle: { fontSize: 13, color: C.muted, marginBottom: 24 },
-    qrBox: {
-        backgroundColor: C.graphite, borderRadius: radius.lg,
-        borderWidth: 1, borderColor: C.border,
-        padding: 24, marginBottom: 20,
-    },
-    qrAmountBox: {
-        backgroundColor: C.orangeTint, borderRadius: radius.md,
-        borderWidth: 1, borderColor: C.orangeDim,
-        paddingHorizontal: 32, paddingVertical: 14,
-        alignItems: 'center', marginBottom: 16, width: '100%',
-    },
-    qrAmountLabel: { fontSize: 11, color: C.muted, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-    qrAmountValue: { fontSize: 28, fontWeight: '900', color: C.orange, marginTop: 4 },
-    qrInstruction: { fontSize: 13, color: C.dim, textAlign: 'center', fontWeight: '500', lineHeight: 20 },
 
     // ── Split Screen
     splitHeader:    { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },

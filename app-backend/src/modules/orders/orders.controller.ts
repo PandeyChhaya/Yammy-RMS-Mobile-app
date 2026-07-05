@@ -21,7 +21,8 @@ export const getOrderController = async (req: Request, res: Response) => {
 
 export const getAllOrderController = async (req: Request, res: Response) => {
     try {
-        const orders = await getAllOrder();
+        const restaurant_id = req.query.restaurant_id ? parseInt(String(req.query.restaurant_id)) : undefined;
+        const orders = await getAllOrder(restaurant_id);
         const mapped = orders.map((o: any) => ({
             ...o,
             items: o.order_items,

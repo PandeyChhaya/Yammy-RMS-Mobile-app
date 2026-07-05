@@ -1,5 +1,6 @@
 export interface CreateMini {
   user_id: number;
+  restaurant_id: number;
   title: string;
   description?: string;
 }

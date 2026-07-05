@@ -35,8 +35,9 @@ const postCategory = async (category: Omit<Category, 'category_id' | 'is_active'
   return data
 }
 
-const getAllCategory = async (): Promise<Category[]> => {
-  const response = await fetch(BASE_URL, {
+const getAllCategory = async (restaurant_id?: number): Promise<Category[]> => {
+  const url = restaurant_id ? `${BASE_URL}?restaurant_id=${restaurant_id}` : BASE_URL
+  const response = await fetch(url, {
     method: 'GET',
     headers: await auth_headers(),
   });

@@ -1,47 +1,50 @@
 import prisma from '../../db.js';
 
-export const postOrder = async(body:any)=>{
+const serializeOrder = (order: any) => ({
+    ...order,
+    total_amount: order.total_amount != null ? Number(order.total_amount) : order.total_amount,
+    discount:     order.discount     != null ? Number(order.discount)     : order.discount,
+    order_items: order.order_items?.map((item: any) => ({
+        ...item,
+        unit_price: item.unit_price != null ? Number(item.unit_price) : item.unit_price,
+        subtotal:   item.subtotal   != null ? Number(item.subtotal)   : item.subtotal,
+    })),
+});
 
-    const {order_type, special_notes, discount, table_id, user_id}= body;
+export const postOrder = async (body: any) => {
+    const { order_type, special_notes, discount, table_id, user_id } = body;
 
+    const table = await prisma.tables.findUnique({ where: { table_id } });
+    if (!table) throw new Error('Table does not exist');
 
     const postNewOrder = await prisma.orders.create({
-        data:{
-            order_type,
-            special_notes,
-            discount,
-            table_id,
-            user_id,
-        }
+        data: { order_type, special_notes, discount, table_id, user_id, restaurant_id: table.restaurant_id },
     });
-    return {message:"New Order created!!" , order_id:postNewOrder.order_id}
+    return { message: "New Order created!!", order_id: postNewOrder.order_id };
 };
 
-export const getOrder= async(body:any)=>{
+export const getOrder = async (body: any) => {
+    const { order_id } = body;
 
-    const {order_id}= body;
-
-    const orderExists = await prisma.orders.findUnique(
-        {
-            where:{order_id},
-        }
-    );
-    if(!orderExists) throw new Error ("Order doesnt exist!!");
-     return orderExists;
+    const orderExists = await prisma.orders.findUnique({
+        where: { order_id },
+        include: { order_items: true },
+    });
+    if (!orderExists) throw new Error("Order doesnt exist!!");
+    return serializeOrder(orderExists);
 };
 
-export const getAllOrder= async()=>{
-
-    const order = await prisma.orders.findMany(
-        {
-        include: {
-            order_items: true,  
+export const getAllOrder = async (restaurant_id?: number) => {
+    const orders = await prisma.orders.findMany({
+        where: {
+            ...(restaurant_id && { restaurant_id }),
         },
+        include: { order_items: true },
         orderBy: { created_at: 'desc' },
-    }
-    );
-    return order;
-} 
+    });
+    return orders.map(serializeOrder);
+};
+
 export const updateOrderStatus = async (body: any) => {
     const { order_id, order_status } = body;
     const orderExists = await prisma.orders.findUnique({ where: { order_id } });
@@ -53,45 +56,25 @@ export const updateOrderStatus = async (body: any) => {
     return { message: 'Status updated!', order_id: updated.order_id, order_status: updated.order_status };
 };
 
-export const putOrder=async(body:any)=>{
+export const putOrder = async (body: any) => {
+    const { order_id, order_type, special_notes, discount } = body;
 
-    const {order_id, order_type, special_notes, discount}= body;
+    const orderExists = await prisma.orders.findUnique({ where: { order_id } });
+    if (!orderExists) throw new Error("Order doesnt exist!!");
 
-    const orderExists= await prisma.orders.findUnique({
-        where: {order_id},
+    const updatedOrder = await prisma.orders.update({
+        where: { order_id },
+        data: { order_type, special_notes, discount },
     });
-    if (!orderExists) throw new Error ("Order doesnt exist!!");
+    return { message: "Order updated successfully!!", order_id: updatedOrder.order_id };
+};
 
-    const updatedOrder= await prisma.orders.update({
-        where:{
-            order_id,
-        },
-        data:{
-            order_type,
-            special_notes,
-            discount,
-        }})
-        return{message: "Order updated successfully!!" , order_id: updatedOrder.order_id};
-    };
+export const deleteOrder = async (body: any) => {
+    const { order_id } = body;
 
-    
+    const orderExists = await prisma.orders.findUnique({ where: { order_id } });
+    if (!orderExists) throw new Error("Order doesnt exist!!");
 
-    export const deleteOrder= async(body:any)=>{
-
-        const{order_id}= body;
-
-        const orderExists= await prisma.orders.findUnique({
-            where:{order_id},
-        });
-
-        if(!orderExists) throw new Error("Order doesnt exist!!");
-
-        
-        
-        await prisma.orders.delete({
-            where:{order_id},
-        });
-
-        return {message:"Order deleted successfully!", order_id};
-      
-    }
+    await prisma.orders.delete({ where: { order_id } });
+    return { message: "Order deleted successfully!", order_id };
+};

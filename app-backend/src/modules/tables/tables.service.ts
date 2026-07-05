@@ -1,10 +1,10 @@
 import prisma from '../../db.js';
 
 export const postTable = async (body: any) => {
-    const { table_number, floor, capacity } = body;
+    const { table_number, floor, capacity, restaurant_id } = body;
 
-    const tableExists = await prisma.tables.findUnique({
-        where: { table_number },
+    const tableExists = await prisma.tables.findFirst({
+        where: { table_number, restaurant_id },
     });
 
     if (tableExists) throw new Error('Table already exists');
@@ -14,6 +14,7 @@ export const postTable = async (body: any) => {
             table_number,
             floor,
             capacity,
+            restaurant_id,
         },
     });
 
@@ -31,9 +32,12 @@ export const getTable = async (body: any) => {
     return table;
 };
 
-export const getAllTables = async () => {
+export const getAllTables = async (restaurant_id?: number) => {
     const tables = await prisma.tables.findMany({
-        where: { is_active: true },
+        where: {
+            is_active: true,
+            ...(restaurant_id && { restaurant_id }),
+        },
         orderBy: { table_number: 'asc' },
     });
     return tables;

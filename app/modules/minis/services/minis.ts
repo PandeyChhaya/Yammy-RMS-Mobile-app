@@ -10,8 +10,9 @@ const auth_headers = async () => {
   };
 };
 
-const getApproved = async () => {
-  const response = await fetch(BASE_URL, {
+const getApproved = async (restaurant_id?: number) => {
+  const url = restaurant_id ? `${BASE_URL}?restaurant_id=${restaurant_id}` : BASE_URL
+  const response = await fetch(url, {
     method: 'GET',
     headers: await auth_headers(),
   });

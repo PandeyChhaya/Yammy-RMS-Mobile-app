@@ -1,12 +1,13 @@
 import { Router } from 'express';
+import { authenticate } from '../../middleware/auth.middleware.js';
 import { deleteMenuItemsController, getAllMenuItemsController, getMenuItemsController, postMenuItemsController, putMenuItemsController } from './menu-items.controller.js';
 
 const router = Router();
 
-router.post('/',postMenuItemsController);
+router.post('/', authenticate, postMenuItemsController);
 router.get('/:id', getMenuItemsController);
-router.get('/',  getAllMenuItemsController);
-router.put('/:id', putMenuItemsController);
-router.delete('/:id',  deleteMenuItemsController);
+router.get('/', getAllMenuItemsController);
+router.put('/:id', authenticate, putMenuItemsController);
+router.delete('/:id', authenticate, deleteMenuItemsController);
 
 export default router;

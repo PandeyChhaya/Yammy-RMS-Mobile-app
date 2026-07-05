@@ -11,7 +11,17 @@ import type {
 const BASE = 'http://192.168.1.71:5000/api'
 
 const handleResponse = async (res: Response) => {
-    const data = await res.json()
+    const text = await res.text()
+    console.log('API response status:', res.status)
+    console.log('API response body:', text)
+
+    let data
+    try {
+        data = JSON.parse(text)
+    } catch {
+        throw new Error(`Server returned non-JSON (status ${res.status}): ${text.slice(0, 200)}`)
+    }
+
     if (!res.ok) throw new Error(data.message ?? 'Something went wrong')
     return data
 }
@@ -25,7 +35,7 @@ const getHeaders = async () => {
 }
 
 export const createOrder = async (payload: CreateOrderPayload): Promise<CreateOrderResponse> => {
-    const res = await fetch(`${BASE}/orders`, {
+    const res = await fetch(`${BASE}/order`, {
         method: 'POST',
         headers: await getHeaders(),
         body: JSON.stringify(payload),

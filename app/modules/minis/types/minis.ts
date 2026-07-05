@@ -1,6 +1,7 @@
 export interface Mini {
   mini_id: number;
   user_id: number;
+  restaurant_id: number;
   title: string;
   description?: string;
   video_url: string;

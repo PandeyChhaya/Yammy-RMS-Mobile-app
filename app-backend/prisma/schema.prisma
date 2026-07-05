@@ -23,7 +23,7 @@ model audit_logs {
 model categories {
   category_id          Int          @id @default(autoincrement())
   category_name        String       @db.VarChar(299)
-  slug                 String       @unique @db.VarChar(299)
+  slug                 String       @db.VarChar(299)
   category_description String?
   parent_id            Int?
   display_order        Int?         @default(0)
@@ -34,6 +34,9 @@ model categories {
   categories           categories?  @relation("categoriesTocategories", fields: [parent_id], references: [category_id], onUpdate: NoAction)
   other_categories     categories[] @relation("categoriesTocategories")
   menu_items           menu_items[]
+  restaurant_id   Int?
+  restaurants     restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onUpdate: NoAction)
+  @@unique([restaurant_id, slug])
 }
 
 model customers {
@@ -192,7 +195,7 @@ model menu_items {
   menu_items_id          Int                   @id @default(autoincrement())
   menu_items_category_id Int?
   menu_items_name        String                @db.VarChar(200)
-  slug                   String                @unique @db.VarChar(200)
+  slug                   String                @db.VarChar(200)
   menu_items_description String?
   price                  Decimal               @db.Decimal(10, 2)
   cost_price             Decimal?              @db.Decimal(10, 2)
@@ -206,6 +209,9 @@ model menu_items {
   menu_item_modifiers    menu_item_modifiers[]
   categories             categories?           @relation(fields: [menu_items_category_id], references: [category_id], onUpdate: NoAction)
   order_items            order_items[]
+  restaurant_id   Int?
+  restaurants     restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onUpdate: NoAction)
+@@unique([restaurant_id, slug])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -246,6 +252,9 @@ model orders {
   tables          tables?           @relation(fields: [table_id], references: [table_id], onUpdate: NoAction)
   users           users?            @relation(fields: [user_id], references: [user_id], onUpdate: NoAction)
   payments        payments[]
+  restaurant_id   Int?
+  restaurants     restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onUpdate: NoAction)
+
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -275,6 +284,9 @@ model reservations {
   updated_at         DateTime?  @default(now()) @db.Timestamp(6)
   customers          customers? @relation(fields: [customer_id], references: [customer_id], onUpdate: NoAction)
   tables             tables?    @relation(fields: [table_id], references: [table_id], onUpdate: NoAction)
+  customer_name    String
+  customer_phone   String?
+  duration_minutes Int      @default(120)
 }
 model minis {
   mini_id       Int       @id @default(autoincrement())
@@ -289,6 +301,9 @@ model minis {
   created_at    DateTime? @default(now()) @db.Timestamp(6)
   updated_at    DateTime? @default(now()) @db.Timestamp(6)
   users         users     @relation(fields: [user_id], references: [user_id], onUpdate: NoAction)
+  restaurant_id   Int?
+  restaurants     restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onUpdate: NoAction)
+
 }
 
 model shifts {
@@ -306,7 +321,7 @@ model shifts {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model tables {
   table_id     Int            @id @default(autoincrement())
-  table_number String         @unique @db.VarChar(20)
+  table_number String         @db.VarChar(20)
   floor        String?        @default("Ground Floor") @db.VarChar(20)
   capacity     Int            @default(1)
   table_status String?        @default("Available") @db.VarChar(20)
@@ -315,6 +330,9 @@ model tables {
   updated_at   DateTime?      @default(now()) @db.Timestamp(6)
   orders       orders[]
   reservations reservations[]
+  restaurant_id   Int?
+  restaurants     restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onUpdate: NoAction)
+  @@unique([restaurant_id, table_number])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -336,6 +354,9 @@ model users {
   orders          orders[]
   shifts          shifts[]
   minis           minis[]
+  restaurant_id   Int?
+  restaurants     restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onUpdate: NoAction)
+
 }
 model loyalty_transactions {
   transaction_id   Int       @id @default(autoincrement())
@@ -346,4 +367,23 @@ model loyalty_transactions {
   description      String?
   created_at       DateTime? @default(now()) @db.Timestamp(6)
   customers        customers @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade, onUpdate: NoAction)
+}
+model restaurants {
+  restaurant_id    Int          @id @default(autoincrement())
+  restaurant_name  String       @db.VarChar(200)
+  slug             String       @unique @db.VarChar(200)
+  description      String?
+  logo_url         String?      @db.VarChar(500)
+  cover_image_url  String?      @db.VarChar(500)
+  address          String?
+  phone            String?      @db.VarChar(20)
+  is_active        Boolean?     @default(true)
+  created_at       DateTime?    @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?    @default(now()) @db.Timestamp(6)
+  users            users[]
+  categories       categories[]
+  menu_items       menu_items[]
+  tables           tables[]
+  orders           orders[]
+  minis            minis[]
 }

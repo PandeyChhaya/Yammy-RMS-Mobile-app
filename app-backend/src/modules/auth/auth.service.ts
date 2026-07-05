@@ -30,7 +30,7 @@ export const registerUser = async (body: any) => {
   });
 
   const accessToken = jwt.sign(
-    { user_id: user.user_id, user_role: user.user_role },
+    { user_id: user.user_id, user_role: user.user_role, restaurant_id: user.restaurant_id },
     JWT_SECRET,
     { expiresIn: "15m" }
   );
@@ -51,6 +51,7 @@ export const registerUser = async (body: any) => {
     user_id: user.user_id,
     user_name: user.user_name,
     user_role: user.user_role,
+    restaurant_id: user.restaurant_id,
     accessToken,
     refreshToken,
   };
@@ -71,7 +72,7 @@ export const loginUser = async (body: any) => {
   if (!isMatch) throw new Error("Invalid email or password");
 
   const accessToken = jwt.sign(
-    { user_id: user.user_id, user_role: user.user_role },
+    { user_id: user.user_id, user_role: user.user_role, restaurant_id: user.restaurant_id },
     JWT_SECRET,
     { expiresIn: "15m" }
   );
@@ -93,11 +94,12 @@ export const loginUser = async (body: any) => {
   return {
     accessToken,
     refreshToken,
-    user_id:      user.user_id,
-    user_name:    user.user_name,
-    user_role:    user.user_role,
-    first_login:  user.first_login,   // 👈 new
-    totp_enabled: user.totp_enabled,  // 👈 new
+    user_id:       user.user_id,
+    user_name:     user.user_name,
+    user_role:     user.user_role,
+    restaurant_id: user.restaurant_id,  // 👈 new - frontend needs this to know if admin must create a restaurant
+    first_login:   user.first_login,
+    totp_enabled:  user.totp_enabled,
   };
 };
 
@@ -127,7 +129,7 @@ export const refreshToken = async (body: any) => {
   if (!user || user.refresh_token !== token) throw new Error("Invalid refresh token");
 
   const accessToken = jwt.sign(
-    { user_id: user.user_id, user_role: user.user_role },
+    { user_id: user.user_id, user_role: user.user_role, restaurant_id: user.restaurant_id },
     JWT_SECRET,
     { expiresIn: "15m" }
   );

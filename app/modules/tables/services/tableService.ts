@@ -11,8 +11,9 @@ const auth_headers = async () => {
   }
 }
 
-const getTable = async (): Promise<TableData[]> => {
-  const response = await fetch(BASE_URL, {
+const getTable = async (restaurant_id?: number): Promise<TableData[]> => {
+  const url = restaurant_id ? `${BASE_URL}?restaurant_id=${restaurant_id}` : BASE_URL
+  const response = await fetch(url, {
     method: 'GET',
     headers: await auth_headers(),
   })

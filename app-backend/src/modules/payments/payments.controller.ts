@@ -14,7 +14,7 @@ export const postPaymentController = async (req: Request, res: Response) => {
         const response = await postPayment(req.body);
         res.status(201).json(response);
     } catch (error) {
-        res.status(400).json({ message: error });
+       res.status(400).json({ message: (error as Error).message });
     }
 };
 
@@ -23,7 +23,7 @@ export const getPaymentController = async (req: Request, res: Response) => {
         const response = await getPayment({ payment_id: parseInt(String(req.params.id)) });
         res.status(200).json(response);
     } catch (error) {
-        res.status(400).json({ message: error });
+        res.status(400).json({ message: (error as Error).message });
     }
 };
 
@@ -32,7 +32,7 @@ export const getAllPaymentsController = async (req: Request, res: Response) => {
         const response = await getAllPayments();
         res.status(200).json(response);
     } catch (error) {
-        res.status(400).json({ message: error });
+        res.status(400).json({ message: (error as Error).message });
     }
 };
 
@@ -41,7 +41,7 @@ export const putPaymentController = async (req: Request, res: Response) => {
         const response = await putPayment({ ...req.body, payment_id: parseInt(String(req.params.id)) });
         res.status(200).json(response);
     } catch (error) {
-        res.status(400).json({ message: error });
+        res.status(400).json({ message: (error as Error).message });
     }
 };
 
@@ -50,7 +50,7 @@ export const deletePaymentController = async (req: Request, res: Response) => {
         const response = await deletePayment({ payment_id: parseInt(String(req.params.id)) });
         res.status(200).json(response);
     } catch (error) {
-        res.status(400).json({ message: error });
+       res.status(400).json({ message: (error as Error).message });
     }
 };
 
@@ -59,7 +59,7 @@ export const initiateEsewaController = async (req: Request, res: Response) => {
         const response = await initiateEsewaPayment(req.body);
         res.status(200).json(response);
     } catch (error) {
-        res.status(400).json({ message: error });
+        res.status(400).json({ message: (error as Error).message });
     }
 };
 
@@ -68,7 +68,7 @@ export const verifyEsewaController = async (req: Request, res: Response) => {
         const response = await verifyEsewaPayment(req.body);
         res.status(200).json(response);
     } catch (error) {
-        res.status(400).json({ message: error });
+        res.status(400).json({ message: (error as Error).message });
     }
 };
 

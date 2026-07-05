@@ -7,41 +7,25 @@ import { AppProvider } from '../shared/contexts/AppContext'
 import { TabStateProvider } from '../shared/contexts/TabStateManager'
 import { UserSettingsProvider } from '../shared/contexts/UserSettingsContext'
 import { seedDatabase } from './modules/pos/utils/seedData'
+import { RestaurantProvider } from './modules/shared/context/RestaurantContext'
 
 const queryClient = new QueryClient()
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false)
-// Replace your useEffect in _layout.tsx:
 
-useEffect(() => {
-  const initialize = async () => {
-  
-    await AsyncStorage.multiRemove(['@products', '@categories', '@tables', '@data_seeded'])
-    
-    await seedDatabase()
-    
-    const products = await AsyncStorage.getItem('@products')
-    const categories = await AsyncStorage.getItem('@categories')
-    const tables = await AsyncStorage.getItem('@tables')
-    console.log('🔍 PRODUCTS:', products ? JSON.parse(products).length : 'NONE')
-    console.log('🔍 CATEGORIES:', categories ? JSON.parse(categories).length : 'NONE')
-    console.log('🔍 TABLES:', tables ? JSON.parse(tables).length : 'NONE')
-    
-    setReady(true)
-  }
-  initialize()
-}, [])
-const checkOrders = async () => {
-  const orders = await AsyncStorage.getItem('@orders')
-  console.log('🔍 ORDERS:', orders ? JSON.parse(orders).length : 'NONE')
-  console.log('🔍 ORDERS DATA:', orders ? JSON.parse(orders) : 'EMPTY')
-}
-checkOrders()
+  useEffect(() => {
+    const initialize = async () => {
+      await AsyncStorage.multiRemove(['@products', '@categories', '@tables', '@data_seeded'])
+      await seedDatabase()
+      setReady(true)
+    }
+    initialize()
+  }, [])
 
   if (!ready) {
     return (
-      <View style={{flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'#FEF1A8'}}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FEF1A8' }}>
         <ActivityIndicator size="large" color="#C41E1E" />
       </View>
     )
@@ -52,7 +36,9 @@ checkOrders()
       <AppProvider>
         <UserSettingsProvider>
           <TabStateProvider>
-            <Stack screenOptions={{ headerShown: false }} />
+            <RestaurantProvider>
+              <Stack screenOptions={{ headerShown: false }} />
+            </RestaurantProvider>
           </TabStateProvider>
         </UserSettingsProvider>
       </AppProvider>

@@ -4,7 +4,7 @@ import type { DeletePayment, GetPayment, InitiateEsewa, PostPayment, PutPayment,
 const ESEWA_MERCHANT_ID = 'EPAYTEST';
 const ESEWA_SECRET = '8gBm/:&EnhH.1/q';
 const ESEWA_VERIFY_URL = 'https://rc.esewa.com.np/mobile/transaction';
-const BASE_URL = 'http://192.168.1.7:5000';
+const BASE_URL = 'http://192.168.1.71:5000';
 
 export const postPayment = async (body: PostPayment) => {
     const { order_id, payment_method, amount_paid, change_given, transaction_ref } = body;

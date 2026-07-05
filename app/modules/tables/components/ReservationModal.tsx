@@ -90,6 +90,16 @@ export default function ReservationModal({
 
   const handleSubmit = async () => {
     setErrors([])
+
+    if (!formData.customer_name.trim()) {
+      setErrors(['Customer name is required'])
+      return
+    }
+    if (!formData.reservation_date || !formData.reservation_time) {
+      setErrors(['Date and time are required'])
+      return
+    }
+
     setIsSubmitting(true)
     try {
       const reserved_at = `${formData.reservation_date}T${formData.reservation_time}`
@@ -98,6 +108,9 @@ export default function ReservationModal({
         party_size:        formData.party_size,
         reserved_at,
         reservation_notes: formData.special_requests,
+        customer_name:     formData.customer_name,
+        customer_phone:    formData.customer_phone,
+        duration_minutes:  formData.duration_minutes,
       })
       setShowSuccess(true)
       setTimeout(() => {
@@ -105,6 +118,7 @@ export default function ReservationModal({
         onClose()
       }, 1500)
     } catch (error) {
+      console.log('Reservation create error:', error)
       setErrors([error instanceof Error ? error.message : 'Failed to create reservation'])
     } finally {
       setIsSubmitting(false)
@@ -310,7 +324,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     borderTopWidth: 1,
     borderColor: C.border,
-    maxHeight: '92%',
+    height: '92%',
     overflow: 'hidden',
   },
 

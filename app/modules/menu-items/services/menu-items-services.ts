@@ -43,8 +43,9 @@ const postMenuItem = async (menuItem: Omit<MenuItem, 'menu_items_id'>): Promise<
   return data
 }
 
-const getMenuItem = async (): Promise<MenuItem[]> => {
-  const response = await fetch(BASE_URL, {
+const getMenuItem = async (restaurant_id?: number): Promise<MenuItem[]> => {
+  const url = restaurant_id ? `${BASE_URL}?restaurant_id=${restaurant_id}` : BASE_URL
+  const response = await fetch(url, {
     method: 'GET',
     headers: await auth_headers(),
   })

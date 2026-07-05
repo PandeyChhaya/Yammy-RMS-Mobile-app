@@ -8,6 +8,19 @@ export const authService = {
     return await AsyncStorage.getItem('@accessToken')
   },
 
+  getRestaurantId: async (): Promise<number | null> => {
+    const val = await AsyncStorage.getItem('@restaurantId')
+    return val ? Number(val) : null
+  },
+
+  setRestaurantId: async (id: number | null): Promise<void> => {
+    if (id === null) {
+      await AsyncStorage.removeItem('@restaurantId')
+    } else {
+      await AsyncStorage.setItem('@restaurantId', String(id))
+    }
+  },
+
   login: async (email: string, password: string) => {
     const response = await fetch(`${BASE_URL}/login`, {
       method: 'POST',
@@ -34,6 +47,7 @@ export const authService = {
     await AsyncStorage.removeItem('@userRole')
     await AsyncStorage.removeItem('@userName')
     await AsyncStorage.removeItem('@userEmail')
+    await AsyncStorage.removeItem('@restaurantId')
   },
 
   register: async (

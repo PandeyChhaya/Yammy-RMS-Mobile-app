@@ -2,7 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle } from 'lucide-react-native'
 import { useState } from 'react'
 import { ActivityIndicator, Alert, Modal, StyleSheet, Text, View } from 'react-native'
-import PaymentCalculator from './calculator'
+import PaymentCalculator, { Screen } from './calculator'
+import EsewaWebView from './esewaWebView'
 import { createCashPayment, createOrder, initiateEsewa, verifyEsewa } from './services/paymentService'
 import type { PaymentMethod, PaymentModalProps, SplitEntry } from './types/payment'
 
@@ -33,18 +34,24 @@ export default function PaymentModal({
     const queryClient = useQueryClient()
 
     const [done,          setDone]          = useState(false)
-    const [esewaQrUrl,    setEsewaQrUrl]    = useState<string | undefined>(undefined)
+    const [screen,        setScreen]        = useState<Screen>('calculator')
+    const [paymentUrl,    setPaymentUrl]    = useState<string | null>(null)
     const [productId,     setProductId]     = useState<string | null>(null)
     const [pendingAmount, setPendingAmount] = useState(0)
+
+    const resetAll = () => {
+        setDone(false)
+        setScreen('calculator')
+        setPaymentUrl(null)
+        setProductId(null)
+    }
 
     const handleSuccess = () => {
         queryClient.invalidateQueries({ queryKey: ['orders'] })
         queryClient.invalidateQueries({ queryKey: ['tables'] })
         setDone(true)
         setTimeout(() => {
-            setDone(false)
-            setEsewaQrUrl(undefined)
-            setProductId(null)
+            resetAll()
             onSuccess()
             onClose()
         }, 1800)
@@ -77,7 +84,11 @@ export default function PaymentModal({
             })
         },
         onSuccess: handleSuccess,
-        onError: (err: Error) => Alert.alert('Payment Failed', err.message),
+        onError: (err: Error) => {
+            console.log('Cash payment error:', err.message)
+            Alert.alert('Payment Failed', err.message)
+            setScreen('calculator')
+        },
     })
 
     const esewaInitMutation = useMutation({
@@ -90,11 +101,15 @@ export default function PaymentModal({
             return { paymentUrl, productId: pid }
         },
         onSuccess: ({ paymentUrl, productId: pid }) => {
-            setEsewaQrUrl(paymentUrl)
+            setPaymentUrl(paymentUrl)
             setProductId(pid)
             setPendingAmount(totalWithTax)
         },
-        onError: (err: Error) => Alert.alert('eSewa Error', err.message),
+        onError: (err: Error) => {
+            console.log('eSewa init error:', err.message)
+            Alert.alert('eSewa Error', err.message)
+            setScreen('calculator')
+        },
     })
 
     const verifyMutation = useMutation({
@@ -103,7 +118,11 @@ export default function PaymentModal({
             amount: pendingAmount,
         }),
         onSuccess: handleSuccess,
-        onError: (err: Error) => Alert.alert('Verification Failed', err.message),
+        onError: (err: Error) => {
+            console.log('eSewa verify error:', err.message)
+            Alert.alert('Verification Failed', err.message)
+            setPaymentUrl(null)
+        },
     })
 
     const handleCharge = (amountPaid: number, notes: string, method: PaymentMethod) => {
@@ -122,12 +141,12 @@ export default function PaymentModal({
         )
     }
 
-    const isLoading = cashMutation.isPending || esewaInitMutation.isPending || verifyMutation.isPending
+    const isLoading = cashMutation.isPending || esewaInitMutation.isPending
 
     return (
         <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
             <View style={s.overlay}>
-                <View style={s.sheet}>
+                <View style={[s.sheet, paymentUrl && s.sheetFull]}>
                     {done ? (
                         <View style={s.centered}>
                             <CheckCircle size={52} color={C.sage} />
@@ -139,28 +158,35 @@ export default function PaymentModal({
                             <ActivityIndicator size="large" color={C.brass} />
                             <Text style={s.loadingText}>Processing...</Text>
                         </View>
+                    ) : verifyMutation.isPending ? (
+                        <View style={s.centered}>
+                            <ActivityIndicator size="large" color={C.brass} />
+                            <Text style={s.loadingText}>Verifying payment...</Text>
+                        </View>
+                    ) : paymentUrl ? (
+                        <EsewaWebView
+                            paymentUrl={paymentUrl}
+                            onSuccess={() => verifyMutation.mutate()}
+                            onFailure={() => {
+                                Alert.alert('Payment Failed', 'eSewa payment was not completed.')
+                                setPaymentUrl(null)
+                                setScreen('calculator')
+                            }}
+                            onClose={() => {
+                                setPaymentUrl(null)
+                                setScreen('calculator')
+                            }}
+                        />
                     ) : (
-                        <>
-                            <PaymentCalculator
-                                onClose={onClose}
-                                onCharge={handleCharge}
-                                onSplit={handleSplit}
-                                totalWithTax={totalWithTax}
-                                esewaQrUrl={esewaQrUrl}
-                                symbol={symbol}
-                            />
-                            {productId && (
-                                <View style={s.verifyBanner}>
-                                    <Text style={s.verifyText}>Customer scanned & paid?</Text>
-                                    <Text
-                                        style={s.verifyLink}
-                                        onPress={() => verifyMutation.mutate()}
-                                    >
-                                        Tap to Verify →
-                                    </Text>
-                                </View>
-                            )}
-                        </>
+                        <PaymentCalculator
+                            onClose={onClose}
+                            onCharge={handleCharge}
+                            onSplit={handleSplit}
+                            totalWithTax={totalWithTax}
+                            screen={screen}
+                            setScreen={setScreen}
+                            symbol={symbol}
+                        />
                     )}
                 </View>
             </View>
@@ -182,6 +208,9 @@ const s = StyleSheet.create({
         borderColor: C.vellum,
         maxHeight: '95%',
     },
+    sheetFull: {
+        height: '95%',
+    },
     centered: {
         alignItems: 'center',
         paddingVertical: 60,
@@ -190,11 +219,4 @@ const s = StyleSheet.create({
     successTitle: { fontSize: 22, fontWeight: '900', color: C.espresso },
     successSub:   { fontSize: 14, color: C.clay },
     loadingText:  { fontSize: 14, color: C.clay, marginTop: 8 },
-    verifyBanner: {
-        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        backgroundColor: C.cream, borderTopWidth: 1, borderTopColor: C.vellum,
-        paddingHorizontal: 20, paddingVertical: 14,
-    },
-    verifyText: { fontSize: 13, color: C.clay, fontWeight: '600' },
-    verifyLink: { fontSize: 13, fontWeight: '800', color: C.sage },
 })

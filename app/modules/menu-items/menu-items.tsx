@@ -1,4 +1,3 @@
-// menu-items.tsx
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -25,6 +24,7 @@ import {
   View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { authService } from '../auth/services/auth.service'
 import ImagePickerModal from '../categories/imagePickerModal'
 import categoriesService from '../categories/services/categoriesService'
 import menuItemsService, { MenuItem } from './services/menu-items-services'
@@ -104,17 +104,22 @@ export default function MenuItems() {
 
   const queryClient = useQueryClient()
 
-  const { data: items, isLoading, error } = useQuery<MenuItem[]>({
+   const { data: items, isLoading, error } = useQuery<MenuItem[]>({
     queryKey: ['products'],
-    queryFn: () => menuItemsService.getMenuItem(),
+    queryFn: async () => {
+      const restaurant_id = await authService.getRestaurantId()
+      return menuItemsService.getMenuItem(restaurant_id ?? undefined)
+    },
     retry: 3,
   })
 
-  const { data: categories } = useQuery<Category[]>({
+ const { data: categories } = useQuery<Category[]>({
     queryKey: ['categories'],
-    queryFn: () => categoriesService.getAllCategory(),
+    queryFn: async () => {
+      const restaurant_id = await authService.getRestaurantId()
+      return categoriesService.getAllCategory(restaurant_id ?? undefined)
+    },
   })
-
   const isEditing = editingItem !== null
 
   const createMutation = useMutation({

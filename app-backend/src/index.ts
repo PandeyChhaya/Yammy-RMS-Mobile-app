@@ -1,5 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config();
+import 'dotenv/config';
 
 import cors from "cors";
 import express from "express";
@@ -16,6 +15,7 @@ import orderItemRouter from "./modules/order_items/order_items.routes.js";
 import orderRouter from "./modules/orders/orders.routes.js";
 import paymentRouter from "./modules/payments/payments.routes.js";
 import reservationsRouter from "./modules/reservations/reservations.routes.js";
+import restaurantsRoutes from './modules/restaurant/restaurant.routes.js';
 import tableRouter from "./modules/tables/tables.routes.js";
 import usersRouter from "./modules/users/users.routes.js";
 
@@ -43,6 +43,8 @@ app.use("/api/inventory",    inventoryRouter);
 app.use("/api/minis",        miniRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/images", imagesRoutes);
+app.use('/api/restaurants', restaurantsRoutes)
+
 
 io.on("connection", (socket) => {
   console.log(`Socket connected: ${socket.id}`);

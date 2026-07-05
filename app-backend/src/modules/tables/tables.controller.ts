@@ -3,7 +3,10 @@ import { deleteTable, getAllTables, getTable, postTable, putTable } from './tabl
 
 export const postTableController = async (req: Request, res: Response) => {
     try {
-        const response = await postTable(req.body);
+        if (!req.user?.restaurant_id) {
+            return res.status(400).json({ message: 'No restaurant linked to this account' });
+        }
+        const response = await postTable({ ...req.body, restaurant_id: req.user.restaurant_id });
         res.status(201).json(response);
     } catch (error) {
         res.status(400).json({ message: error });
@@ -21,7 +24,8 @@ export const getTableController = async (req: Request, res: Response) => {
 
 export const getAllTablesController = async (req: Request, res: Response) => {
     try {
-        const response = await getAllTables();
+        const restaurant_id = req.query.restaurant_id ? parseInt(String(req.query.restaurant_id)) : undefined;
+        const response = await getAllTables(restaurant_id);
         res.status(200).json(response);
     } catch (error) {
         res.status(400).json({ message: error });

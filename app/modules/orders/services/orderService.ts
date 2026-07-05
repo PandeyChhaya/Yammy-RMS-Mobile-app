@@ -1,10 +1,7 @@
 import { Order, OrderStatus } from "@/shared/types/orders";
 import { authService } from "../../auth/services/auth.service";
 
-const BASE_URL= 'http://192.168.1.71:5000/api/orders';
-
-
-
+const BASE_URL= 'http://192.168.1.71:5000/api/order';
 
 const auth_headers= async()=>{
     const token  = await authService.getToken();
@@ -25,8 +22,9 @@ const postOrder= async(order: Omit<Order, 'order_id' | 'created_at'> ): Promise<
       return data;
 };
 
-const getOrder= async():  Promise<Order[]> =>{
-  const response = await fetch(BASE_URL, {
+const getOrder = async (restaurant_id?: number): Promise<Order[]> => {
+  const url = restaurant_id ? `${BASE_URL}?restaurant_id=${restaurant_id}` : BASE_URL
+  const response = await fetch(url, {
     method: 'GET',
     headers : await auth_headers(),
   });

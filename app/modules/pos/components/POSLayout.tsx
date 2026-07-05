@@ -254,7 +254,7 @@ export default function ModernPOSLayout(props: ModernPOSLayoutProps) {
       <View style={styles.topBar}>
         <View style={styles.brand}>
           <View style={styles.brandIcon}>
-            <Text style={styles.brandIconText}>Z</Text>
+            <Text style={styles.brandIconText}>Y</Text>
           </View>
           <Text style={styles.brandName}>Yammy POS</Text>
         </View>

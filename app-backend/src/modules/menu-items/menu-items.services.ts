@@ -1,6 +1,6 @@
 import prisma from '../../db.js';
 
-export const postMenuItems = async (body: any) => {
+export const postMenuItems = async (body: any, restaurant_id: number) => {
     const {
         menu_items_name,
         slug,
@@ -15,7 +15,7 @@ export const postMenuItems = async (body: any) => {
         display_order,
     } = body;
 
-    const existing = await prisma.menu_items.findUnique({ where: { slug } });
+    const existing = await prisma.menu_items.findFirst({ where: { slug, restaurant_id } });
     if (existing) throw new Error('Menu Item already exists!!');
 
     const created = await prisma.menu_items.create({
@@ -31,6 +31,7 @@ export const postMenuItems = async (body: any) => {
             prep_time,
             calories,
             display_order,
+            restaurant_id,
         },
     });
 
@@ -46,8 +47,10 @@ export const getMenuItems = async (body: any) => {
     return item;
 };
 
-export const getAllMenuItems = async () => {
+// customer/kiosk app calls this with ?restaurant_id=5 to scope the menu
+export const getAllMenuItems = async (restaurant_id?: number) => {
     const items = await prisma.menu_items.findMany({
+        where: restaurant_id ? { restaurant_id } : undefined,
         orderBy: { display_order: 'asc' },
         include: { categories: true },
     });
