@@ -12,7 +12,7 @@ const router = Router();
 
 router.post('/',     authenticate, postTableController);
 router.get('/',       getAllTablesController);
-router.get('/:id',    getTableController);
+router.get('/:id',   authenticate,  getTableController);
 router.put('/:id',    authenticate, putTableController);
 router.delete('/:id', authenticate, deleteTableController);
 

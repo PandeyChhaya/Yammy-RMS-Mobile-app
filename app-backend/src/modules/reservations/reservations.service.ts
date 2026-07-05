@@ -18,7 +18,6 @@ const mapReservation = (r: any) => ({
 
 export const postReservation = async (body: any) => {
     const { table_id, party_size, reserved_at, reservation_notes, customer_name, customer_phone, duration_minutes } = body;
-
     const tableExists = await prisma.tables.findUnique({ where: { table_id } });
     if (!tableExists) throw new Error('Table does not exist');
 
@@ -48,20 +47,27 @@ export const getReservation = async (body: any) => {
     return mapReservation(reservation);
 };
 
-export const getAllReservations = async () => {
+
+
+export const getAllReservations = async (restaurant_id?: number) => {
     const reservations = await prisma.reservations.findMany({
+        where: restaurant_id ? { tables: { restaurant_id } } : undefined,
         include: { tables: true },
         orderBy: { reserved_at: 'desc' },
     });
     return reservations.map(mapReservation);
 };
 
-export const getReservationsByDate = async (date: string) => {
+export const getReservationsByDate = async (date: string, restaurant_id?: number) => {
     const start = new Date(date); start.setHours(0, 0, 0, 0);
     const end   = new Date(date); end.setHours(23, 59, 59, 999);
 
     const reservations = await prisma.reservations.findMany({
-        where: { reserved_at: { gte: start, lte: end }, reservation_status: { not: 'cancelled' } },
+        where: {
+            reserved_at: { gte: start, lte: end },
+            reservation_status: { not: 'cancelled' },
+            ...(restaurant_id && { tables: { restaurant_id } }),
+        },
         include: { tables: true },
         orderBy: { reserved_at: 'asc' },
     });

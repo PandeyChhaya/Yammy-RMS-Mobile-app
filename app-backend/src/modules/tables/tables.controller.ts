@@ -24,7 +24,8 @@ export const getTableController = async (req: Request, res: Response) => {
 
 export const getAllTablesController = async (req: Request, res: Response) => {
     try {
-        const restaurant_id = req.query.restaurant_id ? parseInt(String(req.query.restaurant_id)) : undefined;
+        const restaurant_id = req.user?.restaurant_id
+            ?? (req.query.restaurant_id ? parseInt(String(req.query.restaurant_id)) : undefined);
         const response = await getAllTables(restaurant_id);
         res.status(200).json(response);
     } catch (error) {

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authenticate } from '../../middleware/auth.middleware.js';
 import {
     deleteReservationController,
     getReservationController,
@@ -8,13 +9,14 @@ import {
     updateReservationStatusController,
 } from './reservations.controller.js';
 
+
 const router = Router();
 
-router.post('/',             postReservationController);
-router.get('/',              getReservationsByDateController);
-router.get('/:id',           getReservationController);
-router.put('/:id',           putReservationController);
-router.put('/:id/status',    updateReservationStatusController);
-router.delete('/:id',        deleteReservationController);
+router.post('/',             authenticate, postReservationController);
+router.get('/',              authenticate, getReservationsByDateController);
+router.get('/:id',           authenticate, getReservationController);
+router.put('/:id',           authenticate, putReservationController);
+router.put('/:id/status',    authenticate, updateReservationStatusController);
+router.delete('/:id',        authenticate, deleteReservationController);
 
 export default router;

@@ -6,7 +6,7 @@ const router = Router();
 
 router.post('/', authenticate, postMenuItemsController);
 router.get('/:id', getMenuItemsController);
-router.get('/', getAllMenuItemsController);
+router.get('/', authenticate, getAllMenuItemsController);
 router.put('/:id', authenticate, putMenuItemsController);
 router.delete('/:id', authenticate, deleteMenuItemsController);
 

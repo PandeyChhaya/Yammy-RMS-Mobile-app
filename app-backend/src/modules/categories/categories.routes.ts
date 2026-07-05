@@ -8,7 +8,7 @@ const router = Router();
 
 router.post("/", authenticate, postCategoryController);
 router.get("/", getAllCategoryController);
-router.get("/:id", getCategoryController);
+router.get("/:id", authenticate,getCategoryController);
 router.put("/:id", authenticate, putCategoryController);
 router.delete("/:id", authenticate, deleteCategoryController);
 

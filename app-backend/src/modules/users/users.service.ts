@@ -35,26 +35,27 @@ export const getAllUsers= async()=>{
     const users= await prisma.users.findMany();
     return users;
 };
-export const putUser= async(body:any)=>{
-    const{user_id, user_email, user_name, user_role}= body;
+export const putUser = async (body: any) => {
+    const { user_id, user_email, user_name, user_role, is_active } = body;
 
-    const userExists= await prisma.users.findUnique({
-        where:{user_id},
+    const userExists = await prisma.users.findUnique({
+        where: { user_id },
     });
-    if(!userExists) throw new Error ("User doesnt exist!!");
+    if (!userExists) throw new Error("User doesnt exist!!");
 
-    const updatedUser=await prisma.users.update({
-        where:{ 
+    const updatedUser = await prisma.users.update({
+        where: {
             user_id,
         },
-        data:{
-            user_name,
-            user_email,
-            user_role
-        }
-    })
+        data: {
+            ...(user_name !== undefined && { user_name }),
+            ...(user_email !== undefined && { user_email }),
+            ...(user_role !== undefined && { user_role }),
+            ...(is_active !== undefined && { is_active }),
+        },
+    });
 
-    return {message: ("User updated successfully!!"), user_id: updatedUser.user_id}
+    return { message: ("User updated successfully!!"), user_id: updatedUser.user_id };
 };
 export const deleteUser= async(body:any)=>{
     const {user_id}= body;

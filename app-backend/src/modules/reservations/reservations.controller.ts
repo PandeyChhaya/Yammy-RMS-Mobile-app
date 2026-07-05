@@ -29,12 +29,13 @@ export const getReservationController = async (req: Request, res: Response) => {
 
 export const getReservationsByDateController = async (req: Request, res: Response) => {
     try {
+        const restaurant_id = req.user?.restaurant_id;
         const { date } = req.query;
         if (!date) {
-            const all = await getAllReservations();
+            const all = await getAllReservations(restaurant_id as any);
             return res.status(200).json(all);
         }
-        const response = await getReservationsByDate(String(date));
+        const response = await getReservationsByDate(String(date), restaurant_id as any);
         res.status(200).json(response);
     } catch (error) {
         res.status(400).json({ message: (error as Error).message });

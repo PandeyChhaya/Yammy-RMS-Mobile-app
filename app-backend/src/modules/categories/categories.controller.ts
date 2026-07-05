@@ -23,10 +23,10 @@ export const getCategoryController = async (req: Request, res: Response) => {
     }
 };
 
-// customer app calls this with ?restaurant_id=5 to get that restaurant's categories only
 export const getAllCategoryController = async (req: Request, res: Response) => {
     try {
-        const restaurant_id = req.query.restaurant_id ? parseInt(String(req.query.restaurant_id)) : undefined;
+        const restaurant_id = req.user?.restaurant_id
+            ?? (req.query.restaurant_id ? parseInt(String(req.query.restaurant_id)) : undefined);
         const response = await getAllCategory(restaurant_id);
         res.status(200).json(response);
     } catch (error) {
