@@ -1,16 +1,17 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import { Building2, MapPin, Phone } from 'lucide-react-native'
 import { useState } from 'react'
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import { authService } from '../auth/services/auth.service'
 import { corner, palette } from '../shared/theme'
@@ -37,14 +38,15 @@ export default function CreateRestaurant() {
 
     try {
       const result = await restaurantService.postRestaurant({
-        restaurant_name: restaurantName.trim(),
-        description: description.trim() || undefined,
-        address: address.trim() || undefined,
-        phone: phone.trim() || undefined,
-      })
+  restaurant_name: restaurantName.trim(),
+  description: description.trim() || undefined,
+  address: address.trim() || undefined,
+  phone: phone.trim() || undefined,
+})
 
-      await authService.setRestaurantId(result.restaurant_id)
-      router.replace('/modules/Dashboard')
+await AsyncStorage.setItem('@accessToken', result.accessToken)
+await authService.setRestaurantId(result.restaurant_id)
+router.replace('/modules/Dashboard')
     } catch (err: any) {
       Alert.alert('Could not create restaurant', err.message || 'Something went wrong')
     } finally {

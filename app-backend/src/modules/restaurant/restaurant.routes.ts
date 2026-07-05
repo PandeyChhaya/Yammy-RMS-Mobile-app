@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authenticate } from '../../middleware/auth.middleware.js';
 
 import {
     deleteRestaurantController,
@@ -11,7 +12,7 @@ import {
 
 const router = Router();
 
-router.post("/", postRestaurantController);
+router.post("/", authenticate, postRestaurantController);
 router.get("/", getAllRestaurantController);
 router.get("/active", getActiveRestaurantsController);
 router.get("/:id", getRestaurantController);

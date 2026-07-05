@@ -11,7 +11,7 @@ import {
 const router = Router();
 
 router.post('/',     authenticate, postTableController);
-router.get('/',       getAllTablesController);
+router.get('/',      authenticate, getAllTablesController);
 router.get('/:id',   authenticate,  getTableController);
 router.put('/:id',    authenticate, putTableController);
 router.delete('/:id', authenticate, deleteTableController);

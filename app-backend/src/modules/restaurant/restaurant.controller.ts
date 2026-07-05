@@ -10,10 +10,13 @@ import {
 
 export const postRestaurantController = async (req: Request, res: Response) => {
     try {
-        const response = await postRestaurant(req.body);
+        if (!req.user?.user_id) {
+            return res.status(401).json({ message: 'Not authenticated' });
+        }
+        const response = await postRestaurant(req.body, req.user.user_id);
         res.status(201).json(response);
-    } catch (error) {
-        res.status(400).json({ message: error });
+    } catch (error: any) {
+        res.status(400).json({ message: error.message || error });
     }
 };
 

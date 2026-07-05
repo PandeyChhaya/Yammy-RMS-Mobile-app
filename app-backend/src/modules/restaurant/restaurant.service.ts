@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import prisma from '../../db.js';
 
 function slugify(name: string): string {
@@ -8,7 +9,7 @@ function slugify(name: string): string {
         .replace(/(^-|-$)/g, '');
 }
 
-export const postRestaurant = async (body: any) => {
+export const postRestaurant = async (body: any, user_id: number) => {
     const { restaurant_name, description, logo_url, cover_image_url, address, phone } = body;
 
     if (!restaurant_name) throw new Error('restaurant_name is required');
@@ -23,19 +24,24 @@ export const postRestaurant = async (body: any) => {
     }
 
     const created = await prisma.restaurants.create({
-        data: {
-            restaurant_name,
-            slug,
-            description,
-            logo_url,
-            cover_image_url,
-            address,
-            phone,
-        },
+        data: { restaurant_name, slug, description, logo_url, cover_image_url, address, phone },
     });
 
-    return { message: 'Restaurant created!!', restaurant_id: created.restaurant_id, slug: created.slug };
+    const updatedUser = await prisma.users.update({
+        where: { user_id },
+        data: { restaurant_id: created.restaurant_id },
+    });
+
+    const JWT_SECRET = process.env.JWT_SECRET as string;
+    const accessToken = jwt.sign(
+        { user_id: updatedUser.user_id, user_role: updatedUser.user_role, restaurant_id: updatedUser.restaurant_id },
+        JWT_SECRET,
+        { expiresIn: '15m' }
+    );
+
+    return { message: 'Restaurant created!!', restaurant_id: created.restaurant_id, slug: created.slug, accessToken };
 };
+
 
 export const getRestaurant = async (body: any) => {
     const { restaurant_id } = body;
