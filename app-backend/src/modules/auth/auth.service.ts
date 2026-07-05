@@ -6,12 +6,8 @@ import { validatePassword } from '../../utils/passwordValidator.js';
 export const registerUser = async (body: any) => {
   const { user_name, user_email, user_password, user_role } = body;
 
-
   const passwordError = validatePassword(user_password);
   if (passwordError) throw new Error(passwordError);
-
-  const JWT_SECRET = process.env.JWT_SECRET as string;
-  const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
 
   const existingUser = await prisma.users.findUnique({
     where: { user_email },
@@ -19,6 +15,7 @@ export const registerUser = async (body: any) => {
   if (existingUser) throw new Error("Email already exists");
 
   const hashedPassword = await bcrypt.hash(user_password, 10);
+  const needsApproval = user_role === 'Admin';
 
   const user = await prisma.users.create({
     data: {
@@ -26,15 +23,26 @@ export const registerUser = async (body: any) => {
       user_email,
       user_password: hashedPassword,
       user_role,
+      is_active: !needsApproval,
     },
   });
+
+  if (needsApproval) {
+    return {
+      message: "Registration successful. Your account is pending superadmin approval.",
+      pending: true,
+      user_id: user.user_id,
+    };
+  }
+
+  const JWT_SECRET = process.env.JWT_SECRET as string;
+  const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
 
   const accessToken = jwt.sign(
     { user_id: user.user_id, user_role: user.user_role, restaurant_id: user.restaurant_id },
     JWT_SECRET,
     { expiresIn: "15m" }
   );
-
   const refreshToken = jwt.sign(
     { user_id: user.user_id },
     JWT_REFRESH_SECRET,
@@ -48,6 +56,7 @@ export const registerUser = async (body: any) => {
 
   return {
     message: "User registered successfully",
+    pending: false,
     user_id: user.user_id,
     user_name: user.user_name,
     user_role: user.user_role,
@@ -56,7 +65,6 @@ export const registerUser = async (body: any) => {
     refreshToken,
   };
 };
-
 export const loginUser = async (body: any) => {
   const JWT_SECRET = process.env.JWT_SECRET as string;
   const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
@@ -71,6 +79,9 @@ export const loginUser = async (body: any) => {
   const isMatch = await bcrypt.compare(user_password, user.user_password);
   if (!isMatch) throw new Error("Invalid email or password");
 
+    if (!user.is_active) {
+    throw new Error("Your account is pending superadmin approval.");
+  }
   const accessToken = jwt.sign(
     { user_id: user.user_id, user_role: user.user_role, restaurant_id: user.restaurant_id },
     JWT_SECRET,

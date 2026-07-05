@@ -48,41 +48,51 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: Props
   }
 
   const validate = () => {
-    const e: Record<string, string> = {}
-    if (!form.name.trim())       e.name         = 'Name is required'
-    if (!form.current_stock)     e.current_stock = 'Current stock is required'
-    if (!form.min_stock)         e.min_stock     = 'Min stock is required'
-    if (!form.max_stock)         e.max_stock     = 'Max stock is required'
-    if (!form.cost_per_unit)     e.cost_per_unit = 'Cost per unit is required'
-    if (parseFloat(form.min_stock) >= parseFloat(form.max_stock))
-      e.max_stock = 'Max must be greater than min'
-    return e
-  }
-
-  const handleSubmit = async () => {
-    const e = validate()
-    if (Object.keys(e).length > 0) { setErrors(e); return }
-    setLoading(true)
-    try {
-      await inventoryService.postIngredient({
-        name:           form.name.trim(),
-        category:       form.category,
-        unit:           form.unit,
-        min_stock:      parseFloat(form.min_stock),
-        max_stock:      parseFloat(form.max_stock),
-        cost_per_unit:  parseFloat(form.cost_per_unit),
-        expiration_date: form.expiration_date || undefined,
-      })
-      setForm(DEFAULT)
-      setErrors({})
-      onSuccess()
-      onClose()
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to add ingredient')
-    } finally {
-      setLoading(false)
+  const e: Record<string, string> = {}
+  if (!form.name.trim())       e.name         = 'Name is required'
+  if (!form.current_stock)     e.current_stock = 'Current stock is required'
+  if (!form.min_stock)         e.min_stock     = 'Min stock is required'
+  if (!form.max_stock)         e.max_stock     = 'Max stock is required'
+  if (!form.cost_per_unit)     e.cost_per_unit = 'Cost per unit is required'
+  if (parseFloat(form.min_stock) >= parseFloat(form.max_stock))
+    e.max_stock = 'Max must be greater than min'
+  if (form.expiration_date.trim()) {
+    const isValidFormat = /^\d{4}-\d{2}-\d{2}$/.test(form.expiration_date.trim())
+    const parsed = new Date(form.expiration_date.trim())
+    if (!isValidFormat || isNaN(parsed.getTime())) {
+      e.expiration_date = 'Use format YYYY-MM-DD, e.g. 2026-12-31'
     }
   }
+  return e
+}
+
+  const handleSubmit = async () => {
+  const e = validate()
+  if (Object.keys(e).length > 0) { setErrors(e); return }
+  setLoading(true)
+  try {
+    console.log('SUBMITTING INGREDIENT...')
+    const result = await inventoryService.postIngredient({
+      name:           form.name.trim(),
+      category:       form.category,
+      unit:           form.unit,
+      min_stock:      parseFloat(form.min_stock),
+      max_stock:      parseFloat(form.max_stock),
+      cost_per_unit:  parseFloat(form.cost_per_unit),
+      expiration_date: form.expiration_date || undefined,
+    })
+    console.log('SUCCESS:', result)
+    setForm(DEFAULT)
+    setErrors({})
+    onSuccess()
+    onClose()
+  } catch (err: any) {
+    console.log('SUBMIT FAILED:', err.message, err)
+    Alert.alert('Error', err.message || 'Failed to add ingredient')
+  } finally {
+    setLoading(false)
+  }
+}
 
   const handleClose = () => { setForm(DEFAULT); setErrors({}); onClose() }
 
@@ -108,17 +118,17 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: Props
           <ScrollView showsVerticalScrollIndicator={false}>
 
             {/* Name */}
-            <Text style={s.label}>NAME *</Text>
-            <TextInput
-              style={inputStyle('name')}
-              placeholder="e.g. Tomatoes"
-              placeholderTextColor={C.muted}
-              value={form.name}
-              onChangeText={t => set('name', t)}
-              onFocus={() => setFocused('name')}
-              onBlur={() => setFocused(null)}
-            />
-            {errors.name && <Text style={s.fieldError}>{errors.name}</Text>}
+<Text style={s.label}>NAME *</Text>
+<TextInput
+  style={inputStyle('name')}
+  placeholder="e.g. Tomatoes"
+  placeholderTextColor={C.muted}
+  value={form.name}
+  onChangeText={t => set('name', t)}
+  onFocus={() => setFocused('name')}
+  onBlur={() => setFocused(null)}
+/>
+{errors.name && <Text style={s.fieldError}>{errors.name}</Text>}
 
             {/* Category */}
             <Text style={s.label}>CATEGORY *</Text>

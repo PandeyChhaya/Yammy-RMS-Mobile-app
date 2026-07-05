@@ -7,7 +7,7 @@ import PaymentModal from '../payment/payment'
 import tableService from '../tables/services/tableService'
 import { MenuItemDisplay } from './components/menuItemCard'
 import ModernPOSLayout from './components/POSLayout'
-import SplitTicketModal from './components/splitTicketModal'
+import SplitTicketModal from './components/SplitTicketModal'
 import categoriesService from './services/categoriesService'
 import { CartItemDisplay } from './types/cart'
 import { TableData } from './types/tables'
@@ -34,20 +34,19 @@ export default function POS() {
   const queryClient = useQueryClient()
 
   const { data: rawMenuItems = [] } = useQuery({
-    queryKey: ['menu-items'],
-    queryFn: menuItemsService.getMenuItem,
-  })
+  queryKey: ['menu-items'],
+  queryFn: () => menuItemsService.getMenuItem(),
+})
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: categoriesService.getCategory,
   })
 
-  const { data: tables = [] } = useQuery({
-    queryKey: ['tables'],
-    queryFn: tableService.getTable,
-  })
-
+ const { data: tables = [] } = useQuery({
+  queryKey: ['tables'],
+  queryFn: () => tableService.getTable(),
+})
   const menuItems: MenuItemDisplay[] = rawMenuItems.map((item) => {
     const category = categories.find((c) => c.category_id === item.menu_items_category_id)
     return {

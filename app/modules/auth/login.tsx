@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
-import { Eye, EyeOff } from 'lucide-react-native'
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native'
+
 import { useState } from 'react'
 import {
   Alert,

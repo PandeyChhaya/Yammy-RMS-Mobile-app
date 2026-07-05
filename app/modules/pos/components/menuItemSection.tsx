@@ -1,5 +1,5 @@
 // menuItemSection.tsx
-import { Search, Star } from 'lucide-react-native'
+import { Search } from 'lucide-react-native'
 import { useState } from 'react'
 import {
   FlatList,
@@ -69,7 +69,7 @@ export default function MenuItemsSection(props: MenuItemsSectionProps) {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <Star size={14} color={palette.brand} />
+          
           <Text style={styles.headerTitle}>Menu</Text>
           <View style={styles.countBadge}>
             <Text style={styles.countText}>{visibleItems.length}</Text>

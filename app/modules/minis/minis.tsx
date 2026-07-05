@@ -61,6 +61,9 @@ useEffect(() => {
     queryKey: ['my-minis'],
     queryFn: () => minisService.getMyMinis(),
   });
+  useEffect(() => {
+  if (error) console.log('MINIS ERROR:', JSON.stringify(error));
+}, [error]);
 
   const uploadMutation = useMutation({
     mutationFn: () => minisService.uploadMini(title, description, selectedVideo),

@@ -18,33 +18,16 @@ export const useIngredients = () => {
     const [mutating, setMutating] = useState(false)
     const [error, setError]       = useState<string | null>(null)
 
-    const fetchIngredients = async () => {
-    try {
-        setLoading(true)
-        const response = await fetch(`http://192.168.1.71:5000/api/inventory`, {
-            headers: await auth_headers(),
-        })
-        const data = await response.json()
-        
-        const mapped = data.map((item: any) => ({
-            id:            String(item.inventory_id),
-            name:          item.item_name,
-            category:      item.supplier || 'General', 
-            unit:          item.unit,
-            current_stock: Number(item.quantity),
-            min_stock:     Number(item.reorder_level),
-            max_stock:     Number(item.reorder_level) * 3,
-            cost_per_unit: Number(item.cost_per_unit),
-            is_active:     item.is_active,
-            created_at:    item.created_at,
-            updated_at:    item.updated_at,
-        }))
-        setIngredients(mapped)
-    } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error loading ingredients')
-    } finally {
-        setLoading(false)
-    }
+ const fetchIngredients = async () => {
+  try {
+    setLoading(true)
+    const data = await inventoryService.getAllIngredients()
+    setIngredients(data)
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Error loading ingredients')
+  } finally {
+    setLoading(false)
+  }
 }
 
     const createIngredient = async (request: CreateIngredientRequest) => {

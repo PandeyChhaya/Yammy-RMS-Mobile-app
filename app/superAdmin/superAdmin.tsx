@@ -1,9 +1,11 @@
-    
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import {
-  AlertCircle, CheckCircle, Edit, LogOut,
+  AlertCircle, CheckCircle, Clock, Edit,
+  Film,
+  LogOut,
   Plus, Search, Shield, Trash2, Users,
+  XCircle,
 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
@@ -11,6 +13,8 @@ import {
   Switch, Text, TextInput, TouchableOpacity, View,
 } from 'react-native'
 import { authService } from '../modules/auth/services/auth.service'
+import minisService from '../modules/minis/services/minis'
+import { Mini } from '../modules/minis/types/minis'
 const BASE_URL = 'http://192.168.1.71:5000/api/users'
 
 const C = {
@@ -53,10 +57,12 @@ export default function SuperAdmin() {
   const [successMsg,    setSuccessMsg]    = useState<string | null>(null)
   const [errorMsg,      setErrorMsg]      = useState<string | null>(null)
   const [focusedInput,  setFocusedInput]  = useState<string | null>(null)
+  const [minis, setMinis] = useState<Mini[]>([])
 
   useEffect(() => {
     AsyncStorage.getItem('@userName').then(n => { if (n) setSuperName(n) })
     fetchAdmins()
+    fetchMinis()
   }, [])
 
   const getHeaders = async () => {
@@ -75,6 +81,25 @@ export default function SuperAdmin() {
       flash('error', err.message || 'Failed to load admins')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchMinis = async () => {
+    try {
+      const data = await minisService.getAllMinis()
+      setMinis(data.filter((m: Mini) => m.status === 'pending'))
+    } catch (err: any) {
+      flash('error', err.message || 'Failed to load minis')
+    }
+  }
+
+  const handleMiniStatus = async (mini_id: number, status: 'approved' | 'rejected') => {
+    try {
+      await minisService.updateStatus(mini_id, status)
+      flash('success', `Mini ${status}!`)
+      fetchMinis()
+    } catch (err: any) {
+      flash('error', err.message || 'Failed to update mini')
     }
   }
 
@@ -153,6 +178,42 @@ export default function SuperAdmin() {
     }
   }
 
+  const handleApproveAdmin = async (admin: AdminUser) => {
+    try {
+      const res = await fetch(`${BASE_URL}/${admin.user_id}`, {
+        method: 'PUT',
+        headers: await getHeaders(),
+        body: JSON.stringify({ is_active: true }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message)
+      flash('success', `${admin.user_name} approved as Admin!`)
+      fetchAdmins()
+    } catch (err: any) {
+      flash('error', err.message || 'Failed to approve admin')
+    }
+  }
+
+  const handleRejectAdmin = (admin: AdminUser) => {
+    Alert.alert('Reject Admin', `Reject and remove "${admin.user_name}"'s signup?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reject', style: 'destructive',
+        onPress: async () => {
+          try {
+            const res = await fetch(`${BASE_URL}/${admin.user_id}`, { method: 'DELETE', headers: await getHeaders() })
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.message)
+            flash('success', 'Admin signup rejected.')
+            fetchAdmins()
+          } catch (err: any) {
+            flash('error', err.message || 'Failed to reject')
+          }
+        },
+      },
+    ])
+  }
+
   const handleLogout = async () => {
     Alert.alert('Sign Out', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
@@ -177,6 +238,9 @@ export default function SuperAdmin() {
     a.user_name.toLowerCase().includes(search.toLowerCase()) ||
     a.user_email.toLowerCase().includes(search.toLowerCase())
   )
+
+  const pendingAdmins = filtered.filter(a => !a.is_active)
+  const activeAdmins  = filtered.filter(a => a.is_active)
 
   const activeCount   = admins.filter(a => a.is_active).length
   const inactiveCount = admins.filter(a => !a.is_active).length
@@ -222,7 +286,7 @@ export default function SuperAdmin() {
           {[
             { label: 'Total Admins', value: admins.length,   color: C.orange },
             { label: 'Active',       value: activeCount,     color: C.success },
-            { label: 'Inactive',     value: inactiveCount,   color: C.error },
+            { label: 'Pending',      value: inactiveCount,   color: C.warning },
           ].map(stat => (
             <View key={stat.label} style={s.statCard}>
               <Text style={[s.statNumber, { color: stat.color }]}>{stat.value}</Text>
@@ -245,18 +309,6 @@ export default function SuperAdmin() {
           </View>
         )}
 
-        {/* Admins section */}
-        <View style={s.sectionHeader}>
-          <View style={s.sectionLeft}>
-            <Users size={15} color={C.orange} />
-            <Text style={s.sectionTitle}>Admins ({admins.length})</Text>
-          </View>
-          <TouchableOpacity style={s.addButton} onPress={() => { setAddForm(DEFAULT_FORM); setShowAddModal(true) }} activeOpacity={0.85}>
-            <Plus size={15} color={C.white} />
-            <Text style={s.addButtonText}>Add Admin</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Search */}
         <View style={s.searchRow}>
           <Search size={15} color={C.orange} />
@@ -269,19 +321,70 @@ export default function SuperAdmin() {
           />
         </View>
 
-        {/* List */}
+        {/* Pending Admins section */}
+        <View style={s.sectionHeader}>
+          <View style={s.sectionLeft}>
+            <Clock size={15} color={C.warning} />
+            <Text style={[s.sectionTitle, { color: C.warning }]}>Pending Admins ({pendingAdmins.length})</Text>
+          </View>
+        </View>
+
+        {loading ? (
+          <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+            <ActivityIndicator size="small" color={C.orange} />
+          </View>
+        ) : pendingAdmins.length === 0 ? (
+          <View style={[s.emptyState, { paddingVertical: 24 }]}>
+            <Text style={s.emptySubtitle}>No admins awaiting approval</Text>
+          </View>
+        ) : (
+          pendingAdmins.map(admin => (
+            <View key={admin.user_id} style={s.card}>
+              <View style={s.cardHeader}>
+                <View style={s.cardAvatar}>
+                  <Text style={s.cardAvatarText}>{admin.user_name.charAt(0).toUpperCase()}</Text>
+                </View>
+                <View style={s.cardInfo}>
+                  <Text style={s.cardName}>{admin.user_name}</Text>
+                  <Text style={s.cardEmail}>{admin.user_email}</Text>
+                </View>
+              </View>
+              <View style={[s.modalButtons, { marginTop: 0, marginBottom: 0 }]}>
+                <TouchableOpacity style={s.cancelButton} onPress={() => handleRejectAdmin(admin)}>
+                  <Text style={s.cancelButtonText}>Reject</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.submitButton} onPress={() => handleApproveAdmin(admin)}>
+                  <Text style={s.submitButtonText}>Approve</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
+        )}
+
+        {/* Active Admins section */}
+        <View style={s.sectionHeader}>
+          <View style={s.sectionLeft}>
+            <Users size={15} color={C.orange} />
+            <Text style={s.sectionTitle}>Admins ({activeAdmins.length})</Text>
+          </View>
+          <TouchableOpacity style={s.addButton} onPress={() => { setAddForm(DEFAULT_FORM); setShowAddModal(true) }} activeOpacity={0.85}>
+            <Plus size={15} color={C.white} />
+            <Text style={s.addButtonText}>Add Admin</Text>
+          </TouchableOpacity>
+        </View>
+
         {loading ? (
           <View style={{ alignItems: 'center', paddingVertical: 40 }}>
             <ActivityIndicator size="large" color={C.orange} />
           </View>
-        ) : filtered.length === 0 ? (
+        ) : activeAdmins.length === 0 ? (
           <View style={s.emptyState}>
             <Shield size={48} color={C.steel} />
-            <Text style={s.emptyTitle}>No admins found</Text>
-            <Text style={s.emptySubtitle}>Create your first admin account</Text>
+            <Text style={s.emptyTitle}>No active admins</Text>
+            <Text style={s.emptySubtitle}>Approve a pending admin or create one</Text>
           </View>
         ) : (
-          filtered.map(admin => (
+          activeAdmins.map(admin => (
             <View key={admin.user_id} style={s.card}>
               <View style={s.cardHeader}>
                 <View style={s.cardAvatar}>
@@ -333,6 +436,36 @@ export default function SuperAdmin() {
             </View>
           ))
         )}
+
+        {/* Pending Minis section */}
+        <View style={s.sectionHeader}>
+          <View style={s.sectionLeft}>
+            <Film size={15} color={C.orange} />
+            <Text style={s.sectionTitle}>Pending Minis ({minis.length})</Text>
+          </View>
+        </View>
+
+        {minis.length === 0 ? (
+          <View style={[s.emptyState, { paddingVertical: 24 }]}>
+            <Text style={s.emptySubtitle}>No minis awaiting approval</Text>
+          </View>
+        ) : (
+          minis.map(mini => (
+            <View key={mini.mini_id} style={s.card}>
+              <Text style={s.cardName}>{mini.title}</Text>
+              {mini.description && <Text style={s.cardEmail}>{mini.description}</Text>}
+              <View style={[s.modalButtons, { marginTop: 12, marginBottom: 0 }]}>
+                <TouchableOpacity style={s.cancelButton} onPress={() => handleMiniStatus(mini.mini_id, 'rejected')}>
+                  <XCircle size={14} color={C.error} />
+                </TouchableOpacity>
+                <TouchableOpacity style={s.submitButton} onPress={() => handleMiniStatus(mini.mini_id, 'approved')}>
+                  <Text style={s.submitButtonText}>Approve</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
+        )}
+
       </ScrollView>
 
       {/* Add Modal */}
@@ -463,7 +596,7 @@ const s = StyleSheet.create({
   errorBanner:   { flexDirection:'row', alignItems:'center', backgroundColor:C.errorBg, borderWidth:1, borderColor:C.error, borderRadius:radius.md, padding:12, marginBottom:12, gap:8 },
   errorBannerText: { color:C.error, fontSize:13, fontWeight:'600' },
 
-  sectionHeader: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:12 },
+  sectionHeader: { flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:12, marginTop: 8 },
   sectionLeft:   { flexDirection:'row', alignItems:'center', gap:8 },
   sectionTitle:  { fontSize:13, fontWeight:'800', color:C.orange },
   addButton:     { flexDirection:'row', alignItems:'center', backgroundColor:C.orange, borderRadius:radius.pill, paddingHorizontal:14, paddingVertical:8, gap:6 },

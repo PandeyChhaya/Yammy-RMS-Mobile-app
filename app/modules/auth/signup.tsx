@@ -34,7 +34,6 @@ const R = { md: 14, xl: 24 }
 const ROLES = [
   'Admin',
   'Customer',
-  
   'Cashier',
   'Waiter',
   'Kitchen Staff',
@@ -95,7 +94,6 @@ export default function Signup() {
 
     setLoading(true)
     try {
-      // register() now also stores tokens + user info in AsyncStorage
       const result = await authService.register(
         fullName.trim(),
         email.trim(),
@@ -103,6 +101,17 @@ export default function Signup() {
         role,
       )
       console.log('RESULT:', JSON.stringify(result))
+
+      // Admin signups are held for superadmin approval — no tokens are
+      // issued yet, so just inform the user and send them to login.
+      if (result.pending) {
+        Alert.alert(
+          'Registration Submitted',
+          'Your admin account is pending superadmin approval. You will be able to log in once approved.'
+        )
+        router.replace('/modules/auth/login')
+        return
+      }
 
       // Route based on the role they signed up with
       switch (result.user_role) {
@@ -394,7 +403,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8,
   },
 
-  // ── Role chips ──
   roleGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

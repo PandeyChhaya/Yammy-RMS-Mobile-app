@@ -26,12 +26,15 @@ const auth_headers = async () => {
 };
 
 const postIngredient = async (item: CreateIngredientRequest): Promise<Ingredient> => {
+    console.log('POSTING TO:', `${BASE_URL}/ingredients`, item)
     const response = await fetch(`${BASE_URL}/ingredients`, {
         method: 'POST',
         headers: await auth_headers(),
         body: JSON.stringify(item),
     });
-    const data = await response.json();
+    const text = await response.text();
+    console.log('STATUS:', response.status, 'BODY:', text);
+    const data = JSON.parse(text);
     if (!response.ok) throw new Error(data.message || 'Failed to create ingredient');
     return data;
 };
