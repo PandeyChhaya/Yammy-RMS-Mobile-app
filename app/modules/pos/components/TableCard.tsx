@@ -2,6 +2,7 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { TableData } from '../types/tables'
 
+<<<<<<< HEAD
 const palette = {
   bg: '#0A0A0A',
   card: '#1A1A1A',
@@ -18,8 +19,28 @@ const palette = {
   amberBg: '#3A2500',
   blue: '#3B82F6',
   blueBg: '#1E1B4B',
+=======
+const C = {
+  background: '#0A0A0A',
+  surface: '#1A1A1A',
+  surfaceHighlight: '#2C2C2C',
+  primary: '#FF6B2C',
+  primaryDim: '#3D1C00',
+  textMain: '#FFFFFF',
+  textMuted: '#9CA3AF',
+  border: '#2C2C2C',
+  danger: '#EF4444',
+  dangerDim: '#450A0A',
+  success: '#10B981',
+  successDim: '#064E3B',
+  warning: '#F59E0B',
+  warningDim: '#3A2500',
+  info: '#3B82F6',
+  infoDim: '#1E1B4B',
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
 }
 
+<<<<<<< HEAD
 const corner = { xs: 6, sm: 10, md: 14, pill: 100 }
 
 function statusStyle(status: TableData['table_status']) {
@@ -34,6 +55,16 @@ function statusStyle(status: TableData['table_status']) {
     default:
       return { label: 'Available', bg: palette.greenBg, text: palette.green, border: palette.green }
   }
+=======
+const STATUS_CONFIG: Record<
+  TableData['table_status'],
+  { label: string; bg: string; text: string; border: string }
+> = {
+  Available:   { label: 'Available',   bg: C.successDim,   text: C.success,   border: C.success },
+  Occupied:    { label: 'Occupied',    bg: C.warningDim,   text: C.warning,   border: C.warning },
+  Reserved:    { label: 'Reserved',    bg: C.infoDim,      text: C.info,      border: C.info    },
+  Maintenance: { label: 'Maintenance', bg: C.dangerDim,    text: C.danger,    border: C.danger  },
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
 }
 
 interface TableCardProps {
@@ -43,6 +74,7 @@ interface TableCardProps {
   reservationTime?: string
 }
 
+<<<<<<< HEAD
 export default function TableCard(props: TableCardProps) {
   const { table, isSelected, onSelect, reservationTime } = props
   const status = statusStyle(table.table_status)
@@ -50,6 +82,15 @@ export default function TableCard(props: TableCardProps) {
   function handlePress() {
     onSelect(isSelected ? null : table)
   }
+=======
+export default function TableCard({
+  table,
+  isSelected,
+  onSelect,
+  reservationTime,
+}: TableCardProps) {
+  const cfg = STATUS_CONFIG[table.table_status] ?? STATUS_CONFIG.Available
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
 
   return (
     <TouchableOpacity
@@ -98,17 +139,29 @@ const styles = StyleSheet.create({
   card: {
     width: 88,
     height: 88,
+<<<<<<< HEAD
     backgroundColor: palette.card,
     borderRadius: corner.md,
     borderWidth: 1.5,
     borderColor: palette.border,
+=======
+    backgroundColor: C.surface,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: C.border,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
     padding: 8,
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   cardSelected: {
+<<<<<<< HEAD
     backgroundColor: palette.brandBg,
     borderColor: palette.brand,
+=======
+    backgroundColor: C.primaryDim,
+    borderColor: C.primary,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
     borderWidth: 2,
   },
   cardInactive: {
@@ -123,18 +176,32 @@ const styles = StyleSheet.create({
   capacity: {
     fontSize: 10,
     fontWeight: '700',
+<<<<<<< HEAD
     color: palette.textDim,
   },
   capacitySelected: {
     color: palette.brand,
+=======
+    color: C.textMuted,
+  },
+  capacitySelected: {
+    color: C.primary,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
   tableNumber: {
     fontSize: 20,
     fontWeight: '900',
+<<<<<<< HEAD
     color: palette.text,
   },
   tableNumberSelected: {
     color: palette.brand,
+=======
+    color: C.textMain,
+  },
+  tableNumberSelected: {
+    color: C.primary,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
   bottomBlock: {
     alignItems: 'center',
@@ -147,23 +214,39 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusBadgeSelected: {
+<<<<<<< HEAD
     backgroundColor: palette.brand,
     borderColor: palette.brand,
+=======
+    backgroundColor: C.primary,
+    borderColor: C.primary,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
   statusText: {
     fontSize: 9,
     fontWeight: '800',
   },
   statusTextSelected: {
+<<<<<<< HEAD
     color: palette.text,
+=======
+    color: C.textMain,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
   reservationTime: {
     fontSize: 9,
     fontWeight: '700',
+<<<<<<< HEAD
     color: palette.blue,
   },
   reservationTimeSelected: {
     color: palette.brand,
+=======
+    color: C.info,
+  },
+  reservationTimeSelected: {
+    color: C.primary,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
   selectionDot: {
     position: 'absolute',
@@ -172,6 +255,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+<<<<<<< HEAD
     backgroundColor: palette.brand,
+=======
+    backgroundColor: C.primary,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
 })

@@ -13,6 +13,7 @@ import reservationService from '../../reservation/services/reservationService'
 import { TableData } from '../types/tables'
 import TableCard from './tableCard'
 
+<<<<<<< HEAD
 const palette = {
   bg: '#0A0A0A',
   card: '#1A1A1A',
@@ -20,6 +21,25 @@ const palette = {
   text: '#FFFFFF',
   textDim: '#9CA3AF',
   border: '#2C2C2C',
+=======
+const C = {
+  background: '#0A0A0A',
+  surface: '#1A1A1A',
+  surfaceHighlight: '#2C2C2C',
+  primary: '#FF6B2C',
+  primaryDim: '#3D1C00',
+  textMain: '#FFFFFF',
+  textMuted: '#9CA3AF',
+  border: '#2C2C2C',
+  danger: '#EF4444',
+  dangerDim: '#450A0A',
+  success: '#10B981',
+  successDim: '#064E3B',
+  warning: '#F59E0B',
+  warningDim: '#3A2500',
+  info: '#3B82F6',
+  infoDim: '#1E1B4B',
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
 }
 
 const corner = { sm: 10, pill: 100 }
@@ -72,16 +92,26 @@ export default function TablesSection(props: TablesSectionProps) {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
+<<<<<<< HEAD
           <Table2 size={16} color={palette.textDim} />
           <Text style={styles.headerTitle}>Tables</Text>
           {loadingReservations ? <ActivityIndicator size="small" color={palette.brand} /> : null}
+=======
+          <Table2 size={16} color={C.textMuted} />
+          <Text style={styles.headerTitle}>Tables</Text>
+          {loading && <ActivityIndicator size="small" color={C.primary} />}
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
         </View>
 
         <TouchableOpacity
           style={[styles.directSaleButton, isDirectSale && styles.directSaleButtonActive]}
           onPress={() => onTableSelect(null)}
         >
+<<<<<<< HEAD
           <Receipt size={13} color={isDirectSale ? palette.text : palette.textDim} />
+=======
+          <Receipt size={13} color={isDirectSale ? C.textMain : C.textMuted} />
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
           <Text style={[styles.directSaleText, isDirectSale && styles.directSaleTextActive]}>
             Direct Sale
           </Text>
@@ -90,7 +120,11 @@ export default function TablesSection(props: TablesSectionProps) {
 
       {tables.length === 0 ? (
         <View style={styles.emptyState}>
+<<<<<<< HEAD
           <Table2 size={24} color={palette.border} />
+=======
+          <Table2 size={24} color={C.border} />
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
           <Text style={styles.emptyText}>No tables configured</Text>
         </View>
       ) : (
@@ -112,9 +146,15 @@ export default function TablesSection(props: TablesSectionProps) {
 
 const styles = StyleSheet.create({
   container: {
+<<<<<<< HEAD
     backgroundColor: palette.card,
     borderBottomWidth: 1.5,
     borderBottomColor: palette.border,
+=======
+    backgroundColor: C.surface,
+    borderBottomWidth: 1.5,
+    borderBottomColor: C.border,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
   header: {
     flexDirection: 'row',
@@ -123,7 +163,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderBottomWidth: 1,
+<<<<<<< HEAD
     borderBottomColor: palette.border,
+=======
+    borderBottomColor: C.border,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
   headerLeft: {
     flexDirection: 'row',
@@ -133,7 +177,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 14,
     fontWeight: '800',
+<<<<<<< HEAD
     color: palette.text,
+=======
+    color: C.textMain,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
   directSaleButton: {
     flexDirection: 'row',
@@ -141,6 +189,7 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 6,
+<<<<<<< HEAD
     borderRadius: corner.pill,
     backgroundColor: palette.bg,
     borderWidth: 1.5,
@@ -149,14 +198,31 @@ const styles = StyleSheet.create({
   directSaleButtonActive: {
     backgroundColor: palette.brand,
     borderColor: palette.brand,
+=======
+    borderRadius: radius.pill,
+    backgroundColor: C.background,
+    borderWidth: 1.5,
+    borderColor: C.border,
+  },
+  directSaleButtonActive: {
+    backgroundColor: C.primary,
+    borderColor: C.primary,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
   directSaleText: {
     fontSize: 12,
     fontWeight: '700',
+<<<<<<< HEAD
     color: palette.textDim,
   },
   directSaleTextActive: {
     color: palette.text,
+=======
+    color: C.textMuted,
+  },
+  directSaleTextActive: {
+    color: C.textMain,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
   scrollContent: {
     flexDirection: 'row',
@@ -173,6 +239,10 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 12,
+<<<<<<< HEAD
     color: palette.textDim,
+=======
+    color: C.textMuted,
+>>>>>>> fd20a81b224afa5355ca1b5411890875e84fd8e4
   },
 })

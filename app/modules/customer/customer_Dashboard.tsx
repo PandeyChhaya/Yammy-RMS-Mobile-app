@@ -165,6 +165,7 @@ export default function CustomerDashboard() {
             </View>
             <View style={s.welcomeInfo}>
               <Text style={s.welcomeText}>Hello, {userName}! </Text>
+              <Text style={s.welcomeText}>Hello, {userName}! </Text>
               <Text style={s.welcomeSub}>Good to see you again</Text>
             </View>
           </View>

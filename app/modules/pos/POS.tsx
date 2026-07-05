@@ -14,6 +14,7 @@ import { TableData } from './types/tables'
 
 const TAX_RATES = [{ name: 'VAT', rate: 13 }]
 
+// Vibrant, accessible colors tailored for a modern dark-mode interface
 const CATEGORY_COLORS = [
   '#14B8A6',
   '#F59E0B',
