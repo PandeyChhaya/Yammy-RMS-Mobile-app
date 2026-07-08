@@ -11,7 +11,7 @@ import {
 } from 'react-native'
 import reservationService from '../../reservation/services/reservationService'
 import { TableData } from '../types/tables'
-import TableCard from './TableCard'
+import TableCard from './tableCard'
 
 const palette = {
   bg: '#0A0A0A',

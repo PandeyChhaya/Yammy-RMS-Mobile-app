@@ -7,7 +7,8 @@
       "@/components/*": ["./components/*"],
       "@/constants/*": ["./constants/*"],
       "@/shared/*": ["./shared/*"]
-    }
+    },
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "**/*.ts",
