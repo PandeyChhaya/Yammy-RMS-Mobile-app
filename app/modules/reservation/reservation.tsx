@@ -98,10 +98,9 @@ export default function Reservations() {
   })
 
   const { data: tables = [] } = useQuery({
-    queryKey: ['tables'],
-    queryFn:  tableService.getTable,
-  })
-
+  queryKey: ['tables'],
+  queryFn: () => tableService.getTable(),
+})
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: ReservationStatus }) =>
       reservationService.updateReservationStatus(id, status),
