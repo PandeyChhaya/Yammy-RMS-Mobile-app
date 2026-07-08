@@ -13,16 +13,19 @@ const queryClient = new QueryClient()
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    const initialize = async () => {
+useEffect(() => {
+  const initialize = async () => {
+    try {
       await AsyncStorage.multiRemove(['@products', '@categories', '@tables', '@data_seeded'])
       await seedDatabase()
+    } catch (err) {
+      console.error('APP INIT FAILED:', err)
+    } finally {
       setReady(true)
     }
-    initialize()
-  }, [])
-
+  }
+  initialize()
+}, [])
   if (!ready) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FEF1A8' }}>
