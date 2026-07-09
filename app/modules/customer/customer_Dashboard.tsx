@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import {
-  Bell,
   Calendar,
   ChevronRight,
   Clock,
@@ -13,7 +12,8 @@ import {
   Play,
   ShoppingBag,
   Star,
-  Utensils,
+  Store,
+  Utensils
 } from 'lucide-react-native'
 import { useEffect, useState } from 'react'
 import {
@@ -21,6 +21,7 @@ import {
   Linking,
   ScrollView,
   StyleSheet,
+
   Text,
   TouchableOpacity,
   View,
@@ -212,14 +213,14 @@ export default function CustomerDashboard() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[s.actionCard, { backgroundColor: palette.errorBg, borderColor: palette.error }]}
-                onPress={() => router.push('/modules/customer/components/CallWaiter' as any)}
-                activeOpacity={0.8}
-              >
-                <View style={s.actionIconWrap}><Bell size={22} color={palette.error} /></View>
-                <Text style={s.actionLabel}>Call Waiter</Text>
-                <Text style={s.actionSub}>Get assistance</Text>
-              </TouchableOpacity>
+  style={[s.actionCard, { backgroundColor: palette.errorBg, borderColor: palette.error }]}
+  onPress={() => router.push('/modules/customer/components/browseRestaurant' as any)}
+  activeOpacity={0.8}
+>
+  <View style={s.actionIconWrap}><Store size={22} color={palette.error} /></View>
+  <Text style={s.actionLabel}>Browse Restaurants</Text>
+  <Text style={s.actionSub}>Switch location</Text>
+</TouchableOpacity>
 
               <TouchableOpacity
                 style={[s.actionCard, { backgroundColor: palette.card, borderColor: palette.border }]}

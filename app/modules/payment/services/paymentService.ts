@@ -27,7 +27,7 @@ const handleResponse = async (res: Response) => {
 }
 
 const getHeaders = async () => {
-    const token = await AsyncStorage.getItem('@authToken')
+    const token = await AsyncStorage.getItem('@accessToken')
     return {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,

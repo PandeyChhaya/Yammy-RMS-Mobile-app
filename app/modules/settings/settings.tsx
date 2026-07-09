@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import {
   Bell,
@@ -9,7 +10,7 @@ import {
   User,
   Utensils,
 } from 'lucide-react-native'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Alert,
   ScrollView,
@@ -21,6 +22,7 @@ import {
   View,
 } from 'react-native'
 import { authService } from '../auth/services/auth.service'
+import { settingsService } from './services/settingservice'
 
 const C = {
   black:      '#0A0A0A',
@@ -45,18 +47,44 @@ const radius = { xs: 6, sm: 10, md: 14, lg: 18, pill: 100 }
 
 export default function Settings() {
   const router = useRouter()
+  const queryClient = useQueryClient()
 
-  const [restaurantName, setRestaurantName] = useState('Yammy Fresh')
-  const [phone,          setPhone]          = useState('+977 98...')
-  const [address,        setAddress]        = useState('Kathmandu, Nepal')
-  const [notifications,  setNotifications]  = useState(true)
-  const [soundEffects,   setSoundEffects]   = useState(true)
-  const [darkMode,       setDarkMode]       = useState(false)
-  const [focusedInput,   setFocusedInput]   = useState<string | null>(null)
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsService.getSettings(),
+  })
 
-  const handleSave = () => {
-    Alert.alert('Success', 'Settings saved successfully!')
-  }
+  const [restaurantName, setRestaurantName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [address, setAddress] = useState('')
+  // local-only prefs, unrelated to backend for now
+  const [notifications, setNotifications] = useState(true)
+  const [soundEffects, setSoundEffects] = useState(true)
+  const [darkMode, setDarkMode] = useState(false)
+  const [focusedInput, setFocusedInput] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (settings) {
+      setRestaurantName(settings.restaurant_name || '')
+      setPhone(settings.phone || '')
+      setAddress(settings.address || '')
+    }
+  }, [settings])
+
+  const updateMutation = useMutation({
+    mutationFn: () => settingsService.updateSettings({
+      restaurant_name: restaurantName,
+      phone,
+      address,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['settings'] })
+      Alert.alert('Success', 'Settings saved successfully!')
+    },
+    onError: (err: any) => Alert.alert('Error', err.message || 'Failed to save settings'),
+  })
+
+  const handleSave = () => updateMutation.mutate()
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [

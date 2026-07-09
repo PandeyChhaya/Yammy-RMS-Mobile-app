@@ -3,10 +3,15 @@ import { deleteOrder, getAllOrder, getOrder, postOrder, putOrder, updateOrderSta
 
 export const postOrderController = async (req: Request, res: Response) => {
     try {
-        const response = await postOrder(req.body);
+        const user_id = req.user?.user_id;
+        if (!user_id) {
+            res.status(401).json({ message: 'Unauthorized' });
+            return;
+        }
+        const response = await postOrder({ ...req.body, user_id });
         res.status(201).json(response);
     } catch (error) {
-        res.status(400).json({ message: error });
+        res.status(400).json({ message: error instanceof Error ? error.message : error });
     }
 };
 

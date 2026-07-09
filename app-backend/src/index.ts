@@ -16,6 +16,7 @@ import orderRouter from "./modules/orders/orders.routes.js";
 import paymentRouter from "./modules/payments/payments.routes.js";
 import reservationsRouter from "./modules/reservations/reservations.routes.js";
 import restaurantsRoutes from './modules/restaurant/restaurant.routes.js';
+import settingRouter from "./modules/settings/settings.routes.js";
 import tableRouter from "./modules/tables/tables.routes.js";
 import usersRouter from "./modules/users/users.routes.js";
 
@@ -44,6 +45,7 @@ app.use("/api/minis",        miniRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/images", imagesRoutes);
 app.use('/api/restaurants', restaurantsRoutes)
+app.use('/api/settings', settingRouter)
 
 
 io.on("connection", (socket) => {
