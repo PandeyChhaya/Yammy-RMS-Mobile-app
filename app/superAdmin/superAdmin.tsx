@@ -66,23 +66,42 @@ export default function SuperAdmin() {
   }, [])
 
   const getHeaders = async () => {
-    const token = await authService.getToken()
-    return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
-  }
-
-  const fetchAdmins = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch(BASE_URL, { headers: await getHeaders() })
+  let token = await authService.getToken()
+  if (!token) {
+    const refreshToken = await AsyncStorage.getItem('@refreshToken')
+    if (refreshToken) {
+      const res = await fetch('http://192.168.1.71:5000/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: refreshToken }),
+      })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.message)
-      setAdmins(data.filter((u: AdminUser) => u.user_role === 'Admin'))
-    } catch (err: any) {
-      flash('error', err.message || 'Failed to load admins')
-    } finally {
-      setLoading(false)
+      if (data.accessToken) {
+        await AsyncStorage.setItem('@accessToken', data.accessToken)
+        
+        token = data.accessToken
+      }
     }
   }
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+}
+  const fetchAdmins = async () => {
+    const token = await AsyncStorage.getItem('@accessToken')
+console.log('TOKEN:', token)
+  setLoading(true)
+  try {
+    const res = await fetch(BASE_URL, { headers: await getHeaders() })
+const data = await res.json()
+console.log('STATUS:', res.status)
+console.log('DATA:', JSON.stringify(data))
+    if (!res.ok) throw new Error(data.message)
+    setAdmins(data.filter((u: AdminUser) => u.user_role === 'Admin'))
+  } catch (err: any) {
+    flash('error', err.message || 'Failed to load admins')
+  } finally {
+    setLoading(false)
+  }
+}
 
   const fetchMinis = async () => {
     try {

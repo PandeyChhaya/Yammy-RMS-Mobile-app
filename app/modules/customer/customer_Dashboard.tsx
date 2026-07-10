@@ -303,6 +303,7 @@ export default function CustomerDashboard() {
           <View style={s.section}>
             <View style={s.sectionRow}>
               <Text style={s.sectionTitle}>Our Menu</Text>
+              
               <TouchableOpacity onPress={() => router.push('/modules/customer/components/KioskOrder' as any)}>
                 <Text style={s.sectionLink}>Order now</Text>
               </TouchableOpacity>

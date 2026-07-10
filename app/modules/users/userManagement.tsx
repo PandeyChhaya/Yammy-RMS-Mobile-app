@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-    AlertCircle, CheckCircle, Edit, Plus, Search,
-    Shield, Trash2, User, Users,
+  AlertCircle, CheckCircle, Edit, Plus, Search,
+  Shield, Trash2, User, Users,
 } from 'lucide-react-native'
 import { useState } from 'react'
 import {
-    ActivityIndicator, Alert, Modal, ScrollView, StyleSheet,
-    Switch, Text, TextInput, TouchableOpacity, View,
+  ActivityIndicator, Alert, Modal, ScrollView, StyleSheet,
+  Switch, Text, TextInput, TouchableOpacity, View,
 } from 'react-native'
 import userService, { User as UserType } from './usersService'
 
@@ -53,10 +53,13 @@ export default function UsersScreen() {
   })
 
   const createMutation=useMutation({
-    mutationFn:(form:UserFormData)=>userService.postUser({
-      user_name:form.user_name,user_email:form.user_email,
-      user_role:form.user_role,is_active:true,
-    } as any),
+     mutationFn: (form: UserFormData) => userService.postUser({
+    user_name: form.user_name,
+    user_email: form.user_email,
+    user_role: form.user_role,
+    user_password: form.user_password,
+    is_active: true,
+  } as any),
     onSuccess:()=>{
       queryClient.invalidateQueries({queryKey:['users']})
       setShowAddModal(false);setAddForm(DEFAULT_FORM)

@@ -89,11 +89,16 @@ model ingredients {
   is_active       Boolean   @default(true)
   created_at      DateTime  @default(now()) @db.Timestamp(6)
   updated_at      DateTime  @updatedAt @db.Timestamp(6)
+
+  restaurant_id Int?
+  restaurants restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onDelete: Cascade)
+
   supplier_id     String?
   supplier        suppliers?       @relation(fields: [supplier_id], references: [id], onDelete: SetNull)
   stock_movements stock_movements[]
   stock_alerts    stock_alerts[]
   invoice_items   invoice_items[]
+   @@index([restaurant_id])
 }
 
 model suppliers {
@@ -107,8 +112,13 @@ model suppliers {
   is_active      Boolean   @default(true)
   created_at     DateTime  @default(now()) @db.Timestamp(6)
   updated_at     DateTime  @updatedAt @db.Timestamp(6)
+
+  restaurant_id Int?
+  restaurants restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onDelete: Cascade)
+
   ingredients    ingredients[]
   invoices       invoices[]
+   @@index([restaurant_id])
 }
 
 model invoices {
@@ -122,8 +132,13 @@ model invoices {
   status         String        @default("pending") @db.VarChar(20)
   created_at     DateTime      @default(now()) @db.Timestamp(6)
   updated_at     DateTime      @updatedAt @db.Timestamp(6)
+
+  restaurant_id Int?
+  restaurants restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onDelete: Cascade)
+
   supplier       suppliers?    @relation(fields: [supplier_id], references: [id], onDelete: SetNull)
   items          invoice_items[]
+   @@index([restaurant_id])
 }
 
 model invoice_items {
@@ -152,7 +167,12 @@ model stock_movements {
   reference_id  String?     @db.VarChar(100)
   created_by    String?     @db.VarChar(100)
   created_at    DateTime    @default(now()) @db.Timestamp(6)
+
+  restaurant_id Int?
+  restaurants restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onDelete: Cascade)
+
   ingredient    ingredients @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
+   @@index([restaurant_id])
 }
 
 model stock_alerts {
@@ -162,7 +182,12 @@ model stock_alerts {
   message       String
   is_read       Boolean     @default(false)
   created_at    DateTime    @default(now()) @db.Timestamp(6)
+
+  restaurant_id Int?
+  restaurants restaurants? @relation(fields: [restaurant_id], references: [restaurant_id], onDelete: Cascade)
+
   ingredient    ingredients @relation(fields: [ingredient_id], references: [id], onDelete: Cascade)
+   @@index([restaurant_id])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -386,4 +411,9 @@ model restaurants {
   tables           tables[]
   orders           orders[]
   minis            minis[]
+  ingredients      ingredients[]
+suppliers        suppliers[]
+invoices         invoices[]
+stock_movements  stock_movements[]
+stock_alerts     stock_alerts[]
 }

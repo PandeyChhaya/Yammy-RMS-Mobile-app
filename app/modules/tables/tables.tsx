@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRouter } from 'expo-router'
 import {
   AlertCircle,
   CheckCircle,
@@ -66,6 +67,7 @@ const STATUS_CONFIG: Record<TableData['table_status'], { label: string; bg: stri
 const CAPACITY_OPTIONS = [2, 4, 6, 8, 10, 12]
 
 export default function Tables() {
+  const router = useRouter()
   const queryClient = useQueryClient()
 
   const [canManage,             setCanManage]             = useState(false)
@@ -484,7 +486,7 @@ export default function Tables() {
                 <TouchableOpacity
                   style={styles.orderBtn}
                   activeOpacity={0.85}
-                  onPress={() => console.log('Take order for table:', table.table_id)}
+                  onPress={() => router.push({ pathname: '/modules/pos/POS', params: { table_id: table.table_id, table_number: table.table_number } })}
                 >
                   <CreditCard size={14} color={C.white} />
                   <Text style={styles.orderBtnText}>Take Order</Text>

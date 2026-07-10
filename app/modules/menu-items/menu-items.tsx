@@ -451,37 +451,21 @@ export default function MenuItems() {
               </ScrollView>
               {formErrors.category_id ? <Text style={styles.fieldError}>{formErrors.category_id}</Text> : null}
 
-              <View style={styles.priceRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Price (NPR) *</Text>
-                  <View style={[styles.inputWithPrefix, formErrors.price ? styles.inputError : null]}>
-                    <Text style={styles.prefix}>Rs</Text>
-                    <TextInput
-                      style={styles.prefixInput}
-                      placeholder="0.00"
-                      placeholderTextColor={palette.muted}
-                      keyboardType="numeric"
-                      value={form.price}
-                      onChangeText={(t) => setForm({ ...form, price: t })}
-                    />
-                  </View>
-                  {formErrors.price ? <Text style={styles.fieldError}>{formErrors.price}</Text> : null}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Cost (NPR)</Text>
-                  <View style={styles.inputWithPrefix}>
-                    <Text style={styles.prefix}>Rs</Text>
-                    <TextInput
-                      style={styles.prefixInput}
-                      placeholder="0.00"
-                      placeholderTextColor={palette.muted}
-                      keyboardType="numeric"
-                      value={form.cost_price}
-                      onChangeText={(t) => setForm({ ...form, cost_price: t })}
-                    />
-                  </View>
-                </View>
-              </View>
+              <View>
+  <Text style={styles.label}>Price (NPR) *</Text>
+  <View style={[styles.inputWithPrefix, formErrors.price ? styles.inputError : null]}>
+    <Text style={styles.prefix}>Rs</Text>
+    <TextInput
+      style={styles.prefixInput}
+      placeholder="0.00"
+      placeholderTextColor={palette.muted}
+      keyboardType="numeric"
+      value={form.price}
+      onChangeText={(t) => setForm({ ...form, price: t })}
+    />
+  </View>
+  {formErrors.price ? <Text style={styles.fieldError}>{formErrors.price}</Text> : null}
+</View>
 
               <TouchableOpacity
                 style={styles.advancedToggle}
@@ -585,7 +569,7 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '700', color: palette.offWhite },
   emptySubtitle: { fontSize: 13, color: palette.muted, textAlign: 'center' },
 
-  card: { flexDirection: 'row', backgroundColor: palette.card, borderRadius: corner.lg, borderWidth: 1, borderColor: palette.border, overflow: 'hidden', height: 100, marginBottom: 10 },
+  card: { flexDirection: 'row', backgroundColor: palette.card, borderRadius: corner.lg, borderWidth: 1, borderColor: palette.border, overflow: 'hidden', minHeight: 100, marginBottom: 10 },
   cardPhoto: { width: 100, height: 100, position: 'relative' },
   cardImage: { width: '100%', height: '100%' },
   cardImagePlaceholder: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: palette.graphite },
@@ -613,7 +597,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 10, fontWeight: '800', color: palette.muted, letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6, marginTop: 14 },
   input: { borderWidth: 1.5, borderColor: palette.border, borderRadius: corner.md, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: palette.text, backgroundColor: palette.black },
   inputError: { borderColor: palette.error },
-  textArea: { height: 80, textAlignVertical: 'top' },
+textArea: { height: 100, textAlignVertical: 'top', paddingTop: 10 },
   fieldError: { fontSize: 11, color: palette.error, marginTop: 4 },
 
   priceRow: { flexDirection: 'row', gap: 12 },

@@ -25,7 +25,7 @@ import {
 } from 'react-native'
 import { authService } from './auth/services/auth.service'
 import { ordersService } from './orders/services/orderService'
-import tablesService from './pos/services/tablesService'
+import tableService from './pos/services/tablesService'
 
 const colors = {
   bg: '#0A0A0A',
@@ -216,43 +216,47 @@ export default function Dashboard() {
     }
   }
 
-  async function loadStats() {
-    setStatsError(false)
-    try {
-      const token = await AsyncStorage.getItem('@accessToken')
-      if (!token) return
+ async function loadStats() {
+  setStatsError(false)
+  try {
+    const token = await AsyncStorage.getItem('@accessToken')
+    if (!token) return
 
-      const [orders, tables] = await Promise.all([
-        ordersService.getOrder(),
-        tablesService.getTable(),
-      ])
-
-      const todayStr = new Date().toISOString().split('T')[0]
-      const todaysOrders = orders.filter((o: any) => o.created_at?.startsWith(todayStr))
-
-      const revenueToday = todaysOrders.reduce((sum: number, o: any) => {
-        return sum + (Number(o.total_amount) || 0)
-      }, 0)
-
-      const pending = orders.filter((o: any) => o.order_status === 'pending')
-      const occupiedTables = tables.filter(
-        (t: any) => t.table_status !== 'available' && t.table_status !== 'free'
-      )
-
-      setStats({
-        todayOrders: todaysOrders.length,
-        activeTables: occupiedTables.length,
-        totalRevenue: revenueToday,
-        pendingOrders: pending.length,
-      })
-    } catch (err) {
-      console.log('dashboard stats failed:', err)
-      setStatsError(true)
-    } finally {
+    const role = await AsyncStorage.getItem('@userRole')
+    if (role !== 'Admin') {
       setLoadingStats(false)
+      return  // skip stats for non-admin roles
     }
-  }
 
+    const restaurantId = await AsyncStorage.getItem('@restaurantId')
+    if (!restaurantId) return
+
+    const [orders, tables] = await Promise.all([
+      ordersService.getOrder(Number(restaurantId)),
+      tableService.getTable(Number(restaurantId)),
+    ])
+    console.log('orders:', JSON.stringify(orders))
+console.log('tables:', JSON.stringify(tables))
+
+    const todayStr = new Date().toISOString().split('T')[0]
+    const todaysOrders = orders.filter((o: any) => o.created_at?.startsWith(todayStr))
+    const revenueToday = todaysOrders.reduce((sum: number, o: any) => sum + (Number(o.total_amount) || 0), 0)
+    const pending = orders.filter((o: any) => o.order_status === 'pending')
+    const occupiedTables = tables.filter((t: any) => t.table_status !== 'available' && t.table_status !== 'free')
+
+    setStats({
+      todayOrders: todaysOrders.length,
+      activeTables: occupiedTables.length,
+      totalRevenue: revenueToday,
+      pendingOrders: pending.length,
+    })
+  } catch (err) {
+    console.log('dashboard stats failed:', err)
+    setStatsError(true)
+  } finally {
+    setLoadingStats(false)
+  }
+}
   async function handleLogout() {
     await authService.logout()
     router.replace('/modules/auth/login')
@@ -300,26 +304,28 @@ export default function Dashboard() {
             <Text style={styles.onlineText}>Online</Text>
           </View>
         </View>
-
-        <Text style={styles.sectionTitle}>TODAY'S OVERVIEW</Text>
-        <View style={styles.statsGrid}>
-          {statCards.map((card) => (
-            <View key={card.label} style={styles.statCard}>
-              {loadingStats ? (
-                <ActivityIndicator size="small" color={card.color} />
-              ) : statsError ? (
-                <Text style={[styles.statValue, { color: colors.muted, fontSize: 14 }]}>--</Text>
-              ) : (
-                <Text style={[styles.statValue, { color: card.color }]}>
-                  {card.prefix}
-                  {card.label === 'Revenue' ? Number(card.value).toLocaleString() : card.value}
-                </Text>
-              )}
-              <Text style={styles.statLabel}>{card.label}</Text>
-            </View>
-          ))}
+{userRole === 'Admin' && (
+  <>
+    <Text style={styles.sectionTitle}>TODAY'S OVERVIEW</Text>
+    <View style={styles.statsGrid}>
+      {statCards.map((card) => (
+        <View key={card.label} style={styles.statCard}>
+          {loadingStats ? (
+            <ActivityIndicator size="small" color={card.color} />
+          ) : statsError ? (
+            <Text style={[styles.statValue, { color: colors.muted, fontSize: 14 }]}>--</Text>
+          ) : (
+            <Text style={[styles.statValue, { color: card.color }]}>
+              {card.prefix}
+              {card.label === 'Revenue' ? Number(card.value).toLocaleString() : card.value}
+            </Text>
+          )}
+          <Text style={styles.statLabel}>{card.label}</Text>
         </View>
-
+      ))}
+    </View>
+  </>
+)}
         <Text style={styles.sectionTitle}>MODULES</Text>
         <View style={styles.modulesGrid}>
           {visibleModules.map((mod) => (

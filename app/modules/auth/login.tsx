@@ -55,6 +55,7 @@ export default function Login() {
 
     try {
       const result = await authService.login(email.trim(), password.trim())
+          console.log('LOGIN RESULT:', JSON.stringify(result))
 
       await AsyncStorage.setItem('@userName', result.user_name)
       await AsyncStorage.setItem('@userEmail', result.user_email ?? '')
@@ -64,11 +65,12 @@ export default function Login() {
 
       if (result.user_role === 'Customer') {
         router.replace('/modules/customer/components/browseRestaurant')
-      } else if (result.user_role === 'Super Admin') {
-        router.replace('/superAdmin/superAdmin')
-      } else if (result.user_role === 'Admin' && !result.restaurant_id) {
+      }  else if (result.user_role === 'SuperAdmin') {
+  console.log('Navigating to superadmin')
+  router.replace('/superAdmin/superAdmin')
+} else if (result.user_role === 'Admin' && !result.restaurant_id) {
         router.replace('/modules/restaurant/createRestaurant')
-      } else {
+      } else {   
         router.replace('/modules/Dashboard')
       }
     } catch (err: any) {

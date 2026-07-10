@@ -80,6 +80,7 @@ export default function AddIngredientModal({ isOpen, onClose, onSuccess }: Props
       max_stock:      parseFloat(form.max_stock),
       cost_per_unit:  parseFloat(form.cost_per_unit),
       expiration_date: form.expiration_date || undefined,
+      current_stock:   parseFloat(form.current_stock),
     })
     console.log('SUCCESS:', result)
     setForm(DEFAULT)

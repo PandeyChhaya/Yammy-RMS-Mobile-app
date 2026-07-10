@@ -1,10 +1,10 @@
 import prisma from '../../db.js'
 
-export const createIngredient = async (body: any) => {
+export const createIngredient = async (body: any, restaurant_id: number) => {
   const { name, description, category, unit, min_stock, max_stock,
           cost_per_unit, supplier_id, barcode, image_url, expiration_date } = body
 
-  const exists = await prisma.ingredients.findFirst({ where: { name } })
+  const exists = await prisma.ingredients.findFirst({ where: { name, restaurant_id } })
   if (exists) throw new Error('Ingredient already exists')
 
   const ingredient = await prisma.ingredients.create({
@@ -14,16 +14,20 @@ export const createIngredient = async (body: any) => {
       supplier_id: supplier_id || null,
       barcode, image_url,
       expiration_date: expiration_date ? new Date(expiration_date) : null,
+      restaurant_id,
     },
   })
 
-  await checkAndCreateAlerts(ingredient.id)
+  await checkAndCreateAlerts(ingredient.id, restaurant_id)
   return ingredient
 }
 
-export const getAllIngredients = async () => {
+export const getAllIngredients = async (restaurant_id?: number) => {
   return prisma.ingredients.findMany({
-    where: { is_active: true },
+    where: {
+      is_active: true,
+      restaurant_id: restaurant_id ?? -1,
+    },
     orderBy: { created_at: 'desc' },
   })
 }
@@ -59,11 +63,12 @@ export const updateIngredient = async (id: string, body: any) => {
         quantity: Math.abs(diff),
         unit: updated.unit,
         reason: 'Manual stock update',
+        restaurant_id: exists.restaurant_id ?? undefined,
       },
     })
   }
 
-  await checkAndCreateAlerts(id)
+  await checkAndCreateAlerts(id, exists.restaurant_id ?? undefined)
   return updated
 }
 
@@ -77,13 +82,18 @@ export const deleteIngredient = async (id: string) => {
   return { message: 'Ingredient deleted successfully' }
 }
 
-export const createSupplier = async (body: any) => {
-  return prisma.suppliers.create({ data: body })
+export const createSupplier = async (body: any, restaurant_id: number) => {
+  return prisma.suppliers.create({
+    data: { ...body, restaurant_id },
+  })
 }
 
-export const getAllSuppliers = async () => {
+export const getAllSuppliers = async (restaurant_id?: number) => {
   return prisma.suppliers.findMany({
-    where: { is_active: true },
+    where: {
+      is_active: true,
+      restaurant_id: restaurant_id ?? -1,
+    },
     orderBy: { created_at: 'desc' },
   })
 }
@@ -107,8 +117,9 @@ export const deleteSupplier = async (id: string) => {
   return { message: 'Supplier deleted successfully' }
 }
 
-export const getAllInvoices = async () => {
+export const getAllInvoices = async (restaurant_id?: number) => {
   return prisma.invoices.findMany({
+    where: { restaurant_id: restaurant_id ?? -1 },
     include: { items: true },
     orderBy: { created_at: 'desc' },
   })
@@ -134,17 +145,23 @@ export const deleteInvoice = async (id: string) => {
   return { message: 'Invoice deleted successfully' }
 }
 
-export const getStockMovements = async (ingredient_id?: string) => {
+export const getStockMovements = async (ingredient_id?: string, restaurant_id?: number) => {
   return prisma.stock_movements.findMany({
-    where: ingredient_id ? { ingredient_id } : undefined,
+    where: {
+      ...(ingredient_id ? { ingredient_id } : {}),
+      restaurant_id: restaurant_id ?? -1,
+    },
     orderBy: { created_at: 'desc' },
     take: 100,
   })
 }
 
-export const getStockAlerts = async () => {
+export const getStockAlerts = async (restaurant_id?: number) => {
   return prisma.stock_alerts.findMany({
-    where: { is_read: false },
+    where: {
+      is_read: false,
+      restaurant_id: restaurant_id ?? -1,
+    },
     orderBy: { created_at: 'desc' },
   })
 }
@@ -156,15 +173,15 @@ export const markAlertAsRead = async (alert_id: string) => {
   return { message: 'Alert marked as read' }
 }
 
-export const getDashboardData = async () => {
+export const getDashboardData = async (restaurant_id: number) => {
   const [ingredients, alerts, recentMovements] = await Promise.all([
-    prisma.ingredients.findMany({ where: { is_active: true } }),
-    prisma.stock_alerts.findMany({ where: { is_read: false }, orderBy: { created_at: 'desc' } }),
-    prisma.stock_movements.findMany({ orderBy: { created_at: 'desc' }, take: 10 }),
+    prisma.ingredients.findMany({ where: { is_active: true, restaurant_id } }),
+    prisma.stock_alerts.findMany({ where: { is_read: false, restaurant_id }, orderBy: { created_at: 'desc' } }),
+    prisma.stock_movements.findMany({ where: { restaurant_id }, orderBy: { created_at: 'desc' }, take: 10 }),
   ])
 
-  const lowStockCount    = ingredients.filter(i => Number(i.current_stock) <= Number(i.min_stock) && Number(i.current_stock) > 0).length
-  const outOfStockCount  = ingredients.filter(i => Number(i.current_stock) <= 0).length
+  const lowStockCount     = ingredients.filter(i => Number(i.current_stock) <= Number(i.min_stock) && Number(i.current_stock) > 0).length
+  const outOfStockCount   = ingredients.filter(i => Number(i.current_stock) <= 0).length
   const expiringSoonCount = ingredients.filter(i => {
     if (!i.expiration_date) return false
     const days = (new Date(i.expiration_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
@@ -183,7 +200,7 @@ export const getDashboardData = async () => {
   }
 }
 
-const checkAndCreateAlerts = async (ingredient_id: string) => {
+const checkAndCreateAlerts = async (ingredient_id: string, restaurant_id?: number | null) => {
   const ingredient = await prisma.ingredients.findUnique({ where: { id: ingredient_id } })
   if (!ingredient) return
 
@@ -198,6 +215,7 @@ const checkAndCreateAlerts = async (ingredient_id: string) => {
         ingredient_id,
         alert_type: 'out_of_stock',
         message: `${ingredient.name} is out of stock`,
+        ...(restaurant_id ? { restaurant_id } : {}),
       },
     })
   } else if (current <= min) {
@@ -206,6 +224,7 @@ const checkAndCreateAlerts = async (ingredient_id: string) => {
         ingredient_id,
         alert_type: 'low_stock',
         message: `${ingredient.name} is running low (${current} ${ingredient.unit} remaining)`,
+        ...(restaurant_id ? { restaurant_id } : {}),
       },
     })
   }
@@ -214,11 +233,21 @@ const checkAndCreateAlerts = async (ingredient_id: string) => {
     const days = (new Date(ingredient.expiration_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     if (days < 0) {
       await prisma.stock_alerts.create({
-        data: { ingredient_id, alert_type: 'expired', message: `${ingredient.name} has expired` },
+        data: {
+          ingredient_id,
+          alert_type: 'expired',
+          message: `${ingredient.name} has expired`,
+          ...(restaurant_id ? { restaurant_id } : {}),
+        },
       })
     } else if (days <= 7) {
       await prisma.stock_alerts.create({
-        data: { ingredient_id, alert_type: 'expiring_soon', message: `${ingredient.name} expires in ${Math.ceil(days)} day(s)` },
+        data: {
+          ingredient_id,
+          alert_type: 'expiring_soon',
+          message: `${ingredient.name} expires in ${Math.ceil(days)} day(s)`,
+          ...(restaurant_id ? { restaurant_id } : {}),
+        },
       })
     }
   }

@@ -27,6 +27,7 @@ import menuItemsService, { MenuItem } from '../../menu-items/services/menu-items
 import { ordersService } from '../../orders/services/orderService'
 import tableService from '../../tables/services/tableService'
 
+
 // same dark theme as login.tsx / dashboard.tsx
 const colors = {
   bg: '#0A0A0A',
@@ -59,6 +60,7 @@ const PARTY_SIZES = [1, 2, 3, 4, 5, 6]
 export default function KioskOrder() {
   const queryClient = useQueryClient()
   const { selectedRestaurantId } = useRestaurant()
+  console.log('selectedRestaurantId:', selectedRestaurantId)
   const [step, setStep] = useState<Step>('categories')
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [cart, setCart] = useState<CartLine[]>([])

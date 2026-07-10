@@ -1,4 +1,4 @@
-import type { Request, Response } from 'express'
+import type { Request, Response } from 'express';
 import {
     createIngredient,
     createSupplier,
@@ -10,40 +10,252 @@ import {
     getAllSuppliers,
     getDashboardData,
     getIngredientById,
-    getInvoiceById, getInvoiceItems,
+    getInvoiceById,
+    getInvoiceItems,
     getStockAlerts,
     getStockMovements,
     getSupplierById,
     markAlertAsRead,
     updateIngredient,
     updateSupplier,
-} from './inventory.service.js'
+} from './inventory.service.js';
 
-const handle = (fn: Function) => async (req: Request, res: Response) => {
-  try { res.json(await fn(req)) }
-  catch (e: any) { res.status(400).json({ message: e.message }) }
-}
+// ==================== INGREDIENTS ====================
 
-const id = (req: Request) => String(req.params.id)
+export const postIngredientController = async (req: Request, res: Response) => {
+    try {
 
-export const postIngredientController    = handle((req: Request) => createIngredient(req.body))
-export const getAllIngredientsController  = handle(() => getAllIngredients())
-export const getIngredientController     = handle((req: Request) => getIngredientById(id(req)))
-export const putIngredientController     = handle((req: Request) => updateIngredient(id(req), req.body))
-export const deleteIngredientController  = handle((req: Request) => deleteIngredient(id(req)))
+        console.log('req.user:', req.user)
+    const restaurant_id = req.user?.restaurant_id
+    console.log('restaurant_id:', restaurant_id)
 
-export const postSupplierController      = handle((req: Request) => createSupplier(req.body))
-export const getAllSuppliersController   = handle(() => getAllSuppliers())
-export const getSupplierController       = handle((req: Request) => getSupplierById(id(req)))
-export const putSupplierController       = handle((req: Request) => updateSupplier(id(req), req.body))
-export const deleteSupplierController    = handle((req: Request) => deleteSupplier(id(req)))
+        if (!restaurant_id) {
+            return res.status(400).json({ message: 'No restaurant linked to this account' });
+        }
 
-export const getAllInvoicesController    = handle(() => getAllInvoices())
-export const getInvoiceController        = handle((req: Request) => getInvoiceById(id(req)))
-export const getInvoiceItemsController   = handle((req: Request) => getInvoiceItems(id(req)))
-export const deleteInvoiceController     = handle((req: Request) => deleteInvoice(id(req)))
+        const response = await createIngredient(req.body, restaurant_id);
+        res.status(201).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
 
-export const getStockMovementsController = handle((req: Request) => getStockMovements(req.query.ingredient_id as string | undefined))
-export const getStockAlertsController    = handle(() => getStockAlerts())
-export const markAlertAsReadController   = handle((req: Request) => markAlertAsRead(id(req)))
-export const getDashboardController      = handle(() => getDashboardData())
+export const getAllIngredientsController = async (req: Request, res: Response) => {
+    try {
+        console.log('req.user:', req.user)
+        const restaurant_id =
+            req.user?.restaurant_id ??
+            (req.query.restaurant_id
+                ? parseInt(String(req.query.restaurant_id))
+                : undefined);
+        console.log('filtering by restaurant_id:', restaurant_id)
+        const response = await getAllIngredients(restaurant_id);
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: (error as Error).message });
+    }
+};
+
+export const getIngredientController = async (req: Request, res: Response) => {
+    try {
+        const response = await getIngredientById(String(req.params.id));
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+export const putIngredientController = async (req: Request, res: Response) => {
+    try {
+        const response = await updateIngredient(
+            String(req.params.id),
+            req.body
+        );
+
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+export const deleteIngredientController = async (req: Request, res: Response) => {
+    try {
+        const response = await deleteIngredient(String(req.params.id));
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+// ==================== SUPPLIERS ====================
+
+export const postSupplierController = async (req: Request, res: Response) => {
+    try {
+        const restaurant_id = req.user?.restaurant_id;
+
+        if (!restaurant_id) {
+            return res.status(400).json({ message: 'No restaurant linked to this account' });
+        }
+
+        const response = await createSupplier(req.body, restaurant_id);
+        res.status(201).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+export const getAllSuppliersController = async (req: Request, res: Response) => {
+    try {
+        const restaurant_id =
+            req.user?.restaurant_id ??
+            (req.query.restaurant_id
+                ? parseInt(String(req.query.restaurant_id))
+                : undefined);
+
+        const response = await getAllSuppliers(restaurant_id);
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+export const getSupplierController = async (req: Request, res: Response) => {
+    try {
+        const response = await getSupplierById(String(req.params.id));
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+export const putSupplierController = async (req: Request, res: Response) => {
+    try {
+        const response = await updateSupplier(
+            String(req.params.id),
+            req.body
+        );
+
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+export const deleteSupplierController = async (req: Request, res: Response) => {
+    try {
+        const response = await deleteSupplier(String(req.params.id));
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+// ==================== INVOICES ====================
+
+export const getAllInvoicesController = async (req: Request, res: Response) => {
+    try {
+        const restaurant_id =
+            req.user?.restaurant_id ??
+            (req.query.restaurant_id
+                ? parseInt(String(req.query.restaurant_id))
+                : undefined);
+
+        const response = await getAllInvoices(restaurant_id);
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+export const getInvoiceController = async (req: Request, res: Response) => {
+    try {
+        const response = await getInvoiceById(String(req.params.id));
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+export const getInvoiceItemsController = async (req: Request, res: Response) => {
+    try {
+        const response = await getInvoiceItems(String(req.params.id));
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+export const deleteInvoiceController = async (req: Request, res: Response) => {
+    try {
+        const response = await deleteInvoice(String(req.params.id));
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+// ==================== STOCK ====================
+
+export const getStockMovementsController = async (req: Request, res: Response) => {
+    try {
+        const restaurant_id =
+            req.user?.restaurant_id ??
+            (req.query.restaurant_id
+                ? parseInt(String(req.query.restaurant_id))
+                : undefined);
+
+        const response = await getStockMovements(
+            req.query.ingredient_id as string | undefined,
+            restaurant_id
+        );
+
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+export const getStockAlertsController = async (req: Request, res: Response) => {
+    try {
+        const restaurant_id =
+            req.user?.restaurant_id ??
+            (req.query.restaurant_id
+                ? parseInt(String(req.query.restaurant_id))
+                : undefined);
+
+        const response = await getStockAlerts(restaurant_id);
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+export const markAlertAsReadController = async (req: Request, res: Response) => {
+    try {
+        const response = await markAlertAsRead(String(req.params.id));
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};
+
+// ==================== DASHBOARD ====================
+
+export const getDashboardController = async (req: Request, res: Response) => {
+    try {
+        const restaurant_id =
+            req.user?.restaurant_id ??
+            (req.query.restaurant_id
+                ? parseInt(String(req.query.restaurant_id))
+                : undefined);
+
+        if (!restaurant_id) {
+            return res.status(400).json({ message: 'No restaurant linked to this account' });
+        }
+
+        const response = await getDashboardData(restaurant_id);
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(400).json({ message: error });
+    }
+};

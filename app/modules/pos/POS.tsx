@@ -14,7 +14,6 @@ import { TableData } from './types/tables'
 
 const TAX_RATES = [{ name: 'VAT', rate: 13 }]
 
-// Vibrant, accessible colors tailored for a modern dark-mode interface
 const CATEGORY_COLORS = [
   '#14B8A6',
   '#F59E0B',
@@ -221,7 +220,7 @@ export default function POS() {
       queryClient.invalidateQueries({ queryKey: ['orders'] })
       queryClient.invalidateQueries({ queryKey: ['tables'] })
       flashSuccess('Order sent to kitchen!')
-      clearCart()
+    
     } catch (err: any) {
       flashError(err.message ?? 'Failed to send to kitchen')
     } finally {

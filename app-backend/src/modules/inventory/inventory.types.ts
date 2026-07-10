@@ -3,6 +3,7 @@ export interface CreateIngredientRequest {
   description?: string
   category: string
   unit: string
+  current_stock?: number
   min_stock: number
   max_stock: number
   cost_per_unit: number
@@ -11,7 +12,6 @@ export interface CreateIngredientRequest {
   image_url?: string
   expiration_date?: string
 }
-
 export interface UpdateIngredientRequest {
   name?: string
   description?: string
